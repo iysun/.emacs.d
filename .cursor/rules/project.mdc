@@ -1,0 +1,15 @@
+---
+description: 项目级 AI 协作规范入口（始终生效）
+alwaysApply: true
+---
+
+本仓库是个人 Emacs 配置（Emacs Lisp，Windows / PowerShell）。
+
+**单一事实源是 [AGENTS.md](../../AGENTS.md)** —— 构建、运行、目录结构、维护约定都在那里，先读它。
+
+要点速记：
+- 两套 profile：全量（`init.el` → `lisp/init-*.el`）/ 精简（`init-minimal.el`，`emacs --minimal`）。
+- **约定加载 `.el` 源码（`.elc` 已 gitignore）**；交互会话 `load-prefer-newer` 为 nil，旧 `.elc` 会盖过新 `.el`，故别在工作区留 `.elc`。
+- 验证用 `/run`（批处理加载全量 + 精简两套 profile）；语法快查用 `/build`（编译后自动清 `.elc`）。
+- 别碰 `elpa/`、`custom.el`、`server/`；别在工作区留 `.elc`。
+- 密钥（`SILICONFLOW_API_KEY`）只走环境变量，绝不硬编码。

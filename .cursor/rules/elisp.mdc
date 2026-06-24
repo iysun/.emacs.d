@@ -1,0 +1,13 @@
+---
+description: 编辑 Emacs Lisp 文件时的约定
+globs: ["**/*.el"]
+---
+
+碰 `.el` 文件时：
+
+- 每个 `lisp/` 模块文件末尾要有 `(provide 'init-xxx)`；新增模块须在 `init.el` 末尾 `(require 'init-xxx)`。
+- 文件头保留 `-*- lexical-binding: t -*-`。
+- **验证用 `/run`**（批处理加载两套 profile）；语法快查用 `/build`。本配置约定加载 `.el` 源码，做完编译检查务必清掉工作区 `.elc`（交互会话 `load-prefer-newer` 为 nil，旧 `.elc` 会盖过新 `.el`）。
+- 新加用到某包**顶层宏**的模块时，在该模块顶层 `(require '那个包)`，否则字节编译会把宏当函数编译成坏 `.elc`（详见 docs/notes/byte-compile-broken-elc.md）。
+- `assignment to free variable` 这类对包变量的警告通常是 `-Q` 噪音，不必为它改配置；优先消真语法错误与 void-function。
+- 不要编辑 `elpa/`（第三方）与 `custom.el`（Customize 自动生成）；不要把 `.elc` 留在工作区。

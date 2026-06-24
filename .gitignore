@@ -7,7 +7,7 @@ amx-items
 .lsp-session-v1
 eshell/*
 !eshell/alias
-notes
+/notes
 recentf
 tramp
 custom.el
@@ -20,3 +20,10 @@ custom.el
 /tree-sitter/
 /straight/
 **/*.elc
+
+# 运行期噪音（Emacs daemon socket / 教程副本）
+/server
+/tutorial
+
+# AI agent 本地配置（含机器相关路径/密钥），勿入库
+.claude/settings.local.json
