@@ -15,8 +15,9 @@
 
   ;; (plist-put minuet-openai-compatible-options :end-point "https://open.bigmodel.cn/api/paas/v4/chat/completions")
   (plist-put minuet-openai-compatible-options :end-point "https://api.siliconflow.cn/v1/chat/completions")
-  ;; (plist-put minuet-openai-compatible-options :api-key "OPENAI_API_KEY")
-  (plist-put minuet-openai-compatible-options :api-key (defun my-fireworks-api-key () "sk-rdpqqjferiqrhmtumgatnljsxdeuvfvpfhdffrvkjcnejqzw"))
+  ;; :api-key 传环境变量名（字符串），minuet 会用 getenv 读取，避免把密钥写进配置。
+  ;; 使用前先设置环境变量，例如：export SILICONFLOW_API_KEY=sk-xxxx
+  (plist-put minuet-openai-compatible-options :api-key "SILICONFLOW_API_KEY")
   (plist-put minuet-openai-compatible-options :model "Qwen/Qwen2.5-Coder-7B-Instruct")
 
   ;; Prioritize throughput for faster completion
