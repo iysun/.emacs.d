@@ -1,8 +1,17 @@
 ;; init-ui.el   -*- lexical-binding: t -*-
 
 ;; (set-frame-font "-CTDB-FiraCode Nerd Font-medium-normal-normal-*-26-*-*-*-m-0-iso10646-1" nil t)
-;; (set-frame-font "FiraCode Nerd Font" nil t)
-(set-frame-font "JetBrainsMono Nerd Font" nil t)
+;; 按候选顺序选第一个已安装的字体；都没有则用默认，避免缺字体时启动报错。
+;; （Windows 上 JetBrainsMono 的家族名常为 "JetBrainsMono NFM"，故一并列入。）
+(catch 'font-set
+  (dolist (f '("JetBrainsMono Nerd Font" "JetBrainsMono NFM"
+               "FiraCode Nerd Font" "FiraCode NFM"))
+    (when (member f (font-family-list))
+      (set-frame-font f nil t)
+      (throw 'font-set t))))
+;; 中文字体回退（仅当系统装有该字体时生效）
+(when (member "微软雅黑" (font-family-list))
+  (set-fontset-font t 'han (font-spec :family "微软雅黑" :size 16)))
 ;; 开启连体字
 (global-prettify-symbols-mode 1)
 
