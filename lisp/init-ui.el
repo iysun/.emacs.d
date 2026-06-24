@@ -9,9 +9,12 @@
     (when (member f (font-family-list))
       (set-frame-font f nil t)
       (throw 'font-set t))))
-;; 中文字体回退（仅当系统装有该字体时生效）
+;; 中文字体回退（仅当系统装有该字体时生效）。
+;; 不写死 :size——之前固定 16 比英文小，导致中文偏小。去掉 size 后中文跟随默认（英文）字号，等大对齐。
 (when (member "微软雅黑" (font-family-list))
-  (set-fontset-font t 'han (font-spec :family "微软雅黑" :size 16)))
+  (set-fontset-font t 'han (font-spec :family "微软雅黑")))
+;; 若想微调中文相对英文的大小（或解决中英行高不齐），用 rescale：>1 放大中文，<1 缩小。
+;; (setq face-font-rescale-alist '(("微软雅黑" . 1.1)))
 ;; 开启连体字
 (global-prettify-symbols-mode 1)
 
