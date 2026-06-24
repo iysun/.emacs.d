@@ -8,13 +8,17 @@
   "在 multiple-cursors 模式启用时，局部禁用 evil。"
   (when (not my/is-multiple-cursors-mode)
     (cond
-  ((evil-visual-state-p)
-      (let ((mrk (mark))
-    (pnt (point)))
-      (evil-emacs-state)
-      (set-mark mrk)
-      (goto-char pnt)))
-  (t
+     ((evil-visual-state-p)
+      ;; evil 视觉选择是 inclusive，(mark)/(point) 给的 emacs 区是 exclusive，会少末尾一个字符，
+      ;; 导致 mc 标记的文本被截断。用 evil-visual-beginning/end（inclusive 边界）取完整选区。
+      (let ((beg (or (and (markerp evil-visual-beginning) (marker-position evil-visual-beginning))
+                     (region-beginning)))
+            (end (or (and (markerp evil-visual-end) (marker-position evil-visual-end))
+                     (region-end))))
+        (evil-emacs-state)
+        (set-mark beg)
+        (goto-char end)))
+     (t
       (evil-emacs-state)))
     (setq-local my/evil-was-active-before-mc t)
     (setq my/is-multiple-cursors-mode t)
