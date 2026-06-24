@@ -97,10 +97,17 @@
   (global-set-key (kbd "C--") 'popper-toggle)
   (global-set-key (kbd "C-=") 'popper-cycle)
 
-  (with-eval-after-load 'eshell
+  ;; eshell-mode-map 每次进入 eshell-mode 都会被重建，evil-collection 经
+  ;; eshell-first-time-mode-hook 重设键位（其中把 insert 态 RET 绑成 newline → 回车只换行不执行）。
+  ;; 因此这些绑定必须放在 eshell-mode-hook（晚于 first-time 钩子）里、且 depth 靠后，才能覆盖。
+  (defun my/eshell-evil-insert-keys ()
+    (evil-define-key 'insert eshell-mode-map (kbd "RET") 'eshell-send-input)        ; 回车=执行命令
+    (evil-define-key 'insert eshell-mode-map (kbd "<return>") 'eshell-send-input)
     (evil-define-key 'insert eshell-mode-map (kbd "C-p") 'eshell-previous-matching-input-from-input)
     (evil-define-key 'insert eshell-mode-map (kbd "C-n") 'eshell-next-matching-input-from-input)
-    (evil-define-key 'insert eshell-mode-map (kbd "C-r") 'consult-history))
+    (evil-define-key 'insert eshell-mode-map (kbd "C-r") 'consult-history)
+    (evil-normalize-keymaps))
+  (add-hook 'eshell-mode-hook #'my/eshell-evil-insert-keys 90)
 
   (with-eval-after-load 'capf-autosuggest
     (evil-define-key 'insert capf-autosuggest-active-mode-map (kbd "C-f") 'capf-autosuggest-end-of-line))
