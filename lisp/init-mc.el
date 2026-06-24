@@ -2,7 +2,9 @@
 (defvar my/is-multiple-cursors-mode nil)
 
 ;; 自动在 multiple-cursors 模式下禁用 evil，退出后重新启用
-(defun my/disable-evil-for-mc (args)
+;; 用 (&rest _args)：advice 会以被建议命令的参数调用本函数，而 mc 命令 arity 不一
+;; （如 mc/mark-all-like-this 是 0 参），写死一个必填参数会触发 wrong-number-of-arguments。
+(defun my/disable-evil-for-mc (&rest _args)
   "在 multiple-cursors 模式启用时，局部禁用 evil。"
   (when (not my/is-multiple-cursors-mode)
     (cond
@@ -39,12 +41,12 @@
                mc/mark-previous-symbol-like-this
                mc/mark-all-in-region
                mc/edit-lines
+               mc/skip-to-next-like-this
+               mc/skip-to-previous-like-this
                mc/insert-numbers))
   (advice-add cmd :before #'my/disable-evil-for-mc))
 (add-hook 'multiple-cursors-mode-disabled-hook #'my/restore-evil-after-mc)
 
-;; (global-set-key (kbd "C-M-p") 'mc/mark-previous-like-this)
-;; (global-set-key (kbd "C-M-n") 'mc/mark-next-like-this)
-;; (global-set-key (kbd "M-<down>") 'mc/mark-next-like-this-word)
+;; 键位见 init-keymaps.el（C-M-n / C-M-p / C-M-m 等）。
 
 (provide 'init-mc)

@@ -135,10 +135,14 @@
 
   (evil-define-key 'visual 'global (kbd "Y") 'clipboard-kill-ring-save)
 
-  (evil-define-key 'normal 'global (kbd "C-M-n") 'evil-mc-make-and-goto-next-match)
-  (evil-define-key 'visual 'global (kbd "C-M-n") 'evil-mc-make-and-goto-next-match)
-  (evil-define-key 'normal 'global (kbd "C-M-m") 'evil-mc-skip-and-goto-next-match)
-  (evil-define-key 'visual 'global (kbd "C-M-m") 'evil-mc-skip-and-goto-next-match)
+  ;; multiple-cursors（mc/）键位。用 global-set-key 而非 evil-define-key：触发后
+  ;; my/disable-evil-for-mc 会切到 emacs-state，全局绑定在 normal 与 emacs 两态都生效，
+  ;; 这样在已有多光标时还能继续加/跳光标。（evil-mc 未安装，原绑定是 void。）
+  (global-set-key (kbd "C-M-n") 'mc/mark-next-like-this)
+  (global-set-key (kbd "C-M-p") 'mc/mark-previous-like-this)
+  (global-set-key (kbd "C-M-m") 'mc/skip-to-next-like-this)
+  (global-set-key (kbd "C-M-a") 'mc/mark-all-like-this)
+  (global-set-key (kbd "C-M-l") 'mc/edit-lines)
 
   (evil-define-key 'insert 'global (kbd "C-v") 'clipboard-yank)
   (evil-define-key 'insert 'global (kbd "C-a") 'beginning-of-line)
