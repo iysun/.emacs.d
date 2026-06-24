@@ -1,10 +1,8 @@
 ;; init-evil.el 	-*- lexical-binding: t -*-
 ;; 启用 Evil 全局配置
 
-;; 本文件顶层用了 `evil-define-text-object'（宏）。byte-compiler 不会执行 `(evil-mode 1)'，
-;; 故编译期需顶层 require 让宏可用，否则生成坏 .elc（加载报 void-variable evil-a-between）。
-(require 'evil)
-
+;; evil-want-* 必须在 evil 加载【前】设置。尤其 evil-want-keybinding：
+;; 加载 evil 后再设会触发 evil-collection issue #60 警告。
 (progn
   (setq evil-want-integration t)                ; 与 Emacs minor modes 集成
   (setq evil-want-keybinding nil)
@@ -14,6 +12,11 @@
   (setq evil-cross-lines t)                     ; j/k 可跨软换行行（类似 Vim）
   (setq evil-undo-system 'undo-redo)            ; 使用 Emacs 的 undo-tree 或简易 undo-redo
   )
+
+;; 本文件顶层用了 `evil-define-text-object'（宏）。byte-compiler 不会执行 `(evil-mode 1)'，
+;; 故编译期需顶层 require 让宏可用，否则生成坏 .elc（加载报 void-variable evil-a-between）。
+;; 放在 evil-want-* 之后，保证运行时这些变量先于 evil 设好（避免 issue #60）。
+(require 'evil)
 
 (evil-mode 1)
 (with-eval-after-load 'evil

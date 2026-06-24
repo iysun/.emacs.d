@@ -123,15 +123,14 @@
 (add-hook 'dired-mode-hook 'diredfl-mode)
 (add-hook 'vertico-mode-hook 'nerd-icons-completion-mode)
 
-;; dashboard
-;; (require 'dashboard)
-(with-eval-after-load 'dashboard
-  (setq dashboard-startup-banner "~/.emacs.d/logo.svg")
-  (setq dashboard-icon-type 'nerd-icons)
-  (setq dashboard-set-heading-icons t)
-  (setq dashboard-set-file-icons t)
-  )
-(dashboard-setup-startup-hook)
+;; dashboard 首屏已禁用以提速启动（启动直接进 scratch/文件；inhibit-startup-screen 见 early-init.el）。
+;; 若想恢复：取消下面 with-eval-after-load 与 (dashboard-setup-startup-hook) 的注释。
+;; (with-eval-after-load 'dashboard
+;;   (setq dashboard-startup-banner "~/.emacs.d/logo.svg")
+;;   (setq dashboard-icon-type 'nerd-icons)
+;;   (setq dashboard-set-heading-icons t)
+;;   (setq dashboard-set-file-icons t))
+;; (dashboard-setup-startup-hook)
 
 ;; (load-theme 'wombat)
 ;; doom-themes

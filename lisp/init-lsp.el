@@ -5,21 +5,22 @@
   (setq treesit-auto-install 'prompt)
   (global-treesit-auto-mode))
 
-(progn
-  (setq completion-ignore-case t)      ;company-capf匹配时不区分大小写
-  (setq read-process-output-max (* 1024 1024)) ; 1MB
-  (setq eglot-autoshutdown t)
-  ;; eglot-send-changes-idle-time 0.1
-  (setq eglot-events-buffer-size 0)
-  )
-(require 'eglot)
+(setq completion-ignore-case t)              ; capf 匹配时不区分大小写
+(setq read-process-output-max (* 1024 1024)) ; 1MB
+
+;; 不再 eager (require 'eglot)（省 ~1.1s 启动）。
+;; 下面的 eglot-ensure 钩子会在打开对应代码文件时自动加载 eglot。
 (add-hook 'go-ts-mode-hook 'eglot-ensure)
 (add-hook 'js-ts-mode-hook 'eglot-ensure)
 (add-hook 'c-ts-mode-hook 'eglot-ensure)
 (add-hook 'c++-ts-mode-hook 'eglot-ensure)
-(add-to-list 'eglot-server-programs '((c++-ts-mode c-ts-mode) "clangd"))
 
+;; eglot 专属设置移进 with-eval-after-load，避免 setq 早于 defcustom 定义的不确定性。
 (with-eval-after-load 'eglot
+  (setq eglot-autoshutdown t)
+  ;; eglot-send-changes-idle-time 0.1
+  (setq eglot-events-buffer-size 0)
+  (add-to-list 'eglot-server-programs '((c++-ts-mode c-ts-mode) "clangd"))
   (require 'consult-eglot)
   (require 'eldoc-mouse))
 

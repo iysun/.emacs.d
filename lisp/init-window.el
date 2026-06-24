@@ -13,8 +13,10 @@
   ("l" enlarge-window-horizontally "向右加宽")
   ("q" nil "退出"))
 
-;; centaur-tabs
-;; (require 'centaur-tabs)
+;; centaur-tabs：加载 + 全局开启较重（实测 ~2.2s，且仅 GUI 有此开销）。
+;; 从启动关键路径移除——启动后空闲 0.3s 再 require，frame 先显示、标签栏稍后瞬间补上，
+;; emacs-init-time 不再含这 2.2s。两个 local-mode 钩子移进 with-eval-after-load，
+;; 否则启动时 (popper-mode +1) 会经 popper-mode-hook 触发 centaur-tabs 提前加载。
 (with-eval-after-load 'centaur-tabs
   (centaur-tabs-mode t)
   (setq centaur-tabs-cycle-scope 'tabs)
@@ -23,9 +25,12 @@
   (setq centaur-tabs-icon-type 'nerd-icons)  ; or 'nerd-icons
   (setq centaur-tabs-gray-out-icons 'buffer)
   (setq centaur-tabs-style "box")
-  )
-(add-hook 'dashboard-mode-hook 'centaur-tabs-local-mode)
-(add-hook 'popper-mode-hook 'centaur-tabs-local-mode)
+  (add-hook 'dashboard-mode-hook 'centaur-tabs-local-mode)
+  (add-hook 'popper-mode-hook 'centaur-tabs-local-mode))
+
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (run-with-idle-timer 0.3 nil (lambda () (require 'centaur-tabs)))))
 
 (defun my-consult--source-centaur-groups ()
   "Source for switching Centaur Tabs groups."

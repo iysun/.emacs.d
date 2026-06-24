@@ -6,4 +6,5 @@
 - [字节编译与 .elc（曾产坏字节码，已修复）](notes/byte-compile-broken-elc.md) — 动构建/编译流程、加用到某包顶层宏的新模块、或又见 `evil-a-between` / `evil-define-key` 报错时读
 - [两套 profile：全量与精简](notes/profiles.md) — 改启动分发、想了解 `--minimal` / `EMACS_MINIMAL` 行为时读
 - [包镜像与新机器首次安装](notes/package-mirrors-and-first-install.md) — 换镜像、或新机器装包失败（签名/缺包）时读
+- [启动性能：测了什么、延迟了什么](notes/startup-performance.md) — 动启动速度、想知道某包为何延迟/为何不 eager、或 magit/dired/eglot 首次慢时读
 - [AI 补全（minuet + SiliconFlow）](notes/ai-completion-minuet.md) — 启用/配置 `init-ai.el`、处理 API key 时读

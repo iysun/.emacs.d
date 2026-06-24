@@ -6,25 +6,20 @@
 (setq dired-recursive-deletes 'always
       dired-recursive-copies 'always)
 
-(require 'dired-quick-sort)
-;; Quick sort dired buffers via hydra
-(define-key dired-mode-map "S" 'hydra-dired-quick-sort/body)
+;; dired 四件套延迟到首次打开 dired 才加载（省 ~1.6s 启动）。
+;; 这些 define-key 需 dired-mode-map，本就只在 dired 下用，延迟无损功能。
+(with-eval-after-load 'dired
+  (require 'dired-quick-sort)
+  (define-key dired-mode-map "S" 'hydra-dired-quick-sort/body)   ; 快速排序
 
-(require 'dired-git-info)
-;; Show git info in dired
-(define-key dired-mode-map "I" 'dired-git-info-mode)
+  (require 'dired-git-info)
+  (define-key dired-mode-map "I" 'dired-git-info-mode)           ; 显示 git 信息
 
-(require 'dired-rsync)
-;; Allow rsync from dired buffers
-(define-key dired-mode-map (kbd "C-c C-r") 'dired-rsync)
+  (require 'dired-rsync)
+  (define-key dired-mode-map (kbd "C-c C-r") 'dired-rsync)       ; rsync
 
-;; (require 'diredfl)
-;; Colorful dired
-
-(require 'dired-subtree)
-;; 折叠子目录（类似 ranger）
-(with-eval-after-load 'dired-subtree
-  (define-key dired-mode-map (kbd "TAB") 'dired-subtree-toggle)
-  )
+  ;; (require 'diredfl) ; Colorful dired（按需启用）
+  (require 'dired-subtree)
+  (define-key dired-mode-map (kbd "TAB") 'dired-subtree-toggle)) ; 折叠子目录（类似 ranger）
 
 (provide 'init-dired)

@@ -27,7 +27,10 @@ Invalid function: evil-define-key
 在用到 evil 宏的模块**顶层**加 `(require 'evil)`（byte-compiler 会执行顶层 `require`，
 使宏在编译期可用；源码加载时也保证宏先于使用处可用）：
 
-- `lisp/init-evil.el` 顶层 `(require 'evil)`。
+- `lisp/init-evil.el` 顶层 `(require 'evil)`，但**必须放在 `evil-want-*` 那组 `setq` 之后**——
+  尤其 `evil-want-keybinding nil` 要先于 evil 加载设好，否则 evil-collection 报 issue #60 警告
+  （`evil-want-keybinding was set to nil but not before loading evil`）。两个约束叠加：require 既要在
+  evil-want-* 之后、又要在用宏的 `evil-define-text-object` 之前。
 - `lisp/init-keymaps.el`：删掉误导的 `declare-function`，改为顶层 `(require 'evil)`。
 - `lisp/init-evil-plugins.el`（停用）：同样顶层 `(require 'evil)`。
 
