@@ -17,7 +17,11 @@
                      (region-end))))
         (evil-emacs-state)
         (set-mark beg)
-        (goto-char end)))
+        (goto-char end)
+        ;; 确保 region 真正「激活」：dump 启动时 evil 退出 visual 后 transient-mark-mode 可能为 nil，
+        ;; 仅 set-mark 不足以让 region-active-p 为真，mc 会误判「无选区」而去标下一行（报 end-of-buffer）。
+        (setq deactivate-mark nil)
+        (activate-mark)))
      (t
       (evil-emacs-state)))
     (setq-local my/evil-was-active-before-mc t)
