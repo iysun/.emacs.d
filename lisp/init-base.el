@@ -2,7 +2,8 @@
 
 ;; setup
 
-(add-hook 'after-init-hook 'toggle-frame-maximized)
+;; 启动不自动最大化（如需恢复，取消下面这行注释）
+;; (add-hook 'after-init-hook 'toggle-frame-maximized)
 (progn
   (global-auto-revert-mode t)
   (setq make-backup-files nil)                 

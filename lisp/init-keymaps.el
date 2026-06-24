@@ -47,8 +47,9 @@
   (global-set-key (kbd "C-x 5 b") 'consult-buffer-other-frame)
   (global-set-key (kbd "C-x t b") 'consult-buffer-other-tab)
   (global-set-key (kbd "C-x p b") 'consult-project-buffer)
-  (global-set-key (kbd "C-x C-k") 'centaur-tabs-kill-all-buffers-in-current-group)
-  (global-set-key (kbd "C-x C-o") 'centaur-tabs-kill-other-buffers-in-current-group)
+  ;; 原生 tab-line 无「按组关 buffer」对应功能，暂去掉（如需可自行实现）
+  ;; (global-set-key (kbd "C-x C-k") 'centaur-tabs-kill-all-buffers-in-current-group)
+  ;; (global-set-key (kbd "C-x C-o") 'centaur-tabs-kill-other-buffers-in-current-group)
   (global-set-key (kbd "M-#") 'consult-register-load)
   (global-set-key (kbd "M-'") 'consult-register-store)
   (global-set-key (kbd "C-M-#") 'consult-register)
@@ -75,7 +76,7 @@
   (global-set-key (kbd "M-g i") 'consult-imenu)
   (global-set-key (kbd "M-g I") 'consult-imenu-multi)
   (global-set-key (kbd "M-g w") 'ace-window)
-  (global-set-key (kbd "M-g t") 'centaur-tabs-ace-jump)
+  ;; (global-set-key (kbd "M-g t") 'centaur-tabs-ace-jump) ; 原生 tab-line 无 ace-jump 对应
   (global-set-key (kbd "M-g p") 'consult-project-buffer)
 
   (global-set-key (kbd "M-s f") 'consult-fd)
@@ -89,8 +90,8 @@
   (global-set-key (kbd "M-s u") 'consult-focus-lines)
   (global-set-key (kbd "M-s e") 'consult-isearch-history)
 
-  (global-set-key (kbd "C->") 'centaur-tabs-forward-tab)
-  (global-set-key (kbd "C-<") 'centaur-tabs-backward-tab)
+  (global-set-key (kbd "C->") 'tab-line-switch-to-next-tab)
+  (global-set-key (kbd "C-<") 'tab-line-switch-to-prev-tab)
 
   (global-set-key (kbd "C-M-k") 'bookmark-delete)
   (global-set-key (kbd "C--") 'popper-toggle)

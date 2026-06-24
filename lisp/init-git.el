@@ -41,8 +41,13 @@
   (unless (display-graphic-p) (diff-hl-margin-mode 1))
   )
 ;; 钩子设置
-(add-hook 'after-init-hook 'global-diff-hl-mode)
-(add-hook 'after-init-hook 'global-diff-hl-show-hunk-mouse-mode)
+;; diff-hl 加载 + 全局开启实测 ~0.4s，且只在文件缓冲区有意义。从 after-init 挪到
+;; 首次打开文件时一次性启用（届时正好要看 git 改动标记），不再占启动时间。
+(defun my/enable-diff-hl-once ()
+  (global-diff-hl-mode 1)
+  (global-diff-hl-show-hunk-mouse-mode 1)
+  (remove-hook 'find-file-hook 'my/enable-diff-hl-once))
+(add-hook 'find-file-hook 'my/enable-diff-hl-once)
 (add-hook 'dired-mode-hook 'diff-hl-dired-mode)
 (add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)  ; Magit 刷新前更新 diff-hl
 (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)

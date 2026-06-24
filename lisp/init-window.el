@@ -13,43 +13,33 @@
   ("l" enlarge-window-horizontally "向右加宽")
   ("q" nil "退出"))
 
-;; centaur-tabs：加载 + 全局开启较重（实测 ~2.2s，且仅 GUI 有此开销）。
-;; 从启动关键路径移除——启动后空闲 0.3s 再 require，frame 先显示、标签栏稍后瞬间补上，
-;; emacs-init-time 不再含这 2.2s。两个 local-mode 钩子移进 with-eval-after-load，
-;; 否则启动时 (popper-mode +1) 会经 popper-mode-hook 触发 centaur-tabs 提前加载。
-(with-eval-after-load 'centaur-tabs
-  (centaur-tabs-mode t)
-  (setq centaur-tabs-cycle-scope 'tabs)
-  (setq centaur-tabs-height 50)
-  (setq centaur-tabs-set-icons t)
-  (setq centaur-tabs-icon-type 'nerd-icons)  ; or 'nerd-icons
-  (setq centaur-tabs-gray-out-icons 'buffer)
-  (setq centaur-tabs-style "box")
-  (add-hook 'dashboard-mode-hook 'centaur-tabs-local-mode)
-  (add-hook 'popper-mode-hook 'centaur-tabs-local-mode))
+;; 原生 tab-line（按项目分组 + 过滤 eglot buffer）——替代 centaur-tabs，零第三方、零启动开销。
+(defun my/tab-line-buffer-group-by-project (&optional buffer)
+  "Group buffers by project root via project.el."
+  (with-current-buffer (or buffer (current-buffer))
+    (let* ((dir (or (buffer-file-name) nil))
+           (proj (project-current nil dir))
+           (root (when proj (project-root proj))))
+      (if (and root dir)
+          (file-name-nondirectory (directory-file-name root))
+        "Other"))))
 
-(add-hook 'emacs-startup-hook
-          (lambda ()
-            (run-with-idle-timer 0.3 nil (lambda () (require 'centaur-tabs)))))
+(defun my/tab-line-filter (buffers)
+  "Filter out Eglot-generated buffers from tab-line."
+  (let (result)
+    (dolist (buf buffers (nreverse result))
+      (let ((name (buffer-name buf)))
+        (unless (and name
+                     (let ((case-fold-search t))
+                       (string-match-p "\\`\\s-*\\*eglot" name)))
+          (push buf result))))))
 
-(defun my-consult--source-centaur-groups ()
-  "Source for switching Centaur Tabs groups."
-  `(:name     "Tab Groups"
-    :narrow   ?g
-    :category centaur-group
-    :face     font-lock-type-face
-    :items    ,(lambda ()
-                  (centaur-tabs-get-groups))
-    :action   ,(lambda (group)
-                  (centaur-tabs-switch-group group))
-    :preview-key nil))  ;; 禁用预览，因为切换group是立即动作
+(progn
+  (setq tab-line-tabs-function 'tab-line-tabs-buffer-groups)
+  (setq tab-line-tabs-buffer-group-function #'my/tab-line-buffer-group-by-project)
+  (advice-add 'tab-line-tabs-buffer-list :filter-return #'my/tab-line-filter))
 
-;; 添加到 consult-buffer
-(with-eval-after-load 'consult
-  (add-to-list 'consult-buffer-sources 
-                (my-consult--source-centaur-groups)
-                t)
-  )
+(add-hook 'after-init-hook 'global-tab-line-mode)
 
 ;; (require 'popper)
 (with-eval-after-load 'popper

@@ -57,8 +57,6 @@
              nerd-icons-dired
              rainbow-delimiters
              doom-themes
-             doom-modeline
-             centaur-tabs
              popper
              consult
              embark

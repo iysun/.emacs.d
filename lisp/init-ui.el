@@ -149,12 +149,55 @@
   )
 
 
-;; doom-modeline
-(require 'doom-modeline)
-(with-eval-after-load 'doom-modeline
-  (doom-modeline-mode 1)
-  (setq doom-modeline-height 50)
-  )
+;; 原生 mode-line（VSCode 风格分栏，基于 Emacs 默认段）——替代 doom-modeline。
+;; early-init.el 启动时把 mode-line-format 置 nil（提速），这里在 init 阶段恢复为自定义格式。
+(setq-default mode-line-format
+              '("%e"
+                mode-line-front-space
+                (:eval
+                 (if (bound-and-true-p evil-local-mode)
+                     (format "%s " evil-mode-line-tag)
+                   ""))
+                mode-line-buffer-identification
+                mode-line-format-right-align
+                (:eval
+                 (when (and (bound-and-true-p flymake-mode)
+                            (boundp 'flymake-mode-line-format))
+                   (format-mode-line flymake-mode-line-format)))
+                " "
+                (:eval (when vc-mode (format-mode-line '(vc-mode vc-mode))))
+                " "
+                mode-line-misc-info
+                " "
+                mode-line-front-space
+                mode-line-end-spaces))
+
+;; 加粗 mode-line / tab-line 并加内边距。box 颜色取各自背景色 → 呈现为 padding 而非边框。
+;; 主题加载会重置这些 face，故挂到 enable-theme-functions（每次启用主题后重新应用）+ after-init 兜底。
+(defun my-ui--bg-of (face)
+  "取 FACE 背景色（含继承）；取不到则回退 default 背景。"
+  (or (face-background face nil t) (face-background 'default nil t) "#1e1e1e"))
+
+(defun my-ui-setup-bars (&rest _)
+  "把 mode-line / tab-line 调粗并加内边距。"
+  (require 'tab-line nil t)                       ; 确保 tab-line-* face 已定义
+  ;; mode-line：只用 box 上下 padding 加粗，不动字号（线宽 cons = (左右 . 上下)）
+  (dolist (f '(mode-line mode-line-inactive))
+    (when (facep f)
+      (set-face-attribute f nil :height 'unspecified
+                          :box `(:line-width (1 . 6) :color ,(my-ui--bg-of f)))))
+  ;; tab-line 整条：只用 box padding，不动字号
+  (when (facep 'tab-line)
+    (set-face-attribute 'tab-line nil :height 'unspecified
+                        :box `(:line-width (1 . 5) :color ,(my-ui--bg-of 'tab-line))))
+  ;; 每个标签：左右 + 上下 padding，让标签之间更宽松
+  (dolist (f '(tab-line-tab tab-line-tab-current tab-line-tab-inactive))
+    (when (facep f)
+      (set-face-attribute f nil :box `(:line-width (8 . 6) :color ,(my-ui--bg-of f))))))
+
+(add-hook 'after-init-hook #'my-ui-setup-bars t)
+(when (boundp 'enable-theme-functions)
+  (add-hook 'enable-theme-functions #'my-ui-setup-bars))
 
 (defun set-bigger-spacing ()                                               
   (interactive)

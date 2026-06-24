@@ -10,11 +10,11 @@
 
 | 操作 | GUI 耗时 | 处置 |
 |------|---------|------|
-| **centaur-tabs（require + 全局 mode）** | **~2.2s** | **延迟**：移出启动关键路径，启动后空闲 0.3s 再加载 |
+| **centaur-tabs（require + 全局 mode）** | **~2.2s** | **已移除**：换内置 `tab-line`（项目分组 + 过滤 eglot buffer），见 `init-window.el` |
 | `require evil` | 0.53s | 必需 |
-| `package-initialize` | 0.41s | 必需（Defender 排除可降） |
-| `require nerd-icons` | 0.36s | 必需（modeline 用） |
-| doom-modeline（require+mode） | 0.28s | 必需，启动即显示 |
+| `package-initialize` | 0.41s | 必需 |
+| `require nerd-icons` | 0.36s | 仍用于 corfu/dired/completion（modeline/tabs 不再用） |
+| doom-modeline（require+mode） | 0.28s + 启动加载 | **已移除**：换手写 `mode-line-format`，见 `init-ui.el` |
 | `load-theme doom-one` | 0.10s | 廉价 |
 | `font-family-list` ×5 | 0.04s | **不是问题**（曾担心 Windows 字体枚举慢，实测廉价） |
 
@@ -43,13 +43,32 @@
 因为 `init.el` 显式调 `(package-initialize)`（它**不走** quickstart；只有 `package-activate-all` 才用）。
 为 ~100ms 改 init.el 又得每次装/删包重新生成 311KB 文件，不值——**已回退**。
 
-## 系统级（最大单项，需手动）
+## after-init-hook 分项（`emacs -Q` 逐项计时）
 
-文件密集操作（package-initialize、编译）被 **Windows Defender 实时扫描**拖慢（elpa 下上千个小文件）。
-在**管理员** PowerShell 加排除目录收益最大：
-```powershell
-Add-MpPreference -ExclusionPath "C:\Users\20953\AppData\Roaming\.emacs.d","D:\scoop"
-```
+| 项 | 耗时 | 处置 |
+|----|------|------|
+| **global-diff-hl-mode** | **~0.40s** | **延迟**：从 after-init 挪到首次 `find-file` 一次性启用（`init-git.el`） |
+| use-emacs-theme（load-theme doom-one） | 0.24s | 必需 |
+| vertico-mode | 0.12s | 必需（首个 minibuffer 命令要用） |
+| recentf-mode | 0.11s | 保持 |
+| global-corfu-mode / marginalia / winner / savehist | 各 <0.04s | 保持 |
+
+## 走到头的与不能动的
+
+- **native-comp 不可用**：本机 emacs（scoop）`(native-comp-available-p)` => nil，0 个 `.eln`。
+  包只能跑字节码——`require evil`(~0.5s)、doom-modeline+nerd-icons(~0.67s) 是**硬地板**，
+  没法靠原生编译再压。`early-init.el` 里 `native-comp-jit-compilation nil` 在本机是空操作。
+- **Windows Defender 不是瓶颈**：`Get-MpPreference` 显示 `C:\` 和 `D:\` 整盘已被排除（Sangfor 安全软件设的），
+  即 `.emacs.d` / `scoop` 本就不被实时扫描。加目录排除是冗余，实测几乎无变化。
+- **剩余 ~5.3s 里约 2s 是真实 GUI 开销**：建帧 + `toggle-frame-maximized` 最大化重绘 +
+  主题/相对行号/ligature/modeline 在大帧上的 redisplay + 加载 custom.el。配置层很难再削，
+  除非牺牲可见特性（行号、主题、连字…）。
+
+## 真想更快：用 daemon + emacsclient
+
+per-launch ~5.3s 已接近本机这套配置的地板。日常体感要「秒开」，正解是
+**`emacs --daemon` 跑一个常驻进程**（开机/后台付一次 ~5.3s），之后用
+`emacsclientw.exe -c -a runemacs` 开窗口——**瞬开**。这是重配置 Emacs 的标准做法。
 
 ## 权衡与验证
 
