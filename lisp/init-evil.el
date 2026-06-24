@@ -1,5 +1,10 @@
 ;; init-evil.el 	-*- lexical-binding: t -*-
 ;; 启用 Evil 全局配置
+
+;; 本文件顶层用了 `evil-define-text-object'（宏）。byte-compiler 不会执行 `(evil-mode 1)'，
+;; 故编译期需顶层 require 让宏可用，否则生成坏 .elc（加载报 void-variable evil-a-between）。
+(require 'evil)
+
 (progn
   (setq evil-want-integration t)                ; 与 Emacs minor modes 集成
   (setq evil-want-keybinding nil)
@@ -11,7 +16,6 @@
   )
 
 (evil-mode 1)
-;; (require 'evil)
 (with-eval-after-load 'evil
   (require 'evil-collection)
   (evil-collection-init)

@@ -1,3 +1,7 @@
+;; init-evil-plugins.el  -*- lexical-binding: t -*-
+;; 顶层用了 `evil-define-text-object'（宏），编译期需先加载 evil（见 init-evil.el 同款修复）。
+(require 'evil)
+
 ;; evil-textobj-between
 (defgroup evil-textobj-between nil
   "Text object between for Evil"
