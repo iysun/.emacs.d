@@ -1,47 +1,44 @@
 ---
 name: build
-description: 字节编译本仓库 .el 做 lint（抓语法错误与编译警告），编译后自动清理 .elc 回到源码加载
+description: 生成自定义 portable dump（emacs.pdmp）加速启动；预加载某包失败则从 dump.el 列表剔除后重建
 ---
 
-对本 Emacs 配置跑「字节编译-修复」循环。字节编译是本项目事实上的 lint。
+构建本配置的**自定义 portable dump**（`emacs.pdmp`）：把启动期/常用重包预加载进映像，
+启动时用 `--dump-file` 内存映射回来，省掉 `require` 的几秒。脚本是 `dump.el`。
 
-> 本仓库约定**加载 `.el` 源码**（`.elc` 已 gitignore）。交互会话 `load-prefer-newer` 为 nil，
-> 残留旧 `.elc` 会悄悄盖过更新的 `.el`。**所以本命令编译只为检查，结束时清理 `.elc`。**
+> 用映像启动：`emacs --dump-file=<.emacs.d>/emacs.pdmp`，或用仓库根的 `emacs-dump.cmd`。
+> ⚠️ 装/删包或升级 emacs（scoop 更新）后**必须重跑本命令**，否则映像不兼容、启动报错。
 
 ## 循环
 
-1. **只编译本仓库源文件**（避开 `elpa/` 噪音）：
-
+1. **构建**：
    ```powershell
-   $own = @('early-init.el','init.el','init-minimal.el') + (Get-ChildItem lisp\*.el | ForEach-Object FullName)
-   emacs --batch -Q `
-     --eval "(setq user-emacs-directory (file-name-as-directory (expand-file-name `".`")))" `
-     --eval "(add-to-list 'load-path (expand-file-name `"lisp`" user-emacs-directory))" `
-     --eval "(setq package-user-dir (expand-file-name `"elpa`" user-emacs-directory))" `
-     --eval "(require 'package)" --eval "(package-initialize)" `
-     -f batch-byte-compile $own 2>&1
+   make dump            # 等价：emacs --batch -Q -l dump.el
    ```
 
-2. **清理生成的 `.elc`**（每次都做，无论成败）：
+2. **读输出，按情况处理**：
+   - 正常：末尾 `dump: 预加载 N 个包，跳过 0 个` + 生成 `emacs.pdmp`（约 ~48MB）。
+   - **某包 require 失败**：输出里有 `dump: 跳过 <pkg> (...)`——该包没烤进映像（不致命，运行时再正常加载）。
+     若该包本应预加载，检查它是否已装（`elpa/`）。
+   - **`dumping overlays is not yet implemented`**：某包加载时建了 overlay。`dump.el` 已在转储前
+     `remove-overlays` 兜底；若仍报，定位是哪个包建的 overlay，必要时把它从 `dump.el` 的预加载集移除。
+   - **转储期其它报错**：通常是某包加载了不可转储的状态。把嫌疑包（优先 `dump.el` 里「加分组」的
+     magit / eat 等）从预加载集删掉，重跑，直到成功产出 `emacs.pdmp`。
 
+3. **校验映像可用 + 配置完整**（关键——`emacs-init-time` 极小常意味着 init 中途崩了，不是真快）：
    ```powershell
-   Get-ChildItem -Path .,lisp -Filter *.elc -File | Remove-Item -Force
+   emacs --batch --dump-file="$PWD\emacs.pdmp" --eval "(message `"evil:%s`" (featurep 'evil))"
+   # 应打印 evil:t、退出码 0（映像兼容）
    ```
+   更完整的功能/加载验证用 **`/run`** 思路：带 `--dump-file` 启动真实 Emacs，确认所有 `init-*` 模块
+   都 `featurep`、`*Warnings*` 为空、evil-mode 开、主题/tab-line/modeline 正常。
 
-3. **读输出，分类**：
-   - **必须修**：`Error`、`void-function`、`void-variable`、`Wrong number of arguments`、
-     `unbalanced parentheses`、`End of file during parsing`、`Cannot open load file`（缺 require / 模块顺序错）。
-     报错带 `文件:行:列`，直接定位修。
-   - **可忽略的噪音**：对包提供的变量报 `assignment to free variable` / `reference to free variable`
-     （如 `evil-want-*`、`doom-themes-*`、`completion-preview-*`、`tab-line-*`）——`-Q` 下相关包未加载所致，属预期。
-   - **停用模块的安装报错**：`init-ai.el`（minuet）、`lang-go.el`（go-mode）当前注释停用，
-     单独编译会触发 `:ensure t` 联网装包，可能报 `Failed to install …`。未启用则忽略。
+## 注意
 
-   > 注：顶层用 evil 宏的模块（`init-evil.el` / `init-keymaps.el` / `init-evil-plugins.el`）已在文件顶层
-   > `(require 'evil)`，编译期宏可解析。若再看到 `void-variable evil-a-between` /
-   > `Invalid function: evil-define-key`，说明那个 require 被误删了——补回去。
-
-4. **修完**回到 1 重编，直到无「必须修」级别问题。
-
-5. **收尾**：确认工作区已无 `.elc`（第 2 步）。正确性/加载验证用 `/run`。
-   如改动涉及模块结构或命令，按 `AGENTS.md` 判断式约定看是否要更新文档。
+- **不要在 `dump.el` 里跑用户 init**：dump 期无 GUI，跑 init 会踩字体/frame/主题坑。只预加载第三方库。
+- `dump.el` 末尾会复位 `package--initialized` / `package-activated-list` / `package-alist`，
+  让启动时 `init.el` 的 `package-initialize` 重建 load-path（否则没烤进映像的包如 fd-dired 会找不到）。
+- evil 必须在 `dump.el` 里先设 `evil-want-keybinding nil` 再 require，否则启动报 evil-collection #60。
+- 本命令**不校验用户 config 语法**（dump 只加载第三方库）。config 正确性用 `/run`；纯语法 lint 用 `make compile`
+  （注意它产 `.elc`，检查完用 PowerShell 清掉：`Get-ChildItem -Path .,lisp -Filter *.elc -File | Remove-Item -Force`）。
+- `emacs.pdmp` 已 gitignore，勿提交。

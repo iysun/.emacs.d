@@ -17,7 +17,7 @@
 
 为本仓库生成的命令 / 规则（详见各 agent 适配层）：
 
-- **`/build`**（Claude Code，`.claude/commands/build.md`）：字节编译-修复循环。
+- **`/build`**（Claude Code，`.claude/commands/build.md`）：生成自定义 portable dump（`emacs.pdmp`）加速启动。
 - **`/run`**（Claude Code，`.claude/commands/run.md`）：批处理加载冒烟验证循环。
 - Cursor：`.cursor/rules/project.mdc`（始终生效）+ `*.el` 条件规则，指向本文件。
 - Codex：原生读取本 `AGENTS.md`，无需额外文件。
@@ -34,6 +34,9 @@
 | `custom.el` | Customize 自动生成，**已 gitignore，勿手改** |
 | `elpa/` | 第三方包，**已 gitignore，勿编辑/勿提交** |
 | `docs/` | 配置笔记，`docs/notes.md` 是索引，正文在 `docs/notes/*.md`（按需读取） |
+| `dump.el` | portable dump 构建脚本（预加载重包→`emacs.pdmp`），`make dump` / `/build` 调用 |
+| `emacs-dump.cmd` | 带 `--dump-file` 启动 Emacs 的启动器（pdmp 缺失则回退普通启动） |
+| `emacs.pdmp` | 生成的 dump 映像，**已 gitignore，按需 `make dump` 重建** |
 
 当前启用的模块（见 `init.el` 末尾）：`init-base` `init-evil` `init-ui` `init-window`
 `init-completion` `init-dired` `init-git` `init-term` `init-project` `init-mc`
@@ -49,6 +52,24 @@
 - 改动牵涉某主题（构建/编译、profile、镜像安装、AI 补全…）时，先查 `docs/notes.md` 有无相关笔记。
 
 关于字节编译的细节见 [docs/notes/byte-compile-broken-elc.md](docs/notes/byte-compile-broken-elc.md)。
+
+## 构建 = 生成 portable dump（启动加速）
+
+本仓库的「build」= 生成自定义 dump 映像 `emacs.pdmp`（预加载 evil/补全栈/doom-themes 等重包），
+启动时用 `--dump-file` 内存映射回来，省掉 `require` 的几秒。实测 `emacs-init-time` ~5.6s → ~3.3s。
+
+```powershell
+make dump            # = /build，调用 dump.el 生成 emacs.pdmp
+```
+启动用映像：把日常快捷方式指向仓库根的 **`emacs-dump.cmd`**（pdmp 缺失会回退普通启动），
+或手动 `emacs --dump-file=<.emacs.d>\emacs.pdmp`。
+
+要点（细节见 [docs/notes/pdump-startup.md](docs/notes/pdump-startup.md)）：
+- **只预加载第三方库，不在 dump 期跑用户 init**（dump 期无 GUI，会踩字体/frame/主题坑）。
+- `dump.el` 转储前复位 `package--initialized`/`package-activated-list`/`package-alist`，
+  让启动时 `init.el` 的 `package-initialize` 重建 load-path（否则没烤进映像的包如 `fd-dired` 找不到）。
+- evil 须在 dump.el 里先设 `evil-want-keybinding nil` 再 require（否则报 evil-collection #60）。
+- ⚠️ **装/删包、或升级 emacs（scoop 更新）后必须 `make dump` 重建**，否则映像不兼容、启动报错。
 
 ## 字节编译与 .elc
 
@@ -67,7 +88,7 @@
   ```powershell
   Get-ChildItem -Path .,lisp -Filter *.elc -File | Remove-Item -Force
   ```
-  `/build` 命令已内置「编译→清理」，优先用它。
+  （`/build` 现在生成 pdmp，不再做编译；纯语法检查用 `make compile` 后自行清 `.elc`。）
 
 ## 验证配置是否能正常加载
 
