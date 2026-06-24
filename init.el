@@ -19,9 +19,10 @@
 
 (if my/emacs-minimal-p
     ;; ===== 精简 profile：只加载精简配置 =====
+    ;; init-minimal.el 与本文件同级（非 lisp/），故按路径 load，不走 load-path。
     (progn
       (message "Emacs 精简模式启动 (minimal profile)")
-      (require 'init-minimal))
+      (load (expand-file-name "init-minimal" user-emacs-directory)))
 
   ;; ===== 全量 profile：模块化配置 =====
   (require 'package)
@@ -48,6 +49,7 @@
              multiple-cursors
              treesit-auto
              ace-window
+             hydra
              exec-path-from-shell
              nerd-icons
              nerd-icons-completion

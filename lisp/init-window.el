@@ -1,6 +1,10 @@
 ;; init-window.el 	-*- lexical-binding: t -*-
 (add-hook 'after-init-hook 'winner-mode)
 
+;; defhydra 来自 hydra 包；显式 require，确保宏在此处可用（否则 fresh 机器
+;; 上 hydra 未被自动加载时会报 void-function defhydra）。
+(require 'hydra)
+
 (defhydra hydra-window-size (:color red)
   "调整窗口大小"
   ("h" shrink-window-horizontally "向左缩窄")
