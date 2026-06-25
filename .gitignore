@@ -23,7 +23,7 @@ custom.el
 
 # 自定义 portable dump（机器/emacs 版本相关，按需 `make dump` 重建）
 /emacs.pdmp
-/emacs-dump.cmd
+# /emacs-dump.cmd
 
 # 运行期噪音（Emacs daemon socket / 教程副本）
 /server

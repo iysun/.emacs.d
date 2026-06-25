@@ -8,10 +8,10 @@
 
 一套模块化的 Emacs 配置，支持两套 profile：
 
-- **全量（full，默认）**：`init.el` 加载 `lisp/init-*.el` 各模块（evil、补全、UI、LSP、magit…）。
+- **全量（full，默认）**：`init-full.el` 声明包列表并 `require` 各模块（evil、补全、UI、LSP、magit…）。
 - **精简（minimal）**：单文件 `init-minimal.el`，只含 evil + 内置 project/eglot + completion-preview。
 
-启动链：`early-init.el` → `init.el`（profile 分发器）→ `init-minimal.el` 或 `lisp/init-*.el`。
+启动链：`early-init.el` → `init.el`（profile 分发器）→ `init-full.el` 或 `init-minimal.el`。
 
 ## AI 工具入口
 
@@ -28,7 +28,8 @@
 | 路径 | 作用 |
 |------|------|
 | `early-init.el` | GC 延迟、native-comp、包系统早期开关、首装签名校验兜底 |
-| `init.el` | profile 分发；全量下声明包列表 + `require` 各模块 |
+| `init.el` | profile 分发器（仅分发，不含具体配置） |
+| `init-full.el` | 全量 profile：声明包列表 + `require` 各模块（与 `init.el` 同级，按路径 load） |
 | `init-minimal.el` | 精简 profile 全部内容（与 `init.el` 同级，按路径 load） |
 | `lisp/init-*.el` | 全量 profile 的功能模块（每个 `(provide 'init-xxx)`） |
 | `lisp/lang-*.el` | 语言专属配置（如 `lang-go.el`，当前未启用） |
@@ -39,10 +40,11 @@
 | `README.md` | 简洁项目介绍 + 文档入口（规范/流程仍以本文件为准） |
 | `docs/startup-benchmark.md` | 多机启动速度基准记录 + 测法（脚本 `-a` 追加到此） |
 | `scripts/bench-startup.py` | 跨平台测速脚本：采集机器信息 + 三场景测真实 GUI 启动耗时，输出/追加基准块 |
-| `emacs-dump.cmd` | 带 `--dump-file` 启动 Emacs 的启动器（pdmp 缺失则回退普通启动） |
+| `emacs-dump.cmd` | Windows：带 `--dump-file` 启动 Emacs（pdmp 缺失则回退普通启动） |
+| `emacs-dump.sh` | Linux/macOS：同上 |
 | `emacs.pdmp` | 生成的 dump 映像，**已 gitignore，按需 `make dump` 重建** |
 
-当前启用的模块（见 `init.el` 末尾）：`init-base` `init-evil` `init-ui` `init-window`
+当前启用的模块（见 `init-full.el` 末尾）：`init-base` `init-evil` `init-ui` `init-window`
 `init-completion` `init-dired` `init-git` `init-term` `init-project` `init-mc`
 `init-keymaps` `init-lsp`。`init-ai` / `init-evil-plugins` / `lang-go` 已写好但注释停用。
 
