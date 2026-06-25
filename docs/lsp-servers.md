@@ -4,36 +4,34 @@ Eglot 使用的 LSP server 汇总。配置入口：`lisp/init-lsp.el`。
 
 ## Go — gopls
 
-| 项 | 值 |
-|---|---|
-| 安装路径 | `C:\Users\Administrator\go\bin\gopls.exe` |
-| 安装命令 | `go install golang.org/x/tools/gopls@latest` |
-| 触发 mode | `go-ts-mode` |
+- **安装**：`go install golang.org/x/tools/gopls@latest`
+- **验证**：`gopls version`
+- **触发 mode**：`go-ts-mode`
+
+gopls 安装到 `$GOPATH/bin`（默认 `~/go/bin`），确保该目录在 `PATH` 中。
 
 ## Python — pyright
 
-| 项 | 值 |
-|---|---|
-| 安装路径 | `D:\Applications\Scoop\apps\python\current\Scripts\pyright-langserver.exe` |
-| 安装命令 | `pip install pyright` |
-| 升级命令 | `pip install -U pyright` |
-| 触发 mode | `python-ts-mode`, `python-mode` |
+- **安装**：`pip install pyright`
+- **升级**：`pip install -U pyright`
+- **验证**：`pyright-langserver --version`
+- **触发 mode**：`python-ts-mode`, `python-mode`
 
 ## JS / TS — typescript-language-server
 
-| 项 | 值 |
-|---|---|
-| 安装路径 | `D:\Working_Tools\nodejs\node_global\typescript-language-server.ps1` |
-| 安装命令 | `npm install -g typescript-language-server typescript` |
-| 升级命令 | `npm update -g typescript-language-server typescript` |
-| 触发 mode | `js-ts-mode`, `typescript-ts-mode`, `tsx-ts-mode` |
+- **安装**：`npm install -g typescript-language-server typescript`
+- **升级**：`npm update -g typescript-language-server typescript`
+- **验证**：`typescript-language-server --version`
+- **触发 mode**：`js-ts-mode`, `typescript-ts-mode`, `tsx-ts-mode`
 
 ## C / C++ — clangd
 
-| 项 | 值 |
-|---|---|
-| 安装命令 | 随 LLVM 安装：`winget install LLVM.LLVM` 或 scoop `scoop install llvm` |
-| 触发 mode | `c-ts-mode`, `c++-ts-mode` |
+- **安装**：随 LLVM 安装
+  - Windows：`winget install LLVM.LLVM` 或 `scoop install llvm`
+  - macOS：`brew install llvm`
+  - Linux：`apt install clangd` / `dnf install clang-tools-extra`
+- **验证**：`clangd --version`
+- **触发 mode**：`c-ts-mode`, `c++-ts-mode`
 
 ## 常用 Eglot 命令
 
