@@ -11,7 +11,10 @@
 ;; 不再 eager (require 'eglot)（省 ~1.1s 启动）。
 ;; 下面的 eglot-ensure 钩子会在打开对应代码文件时自动加载 eglot。
 (add-hook 'go-ts-mode-hook 'eglot-ensure)
+(add-hook 'python-ts-mode-hook 'eglot-ensure)
 (add-hook 'js-ts-mode-hook 'eglot-ensure)
+(add-hook 'typescript-ts-mode-hook 'eglot-ensure)
+(add-hook 'tsx-ts-mode-hook 'eglot-ensure)
 (add-hook 'c-ts-mode-hook 'eglot-ensure)
 (add-hook 'c++-ts-mode-hook 'eglot-ensure)
 
@@ -21,6 +24,8 @@
   ;; eglot-send-changes-idle-time 0.1
   (setq eglot-events-buffer-size 0)
   (add-to-list 'eglot-server-programs '((c++-ts-mode c-ts-mode) "clangd"))
+  (add-to-list 'eglot-server-programs '((python-ts-mode python-mode) "pyright-langserver" "--stdio"))
+  (add-to-list 'eglot-server-programs '((typescript-ts-mode tsx-ts-mode js-ts-mode) "typescript-language-server" "--stdio"))
   (require 'consult-eglot)
   (require 'eldoc-mouse))
 

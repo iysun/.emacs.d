@@ -12,7 +12,6 @@
   
   ;;; And I have tried
   (setq-default indent-tabs-mode nil)
-  (setq-default tab-width 2)
 
   ;; 自定义项目标识
   (setq project-vc-extra-root-markers '(".project"))

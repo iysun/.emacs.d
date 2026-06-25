@@ -37,12 +37,9 @@
 ;; whitespace：display-table 只做字形映射，勿在 glyph 上绑独立 face，否则与 `region`
 ;; 合并异常（选区发灰/断层）；颜色只设在 `whitespace-space` / `whitespace-tab`（font-lock）。
 ;; Tab 用 GNU 默认向量；font-lock prepend 减轻 treesit 盖住的问题。
-(setq whitespace-style '(face tabs tab-mark spaces space-mark)
+(setq whitespace-style '(face tabs tab-mark)
       whitespace-display-mappings
-      '((space-mark ?\s [?·] [?.])
-        (space-mark ?\xa0 [?¤] [?_])
-        (tab-mark ?\t [?» ?\t] [?\\ ?\t])))
-(setq-default tab-width 2)
+      '((tab-mark ?\t [?» ?\t] [?\\ ?\t])))
 
 (defun my-ui--fg (face fallback)
   (let ((v (face-attribute face :foreground nil t)))
