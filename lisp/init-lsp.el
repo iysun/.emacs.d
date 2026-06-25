@@ -3,7 +3,15 @@
 (with-eval-after-load 'treesit-auto
   (treesit-auto-add-to-auto-mode-alist 'all)
   (setq treesit-auto-install 'prompt)
-  (global-treesit-auto-mode))
+  (global-treesit-auto-mode)
+  ;; Emacs 30.x 内置 libtree-sitter.dll 只支持 ABI 14，
+  ;; 以下 grammar 的 master 分支已升到 ABI 15，固定到最后一个 ABI 14 兼容 tag。
+  (dolist (entry '((javascript . "v0.21.4")
+                   (typescript . "v0.21.2")
+                   (tsx        . "v0.21.2")))
+    (when-let ((recipe (cl-find (car entry) treesit-auto-recipe-list
+                                :key #'treesit-auto-recipe-lang)))
+      (setf (treesit-auto-recipe-abi14-revision recipe) (cdr entry)))))
 
 (setq completion-ignore-case t)              ; capf 匹配时不区分大小写
 (setq read-process-output-max (* 1024 1024)) ; 1MB
