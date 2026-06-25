@@ -19,6 +19,7 @@
 
 - **`/build`**（Claude Code，`.claude/commands/build.md`）：生成自定义 portable dump（`emacs.pdmp`）加速启动。
 - **`/run`**（Claude Code，`.claude/commands/run.md`）：批处理加载冒烟验证循环。
+- **`/bench`**（Claude Code，`.claude/commands/bench.md`）：测本机启动速度（三场景真实 GUI），追加到 `docs/startup-benchmark.md`。
 - Cursor：`.cursor/rules/project.mdc`（始终生效）+ `*.el` 条件规则，指向本文件。
 - Codex：原生读取本 `AGENTS.md`，无需额外文件。
 
