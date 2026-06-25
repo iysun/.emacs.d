@@ -57,3 +57,24 @@ python scripts/bench-startup.py -n 8   # 每场景跑 8 次（默认 6）
 
 > 测量：`scripts/bench-startup.py`（每场景 6 次，去首次预热取 min/中位数；真实 GUI `emacs-init-time`，已 `--init-directory` 钉定本仓库）。
 > 备注：
+
+### ballentin（2026-06-25）
+
+| 字段 | 值 |
+|---|---|
+| OS | Windows 11 (10.0.22631) |
+| CPU | AMD Ryzen 7 7840H with Radeon 780M Graphics（16 逻辑核） |
+| 内存 | 27.7 GB |
+| 磁盘 | SSD |
+| Emacs | GNU Emacs 30.2 |
+| native-comp | ❌ 不可用 |
+| emacs.pdmp | 48.2 MB（2026-06-24 23:48） |
+
+| 场景 | min(s) | 中位数(s) | 有效/总次数 |
+|---|---|---|---|
+| dump 映像 | 4.483 | 4.661 | 5/6 |
+| 普通全量 | 6.605 | 6.669 | 5/6 |
+| 精简 minimal | 2.092 | 2.146 | 5/6 |
+
+> 测量：`scripts/bench-startup.py`（每场景 6 次，去首次预热取 min/中位数；真实 GUI `emacs-init-time`，已 `--init-directory` 钉定本仓库）。
+> 备注：
