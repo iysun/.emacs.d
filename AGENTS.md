@@ -35,6 +35,9 @@
 | `elpa/` | 第三方包，**已 gitignore，勿编辑/勿提交** |
 | `docs/` | 配置笔记，`docs/notes.md` 是索引，正文在 `docs/notes/*.md`（按需读取） |
 | `dump.el` | portable dump 构建脚本（预加载重包→`emacs.pdmp`），`make dump` / `/build` 调用 |
+| `README.md` | 简洁项目介绍 + 文档入口（规范/流程仍以本文件为准） |
+| `docs/startup-benchmark.md` | 多机启动速度基准记录 + 测法（脚本 `-a` 追加到此） |
+| `scripts/bench-startup.py` | 跨平台测速脚本：采集机器信息 + 三场景测真实 GUI 启动耗时，输出/追加基准块 |
 | `emacs-dump.cmd` | 带 `--dump-file` 启动 Emacs 的启动器（pdmp 缺失则回退普通启动） |
 | `emacs.pdmp` | 生成的 dump 映像，**已 gitignore，按需 `make dump` 重建** |
 
