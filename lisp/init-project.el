@@ -7,7 +7,7 @@
   "解析当前缓冲区的项目根目录，与 `project.el` 一致；若无项目则使用当前目录。"
   (let* ((dir (or directory default-directory))
          (default-directory dir))
-    (or (when-let ((proj (project-current nil)))
+    (or (when-let* ((proj (project-current nil)))
           (project-root proj))
         dir)))
 

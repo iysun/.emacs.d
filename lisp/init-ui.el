@@ -91,9 +91,9 @@
     (when (or (null faded) (string= faded base))
       (setq faded (my-ui--whitespace-muted-fg base bg)))
     (dolist (x '((whitespace-tab . semi-bold)))
-      (set-face-attribute (car x) nil :foreground faded :background nil :weight (cdr x)))
+      (set-face-attribute (car x) nil :foreground faded :background 'unspecified :weight (cdr x)))
     (dolist (sym '(whitespace-space whitespace-hspace))
-      (set-face-attribute sym nil :foreground faded :background nil :weight 'normal))))
+      (set-face-attribute sym nil :foreground faded :background 'unspecified :weight 'normal))))
 
 (add-hook 'after-init-hook #'my-ui-setup-whitespace-faces t)
 (when (boundp 'enable-theme-functions)
@@ -112,15 +112,7 @@
 ;; 4. 全局开启
 (add-hook 'prog-mode-hook 'whitespace-mode)
 
-;; nerd-icons
-;; (require 'nerd-icons)
-;; (require 'nerd-icons-completion)
-;; (require 'nerd-icons-corfu)
-;; (require 'nerd-icons-dired)
-
-(add-hook 'dired-mode-hook 'nerd-icons-dired-mode)
 (add-hook 'dired-mode-hook 'diredfl-mode)
-(add-hook 'vertico-mode-hook 'nerd-icons-completion-mode)
 
 ;; dashboard 首屏已禁用以提速启动（启动直接进 scratch/文件；inhibit-startup-screen 见 early-init.el）。
 ;; 若想恢复：取消下面 with-eval-after-load 与 (dashboard-setup-startup-hook) 的注释。

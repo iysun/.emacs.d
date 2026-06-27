@@ -41,8 +41,7 @@
     vertico marginalia consult embark embark-consult orderless
     corfu cape doom-themes hydra project
     ;; --- 加分 ---
-    nerd-icons nerd-icons-completion nerd-icons-corfu nerd-icons-dired
-    eglot treesit-auto magit popper ace-window eat)
+    eglot magit popper ace-window eat)
   "要烤进 dump 的包；从前到后加载。")
 
 (let ((loaded 0) (skipped '()))

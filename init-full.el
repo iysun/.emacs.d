@@ -28,10 +28,6 @@
            multiple-cursors
            ace-window
            hydra
-           nerd-icons
-           nerd-icons-completion
-           nerd-icons-corfu
-           nerd-icons-dired
            rainbow-delimiters
            doom-themes
            popper

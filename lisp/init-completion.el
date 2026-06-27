@@ -8,6 +8,12 @@
   (setq completion-category-overrides '((file (styles basic partial-completion))))
   )
 
+;; marginalia 直接调用 compat 内部符号 compat--seconds-to-string，
+;; 而 Emacs 31 上 compat 不再定义它（seconds-to-string 已内置）。
+;; 上游未修复前保留此 shim。
+(unless (fboundp 'compat--seconds-to-string)
+  (defalias 'compat--seconds-to-string #'seconds-to-string))
+
 ;; (require 'marginalia)
 (add-hook 'after-init-hook 'marginalia-mode)
 ;; (use-package vertico-posframe
