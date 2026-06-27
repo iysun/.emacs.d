@@ -1,3 +1,4 @@
+;;; -*- lexical-binding: t; -*-
 ;; (defun my-diff-hl-fringe-bmp-function (_type _pos)
 ;; "Fringe bitmap function for use as `diff-hl-fringe-bmp-function'."
 ;;     (define-fringe-bitmap 'my-diff-hl-bmp

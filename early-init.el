@@ -41,6 +41,9 @@
 ;; from emacs (especially on Microsoft Windows)
 (prefer-coding-system 'utf-8)
 
+;; Windows: avoid GC pauses caused by compacting font caches (Nerd Fonts etc.)
+(setq inhibit-compacting-font-caches t)
+
 ;; Inhibit resizing frame
 (setq frame-inhibit-implied-resize t)
 

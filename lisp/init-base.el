@@ -7,7 +7,7 @@
 (progn
   (global-auto-revert-mode t)
   (setq make-backup-files nil)                 
-  (fset 'yes-or-no-p 'y-or-n-p)
+  (setq use-short-answers t)
   (setq select-enable-clipboard nil)
   
   ;;; And I have tried
@@ -19,12 +19,6 @@
   (global-hl-line-mode t)
   )
 
-
-;; exec-path-from-shell 当前未启用（initialize 已注释），故不再 eager require。
-;; 若日后要用：在此 (require 'exec-path-from-shell) 并取消下面 initialize 的注释。
-(with-eval-after-load 'exec-path-from-shell
-  ;;(exec-path-from-shell-initialize)
-  (setq exec-path-from-shell-shell-name "/bin/bash"))
 
 ;; 记录 M-x 历史
 (add-hook 'after-init-hook 'savehist-mode)

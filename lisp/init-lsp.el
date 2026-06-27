@@ -1,17 +1,18 @@
-;; 加载 treesit-auto
-(require 'treesit-auto)
-(with-eval-after-load 'treesit-auto
-  (treesit-auto-add-to-auto-mode-alist 'all)
-  (setq treesit-auto-install 'prompt)
-  (global-treesit-auto-mode)
-  ;; Emacs 30.x 内置 libtree-sitter.dll 只支持 ABI 14，
-  ;; 以下 grammar 的 master 分支已升到 ABI 15，固定到最后一个 ABI 14 兼容 tag。
-  (dolist (entry '((javascript . "v0.21.4")
-                   (typescript . "v0.21.2")
-                   (tsx        . "v0.21.2")))
-    (when-let ((recipe (cl-find (car entry) treesit-auto-recipe-list
-                                :key #'treesit-auto-recipe-lang)))
-      (setf (treesit-auto-recipe-abi14-revision recipe) (cdr entry)))))
+;;; -*- lexical-binding: t; -*-
+
+;; Emacs 31 内置：自动把有 ts 变体的 major mode 全部切换到 tree-sitter 版本。
+;; 替代第三方 treesit-auto 包的 global-treesit-auto-mode + add-to-auto-mode-alist。
+(setq treesit-enabled-modes t)
+
+;; 补充 Emacs 31 尚未内置 grammar 源的语言（TypeScript/Rust/TOML/YAML/Dockerfile 已内置）。
+;; 缺 grammar 时执行 M-x treesit-install-language-grammar 即可按此列表拉取。
+(setq treesit-language-source-alist
+      '((go         "https://github.com/tree-sitter/tree-sitter-go")
+        (gomod      "https://github.com/camdencheek/tree-sitter-go-mod")
+        (python     "https://github.com/tree-sitter/tree-sitter-python")
+        (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
+        (c          "https://github.com/tree-sitter/tree-sitter-c")
+        (cpp        "https://github.com/tree-sitter/tree-sitter-cpp")))
 
 (setq completion-ignore-case t)              ; capf 匹配时不区分大小写
 (setq read-process-output-max (* 1024 1024)) ; 1MB

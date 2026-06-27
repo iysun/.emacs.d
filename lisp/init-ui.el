@@ -18,9 +18,8 @@
 ;; 开启连体字
 (global-prettify-symbols-mode 1)
 
-;;让鼠标滚动更好用
-(setq mouse-wheel-scroll-amount '(1 ((shift) . 1) ((control) . nil)))
-(setq mouse-wheel-progressive-speed nil)
+;; 精准像素滚动（Emacs 29+，31 更稳定）
+(pixel-scroll-precision-mode 1)
 
 ;; line numbers
 (global-display-line-numbers-mode 1)

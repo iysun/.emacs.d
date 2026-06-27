@@ -26,10 +26,8 @@
            evil-commentary
            posframe
            multiple-cursors
-           treesit-auto
            ace-window
            hydra
-           exec-path-from-shell
            nerd-icons
            nerd-icons-completion
            nerd-icons-corfu
@@ -43,7 +41,6 @@
            marginalia
            consult-eglot
            eldoc-mouse
-           dashboard
            magit
            diff-hl
            dired-quick-sort
@@ -53,7 +50,6 @@
            dired-subtree
            eshell-git-prompt
            eshell-syntax-highlighting
-           capf-autosuggest
            orderless
            vertico
            corfu
