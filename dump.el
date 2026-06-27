@@ -12,6 +12,13 @@
         package-user-dir (expand-file-name "elpa" root)
         gc-cons-threshold most-positive-fixnum))
 
+;; dump 里不能含 .eln（native-comp）引用：加载 dump 时 LoadLibrary 调用时序早于
+;; Windows DLL 搜索路径完全建立，会报 "找不到指定的模块"。清空 eln-load-path
+;; 让包在 dump 构建期只加载字节编译版本，不把 .eln 地址烤进映像。
+(setq native-comp-jit-compilation nil)
+(when (boundp 'native-comp-eln-load-path)
+  (setq native-comp-eln-load-path nil))
+
 ;; 与 early-init 同逻辑：新机器无 keyring 时关签名校验，避免装/读包失败
 (unless (file-exists-p (expand-file-name "elpa/gnupg/pubring.kbx" user-emacs-directory))
   (setq package-check-signature nil))
@@ -41,7 +48,8 @@
     vertico marginalia consult embark embark-consult orderless
     corfu cape doom-themes hydra project
     ;; --- 加分 ---
-    eglot magit popper ace-window eat)
+    ;; eat 含 C 扩展（eat-core.dll），烤进 dump 后恢复时可能触发段错误，排除在外
+    eglot magit popper ace-window)
   "要烤进 dump 的包；从前到后加载。")
 
 (let ((loaded 0) (skipped '()))
