@@ -14,8 +14,8 @@
         (c          "https://github.com/tree-sitter/tree-sitter-c")
         (cpp        "https://github.com/tree-sitter/tree-sitter-cpp")))
 
-(setq completion-ignore-case t)              ; capf 匹配时不区分大小写
-(setq read-process-output-max (* 1024 1024)) ; 1MB
+(setq completion-ignore-case t)                   ; capf 匹配时不区分大小写
+(setq read-process-output-max (* 4 1024 1024))    ; 4MB，减少 LSP 大响应的分批 I/O
 
 ;; 不再 eager (require 'eglot)（省 ~1.1s 启动）。
 ;; 下面的 eglot-ensure 钩子会在打开对应代码文件时自动加载 eglot。
@@ -30,8 +30,19 @@
 ;; eglot 专属设置移进 with-eval-after-load，避免 setq 早于 defcustom 定义的不确定性。
 (with-eval-after-load 'eglot
   (setq eglot-autoshutdown t)
-  ;; eglot-send-changes-idle-time 0.1
-  (setq eglot-events-buffer-size 0)
+  (setq eglot-events-buffer-size 0)         ; 关闭事件日志，减少内存分配
+  (setq eglot-sync-connect 0)               ; 异步连接，打开文件不阻塞
+  (setq eglot-send-changes-idle-time 0.5)   ; 停止输入 0.5s 后才把变更推给 LSP（默认值，显式写出）
+  (setq eglot-ignored-server-capabilities   ; 关闭 inlay hints 推送，减少 gopls → Emacs 的通知量
+        '(:inlayHintProvider))
+
+  ;; gopls 专项调优：关闭代价高的静态分析，按需开启
+  (setq-default eglot-workspace-configuration
+                '(:gopls (:staticcheck       :json-false
+                          :analyses          (:unusedparams t :shadow t)
+                          :usePlaceholders   t
+                          :completeUnimported t)))
+
   (add-to-list 'eglot-server-programs '((c++-ts-mode c-ts-mode) "clangd"))
   (add-to-list 'eglot-server-programs '((python-ts-mode python-mode) "pyright-langserver" "--stdio"))
   (add-to-list 'eglot-server-programs '((typescript-ts-mode tsx-ts-mode js-ts-mode) "typescript-language-server" "--stdio"))

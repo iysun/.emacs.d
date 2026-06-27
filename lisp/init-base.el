@@ -20,6 +20,9 @@
   )
 
 
+;; eldoc 延迟：避免光标移动时频繁触发 LSP hover 请求
+(setq eldoc-idle-delay 0.5)
+
 ;; 记录 M-x 历史
 (add-hook 'after-init-hook 'savehist-mode)
 (progn

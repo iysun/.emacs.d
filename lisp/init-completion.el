@@ -137,6 +137,7 @@
 (add-to-list 'completion-at-point-functions #'cape-keyword)
 (add-to-list 'completion-at-point-functions #'cape-abbrev)
 
-(advice-add 'eglot-completion-at-point :around #'cape-wrap-buster)
+;; cape-wrap-buster 已移除：它每次按键都绕过 eglot 缓存强制重新请求 LSP，是输入卡顿的主因。
+;; eglot 29+ 自身的缓存机制已足够，无需 buster。
 
 (provide 'init-completion)
