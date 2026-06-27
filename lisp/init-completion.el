@@ -94,7 +94,7 @@
   (setq corfu-auto t)
   (setq corfu-auto-prefix 2)
   (setq corfu-preview-current nil)
-  (setq corfu-auto-delay 0.2)
+  (setq corfu-auto-delay 0.5)
   (setq corfu-popupinfo-delay '(0.4 . 0.2))
   ;; 设置 corfu 字体
   (custom-set-faces
@@ -137,6 +137,8 @@
 (setq read-extended-command-predicate #'command-completion-default-include-p)
 
 ;; Add extensions - cape
+;; cape-dabbrev 默认扫描所有 buffer，在 LSP 模式下会拖慢补全触发，限制为只查当前 buffer
+(setq cape-dabbrev-check-other-buffers nil)
 (add-to-list 'completion-at-point-functions #'cape-dabbrev)
 (add-to-list 'completion-at-point-functions #'cape-file)
 (add-to-list 'completion-at-point-functions #'cape-elisp-block)

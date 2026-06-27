@@ -35,6 +35,7 @@
   (setq eglot-send-changes-idle-time 0.5)   ; 停止输入 0.5s 后才把变更推给 LSP（默认值，显式写出）
   (setq eglot-ignored-server-capabilities   ; 关闭 inlay hints 推送，减少 gopls → Emacs 的通知量
         '(:inlayHintProvider))
+  (setq eldoc-idle-delay 0.5)               ; 延迟 eldoc hover 请求，减少光标移动触发的 LSP 请求
 
   ;; gopls 专项调优：关闭代价高的静态分析，按需开启
   (setq-default eglot-workspace-configuration
@@ -48,5 +49,21 @@
   (add-to-list 'eglot-server-programs '((typescript-ts-mode tsx-ts-mode js-ts-mode) "typescript-language-server" "--stdio"))
   (require 'consult-eglot)
   (require 'eldoc-mouse))
+
+;; Workaround: eglot 的 track-changes 回调有时把 marker 对象直接放进 LSP 消息结构，
+;; 导致 jsonrpc--json-encode 在序列化时报 "Wrong type argument: consp, #<marker>"。
+;; 上游 bug，在修复合并前用此 advice 兜底：递归把 marker 替换为整数位置再编码。
+(with-eval-after-load 'jsonrpc
+  (defun my/jsonrpc-sanitize-markers (obj)
+    (cond
+     ((markerp obj) (marker-position obj))
+     ((consp obj)
+      (cons (my/jsonrpc-sanitize-markers (car obj))
+            (my/jsonrpc-sanitize-markers (cdr obj))))
+     ((vectorp obj)
+      (cl-map 'vector #'my/jsonrpc-sanitize-markers obj))
+     (t obj)))
+  (advice-add 'jsonrpc--json-encode :filter-args
+              (lambda (args) (list (my/jsonrpc-sanitize-markers (car args))))))
 
 (provide 'init-lsp)
