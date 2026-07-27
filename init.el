@@ -19,7 +19,10 @@
     (or flag (getenv "EMACS_MINIMAL")))
   "Non-nil 表示以精简 profile 启动。")
 
-(setq custom-file "~/.emacs.d/custom.el")
+;; 用 `user-emacs-directory' 而非硬编码 "~/.emacs.d/"：Windows 上若 shell 设了 HOME
+;; （Git Bash 就会设），`~/.emacs.d' 指向 C:\Users\<user>\.emacs.d，而本仓库在
+;; %APPDATA%\.emacs.d——两者不是一个地方，Customize 会读写到错误的 custom.el。
+(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (when (file-exists-p custom-file)
   (load custom-file))
 

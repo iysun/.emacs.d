@@ -35,6 +35,11 @@ python scripts/bench-startup.py -n 8   # 每场景跑 8 次（默认 6）
 
 ## 机器记录
 
+> ⚠️ **下列记录已过期，勿据此下结论**（2026-07-27 标注）。两条都是 2026-06-25 在 **Emacs 30.2** 上测的；
+> 此后仓库做了「基于 Emacs 31 适配」，并修掉了两个 dump 静默 bug——当时的 `emacs.pdmp` 其实只烤进了
+> 20 个包中的 9 个（见 [notes/pdump-startup.md](notes/pdump-startup.md)「两个静默 bug」），
+> 「dump 映像」那一列因此不代表修复后的真实表现。**需重跑 `/bench` 刷新。**
+
 <!-- 在此区粘贴 scripts/bench-startup.py 的输出块；或用 `-a` 自动追加 -->
 
 ### PC-20241114VUMP（2026-06-25）

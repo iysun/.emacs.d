@@ -14,9 +14,15 @@ emacs --dump-file=<.emacs.d>\emacs.pdmp     # 或把快捷方式指向 emacs-dum
 `dump-emacs-portable` 写出新映像。启动时 early-init/init 照常运行，`(require 'evil)` 等命中映像即瞬返。
 **只预加载第三方库，不在 dump 期跑用户 init**——dump 期无显示，跑 init 会踩字体/frame/主题坑。
 
-预加载集（见 `dump.el` 的 `my/dump-packages`）：evil 全家桶、补全栈（vertico/corfu/consult/embark/
-marginalia/orderless/cape）、doom-themes、hydra、project（核心）+ nerd-icons/eglot/treesit-auto/
-magit/popper/ace-window/eat（加分；若转储报错优先从加分组删）。
+预加载集（见 `dump.el` 的 `my/dump-packages`，当前 20 个）：evil 全家桶、补全栈（vertico/corfu/
+consult/embark/embark-consult/marginalia/orderless/cape）、doom-themes、hydra、project（核心）
++ eglot/magit/popper/ace-window（加分；若转储报错优先从加分组删）。`eat` 因含 C 扩展已排除。
+
+构建时留意这两行输出，能一眼看出是不是又踩了下面的静默 bug：
+```
+dump: 已激活 65/65 个包        ← 分子远小于分母 = 包激活出问题（见「两个静默 bug」①）
+dump: 预加载 20 个包，跳过 0 个 ← 跳过不为 0 = 映像残缺
+```
 
 ## 踩过的三个坑（都已在 dump.el 处理）
 1. **`dumping overlays is not yet implemented`**：某包加载时建了 overlay，pdumper 不支持。
@@ -48,12 +54,52 @@ magit/popper/ace-window/eat（加分；若转储报错优先从加分组删）�
 dump 内容无关（空 dump 也崩）。
 **处置**：开始菜单快捷方式改为直接用 `runemacs.exe`（无 `--dump-file`），等 Emacs 31 正式版修复后
 再 `make dump` 重建并恢复快捷方式参数。
+> ⚠ 下面「两个静默 bug ②」会产生**一模一样**的症状（静默 exit 0 / `0xC0000005`），但那个是
+> 内容相关、可修的。判断哪一种，用那节末尾的**空 dump 判据**，别直接按本节结论放弃 pdmp。
+> Emacs 30.2（scoop）实测：空 dump 正常 → 属于 ②，修完 pdmp 已恢复可用。
 
 ### dump.el 已加的两个 Windows 防御性配置
 1. `(setq native-comp-eln-load-path nil)`（dump 构建期）：让包回退字节编译版本，避免 dump 里烤入
    `.eln`（native-comp DLL）路径引用——加载 dump 时 `LoadLibrary` 调用时序早于 PATH 完全建立，
-   会导致"找不到指定的模块"。等 pdmp 可用时此配置可解决 DLL 搜索路径问题。
+   会导致"找不到指定的模块"。
+   ⚠ **现已改为「仅当本 Emacs 真支持 native-comp 时才清」**，见下面「清空 eln 路径反而把映像弄崩」。
 2. `eat` 从预加载集中排除：`eat` 含 C 扩展（`eat-core.dll`），烤进 dump 后恢复时有额外崩溃风险。
+
+## 两个静默 bug（2026-07-27 排查，均已修）
+
+### ① 构建期只烤进了 9/20 个包（静默）
+**现象**：`make dump` 报 `dump: 跳过 vertico/consult/corfu/magit/...`（11 个 file-missing），
+但这些包在 `elpa/` 下明明装着；转储照样"成功"，产出一个残缺映像。
+**根因**：Emacs 启动阶段（早于 `-l dump.el`）已按**默认** `user-emacs-directory` 跑过一轮
+`package-activate-all`。从 **Git Bash / make 里跑时 `HOME` 被设成 `C:\Users\<user>`**，
+`~/.emacs.d` 于是不再是本仓库（本仓库在 `%APPDATA%\.emacs.d`），
+那边残留的**过期 `package-quickstart.el`** 被当成激活清单读进来 → 只激活到 11/65 个包。
+**修复**：`dump.el` 在 `package-initialize` 前把 `package-quickstart-file` 指回本仓库
+（那里没有该文件 → 走真正的目录扫描），并清空 `package--initialized` /`package--activated` /
+`package-alist` / `package-activated-list`，强制按本仓库 `elpa/` 重新激活。
+现在构建会打印 `dump: 已激活 65/65 个包`，可据此一眼确认。
+
+### ② 清空 eln 路径反而把映像弄崩（0xC0000005）
+**现象**：映像能转储成功，但 `--dump-file` 启动**静默退出**（exit 0，什么都不执行）或直接段错误
+（`0xC0000005`）。和上面那条 Emacs 31 的症状长得一模一样，极易误判成同一个问题。
+**根因**：`(setq native-comp-eln-load-path nil)` 在**不支持 native-comp** 的构建上（如 scoop 的
+Emacs 30.2）没有任何防御价值（根本不存在 `.eln`），却会让转出的映像加载时崩溃。
+且需要「激活/加载的包足够多」才触发——所以 bug ① 只烤 9 个包时看不出来，两个 bug 互相掩护。
+**对照实验**（同一台机器，其余条件相同）：
+
+| 组合 | 结果 |
+|------|------|
+| 空 dump（不碰 package） | ✅ 正常启动 |
+| 65 包激活 + **不清** eln 路径 | ✅ 正常启动 |
+| 65 包激活 + **清空** eln 路径 | ❌ 段错误 0xC0000005 |
+| 11 包激活 + 清空 eln 路径 | ✅ 正常启动（包不够多，没触发） |
+
+**修复**：加 `native-comp-available-p` 守卫，只在真有 native-comp 时才清空。
+native-comp 可用的机器上原防御照旧生效。
+
+> 判据：先转一个**空 dump**（`emacs --batch -Q --eval '(dump-emacs-portable "/tmp/e.pdmp")'`）
+> 试启动。空 dump 能起 → 是**内容相关**的问题（往这两条查）；空 dump 也崩 → 才是
+> Emacs 31 那种二进制级 bug。
 
 ### 开始菜单快捷方式：用 runemacs.exe，不用 emacs.exe
 - `emacs.exe`：控制台子系统，启动时**必然弹一个额外终端窗口**。

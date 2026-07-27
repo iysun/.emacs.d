@@ -36,9 +36,7 @@
 
 (require 'package)
 (setq package-quickstart t)
-(setq package-archives '(("gnu" . "https://mirrors.ustc.edu.cn/elpa/gnu/")
-			 ("melpa" . "https://mirrors.ustc.edu.cn/elpa/melpa/")
-			 ("nongnu" . "https://mirrors.ustc.edu.cn/elpa/nongnu/")))
+(require 'init-mirrors)                 ; package-archives 的唯一定义处
 (package-initialize)
 
 (dolist (package

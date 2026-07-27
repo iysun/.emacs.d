@@ -2,8 +2,18 @@
 
 ## 镜像
 
-包源用 USTC 镜像（`init.el` 全量分支与 `init-minimal.el` 各有一份 `package-archives`）。
-清华 TUNA 的备选在 `init.el` 里注释保留。**换镜像时两处都要改。**
+包源集中在 **`lisp/init-mirrors.el`**（唯一定义处），USTC / 清华 TUNA / 官方三套各存一个常量，
+文件末尾一行 `setq` 选用哪套。**换镜像只改那一行。**
+
+三条加载路径都从这里取，不要再在别处写 `package-archives`：
+
+| 使用方 | 取法 |
+|--------|------|
+| `init-full.el` | `(require 'init-mirrors)` |
+| `init-minimal.el` | `(require 'init-mirrors)` |
+| `dump.el` | 同上（`-Q` 起，故先把 `lisp/` 加进 `load-path`） |
+
+> 历史：这三处原本各抄一份，`dump.el` 那份还漏在了 AGENTS.md 的「改镜像要改两处」之外。
 
 ## 新机器首次安装的签名校验兜底
 

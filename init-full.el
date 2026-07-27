@@ -5,15 +5,7 @@
 ;; GC 延迟与 custom-file 由 `early-init.el' / 根 `init.el' 统一处理，此处不再重复。
 
 (require 'package)
-(setq package-archives
-      '(("gnu"    . "https://mirrors.ustc.edu.cn/elpa/gnu/")
-        ("melpa"  . "https://mirrors.ustc.edu.cn/elpa/melpa/")
-        ("nongnu" . "https://mirrors.ustc.edu.cn/elpa/nongnu/")
-        ("org"    . "https://mirrors.ustc.edu.cn/elpa/org/")))
-;;(setq package-archives
-;;  '(("gnu"    . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
-;;    ("nongnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")
-;;    ("melpa"  . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")))
+(require 'init-mirrors)                 ; package-archives 的唯一定义处
 (package-initialize)
 
 (require 'use-package)
@@ -76,6 +68,33 @@
 ;;(require 'init-evil-plugins)
 ;;
 ;;(require 'lang-go)
+
+;; ---- emacs.pdmp 新鲜度自检 ----
+;; 映像里烤着 elpa/ 下那批包的代码。装/删包后若不重跑 `make dump'，映像照样能启动，
+;; 但跑的是**旧代码**——这种「静默用着旧包」比启动直接失败更难发现。
+;; （升级 emacs 那种不兼容会启动即报错，不需要额外提醒。）
+;; 把 AGENTS.md 里的口头约定落成一次实际检查：仅在确实用本仓库 dump 启动时才判。
+(defun my/check-pdmp-freshness ()
+  "用本仓库 emacs.pdmp 启动时，若映像早于 elpa/ 最后改动则告警。"
+  (when-let* ((stats (and (fboundp 'pdumper-stats) (pdumper-stats)))
+              (dump (alist-get 'dump-file-name stats))
+              (ours (expand-file-name "emacs.pdmp" user-emacs-directory))
+              ((file-exists-p ours))
+              ((file-equal-p dump ours))
+              (elpa (expand-file-name "elpa" user-emacs-directory))
+              ((file-directory-p elpa))
+              (dump-time (file-attribute-modification-time (file-attributes ours)))
+              (elpa-time (file-attribute-modification-time (file-attributes elpa)))
+              ((time-less-p dump-time elpa-time)))
+    (display-warning
+     'pdmp
+     (format "emacs.pdmp（%s）早于 elpa/ 最后改动（%s）：包可能已增删，映像里是旧代码。
+请重跑 `make dump' 重建。"
+             (format-time-string "%F %R" dump-time)
+             (format-time-string "%F %R" elpa-time))
+     :warning)))
+
+(add-hook 'emacs-startup-hook #'my/check-pdmp-freshness)
 
 (provide 'init-full)
 

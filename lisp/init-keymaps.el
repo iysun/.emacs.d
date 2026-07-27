@@ -20,12 +20,15 @@
   (capitalize-word -1))
 
 (defun init-keymaps--bind-diff-hl-local ()
+  ;; 全组统一用 M- 前缀。原先 show-hunk 绑在 `C-c h v'，会把 local map 里的 `C-c h'
+  ;; 变成前缀键，压过全局 `C-c h' = consult-history——而 prog/text-mode 恰好覆盖
+  ;; 日常绝大多数缓冲区，等于 consult-history 按不出来。
   (dolist (state '(normal insert visual))
     (evil-define-key state 'local (kbd "M-p") 'diff-hl-previous-hunk)
     (evil-define-key state 'local (kbd "M-n") 'diff-hl-next-hunk)
     (evil-define-key state 'local (kbd "M-,") 'diff-hl-revert-hunk)
     (evil-define-key state 'local (kbd "M-.") 'diff-hl-stage-dwim)
-    (evil-define-key state 'local (kbd "C-c h v") 'diff-hl-show-hunk)))
+    (evil-define-key state 'local (kbd "M-h") 'diff-hl-show-hunk)))
 
 ;; 在 evil 加载后用原生 keymap API 绑定（global-set-key / define-key / evil-define-key）
 (with-eval-after-load 'evil

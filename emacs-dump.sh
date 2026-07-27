@@ -4,6 +4,8 @@
 #
 # dump 映像（emacs.pdmp）必须与当前 emacs 二进制匹配。
 # 装/删包或升级 emacs 后须先 make dump 重建。
+# 「装/删包后忘了重建」这种静默失效由 init-full.el 的 my/check-pdmp-freshness
+# 在启动时检查并告警（比在本脚本里比时间戳更准，也覆盖手动 --dump-file 启动）。
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PDMP="$SCRIPT_DIR/emacs.pdmp"

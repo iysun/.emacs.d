@@ -32,6 +32,7 @@
 | `init-full.el` | 全量 profile：声明包列表 + `require` 各模块（与 `init.el` 同级，按路径 load） |
 | `init-minimal.el` | 精简 profile 全部内容（与 `init.el` 同级，按路径 load） |
 | `lisp/init-*.el` | 全量 profile 的功能模块（每个 `(provide 'init-xxx)`） |
+| `lisp/init-mirrors.el` | **包源镜像的唯一定义处**（全量/精简/dump 三处都 require 它，换镜像只改这一个文件） |
 | `lisp/lang-*.el` | 语言专属配置（如 `lang-go.el`，当前未启用） |
 | `custom.el` | Customize 自动生成，**已 gitignore，勿手改** |
 | `elpa/` | 第三方包，**已 gitignore，勿编辑/勿提交** |
@@ -75,7 +76,15 @@ make dump            # = /build，调用 dump.el 生成 emacs.pdmp
 - `dump.el` 转储前复位 `package--initialized`/`package-activated-list`/`package-alist`，
   让启动时 `init.el` 的 `package-initialize` 重建 load-path（否则没烤进映像的包如 `fd-dired` 找不到）。
 - evil 须在 dump.el 里先设 `evil-want-keybinding nil` 再 require（否则报 evil-collection #60）。
+- `native-comp-eln-load-path` **只在本 Emacs 真支持 native-comp 时才清空**；在不支持的构建上清空
+  会让映像加载时段错误（`0xC0000005`）。见 pdump 笔记「两个静默 bug ②」。
+- `dump.el` 在 `package-initialize` 前把 `package-quickstart-file` 指回本仓库并复位 package 记账，
+  否则从 Git Bash / make 里跑（`HOME` 被设）会读到别处的过期 quickstart，静默只激活一小部分包。
+- 构建输出要盯两行：`已激活 65/65 个包` 与 `预加载 20 个包，跳过 0 个`。分子偏小 / 跳过不为 0
+  = 映像残缺（历史上这里静默只烤进过 9/20）。
 - ⚠️ **装/删包、或升级 emacs（scoop 更新）后必须 `make dump` 重建**，否则映像不兼容、启动报错。
+  「装/删包后忘了重建」这种**不报错**的情况，由 `init-full.el` 的 `my/check-pdmp-freshness`
+  在启动时比对 `emacs.pdmp` 与 `elpa/` 的时间戳并弹 `*Warnings*` 提醒。
 
 ## 字节编译与 .elc
 
@@ -90,11 +99,15 @@ make dump            # = /build，调用 dump.el 生成 emacs.pdmp
 
 - **本仓库约定加载 `.el` 源码**（`.elc` 已 gitignore，不提交）。
 - 交互会话里 `load-prefer-newer` 为 nil（见 `early-init.el`），**残留的旧 `.elc` 会悄悄盖过更新的 `.el`**。
-  所以编译只用于检查；检查完把自己的 `.elc` 清掉，回到源码加载（`make clean` 在 Windows 因 GNU find 失效，改用）：
+  所以编译只用于检查；检查完用 **`make clean`** 把 `.elc` 清掉，回到源码加载。
   ```powershell
-  Get-ChildItem -Path .,lisp -Filter *.elc -File | Remove-Item -Force
+  make compile   # 语法检查
+  make clean     # 清 .elc（不动 emacs.pdmp）
   ```
-  （`/build` 现在生成 pdmp，不再做编译；纯语法检查用 `make compile` 后自行清 `.elc`。）
+  （`make clean` 原先用 GNU `find`，在 Windows 会命中 `system32\find.exe` 而**静默失效**，现已改成
+  用 `emacs --batch` 删，三平台一致。要连 `emacs.pdmp` 一起删用 `make distclean`——单独分出来是因为
+  pdmp 重建要几十秒，不该被高频的清 `.elc` 顺手毁掉。）
+  （`/build` 生成 pdmp，不做编译；纯语法检查走上面两步。）
 
 ## 验证配置是否能正常加载
 
@@ -129,4 +142,6 @@ $env:SILICONFLOW_API_KEY = "sk-xxxx"   # 由用户在自己的 shell/系统环�
 - **新增模块**：在 `lisp/` 下建 `init-xxx.el`，文件末 `(provide 'init-xxx)`，并在 `init.el` 末尾 `(require 'init-xxx)`。
 - **改完怎么验证**：用 `/run`（批处理加载全量 + 精简两套 profile，确认无错）；语法快查用 `/build`（编译后自动清理 `.elc`）。
 - **别碰** `elpa/`、`custom.el`、`server/`；不要提交 `.elc`（已 gitignore），也不要把 `.elc` 留在工作区——交互会话 `load-prefer-newer` 为 nil，旧 `.elc` 会盖过更新的 `.el`。
-- 包源用 USTC 镜像（见 `init.el`）；切镜像时全量与精简两处都要改。
+- 包源用 USTC 镜像；**只在 `lisp/init-mirrors.el` 里改**（全量/精简/dump 都 require 它，不要再在别处写 `package-archives`）。
+- 路径别硬编码 `~/.emacs.d/`，一律用 `user-emacs-directory`。Windows 上 Git Bash 等会设 `HOME`，
+  届时 `~/.emacs.d` 指向 `C:\Users\<user>\.emacs.d`，而本仓库在 `%APPDATA%\.emacs.d`，两者不是一个地方。

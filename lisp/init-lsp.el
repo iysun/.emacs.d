@@ -1,8 +1,36 @@
 ;;; -*- lexical-binding: t; -*-
 
-;; Emacs 31 内置：自动把有 ts 变体的 major mode 全部切换到 tree-sitter 版本。
-;; 替代第三方 treesit-auto 包的 global-treesit-auto-mode + add-to-auto-mode-alist。
-(setq treesit-enabled-modes t)
+;; tree-sitter 模式路由。
+;;
+;; Emacs 31 内置 `treesit-enabled-modes'：设 t 即自动把所有有 ts 变体的 major mode
+;; 切到 tree-sitter 版本，替代第三方 treesit-auto。
+;;
+;; Emacs ≤30 没有这个变量，`setq' 它只是凭空造一个没人读的全局量（静默失效）。
+;; 该分支下手动填 `major-mode-remap-alist'，逐语言用 `treesit-ready-p' 把关：
+;; grammar 装了才 remap，没装就留在原生 mode，不会开出一个报错的空 ts buffer。
+;; （Windows 上 grammar DLL 常因 ABI 不匹配加载失败，此时全部跳过，行为同未配置。）
+(if (boundp 'treesit-enabled-modes)
+    (setq treesit-enabled-modes t)
+  (when (and (fboundp 'treesit-available-p) (treesit-available-p))
+    (require 'treesit)
+    ;; (语言 . (原 mode . ts mode))；只覆盖下面 eglot-ensure 挂钩的那几门语言。
+    (dolist (spec '((go         (go-mode        . go-ts-mode))
+                    (gomod      (go-dot-mod-mode . go-mod-ts-mode))
+                    (python     (python-mode    . python-ts-mode))
+                    (javascript (js-mode        . js-ts-mode)
+                                (javascript-mode . js-ts-mode)
+                                (js2-mode       . js-ts-mode))
+                    (typescript (typescript-mode . typescript-ts-mode))
+                    (c          (c-mode         . c-ts-mode))
+                    (cpp        (c++-mode       . c++-ts-mode))))
+      (when (treesit-ready-p (car spec) t)
+        (dolist (pair (cdr spec))
+          (add-to-list 'major-mode-remap-alist pair))))
+    ;; .ts/.tsx 在 Emacs 30 没有非 ts 的内置 major mode 可 remap，直接进 auto-mode-alist。
+    (when (treesit-ready-p 'typescript t)
+      (add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-ts-mode)))
+    (when (treesit-ready-p 'tsx t)
+      (add-to-list 'auto-mode-alist '("\\.tsx\\'" . tsx-ts-mode)))))
 
 ;; 补充 Emacs 31 尚未内置 grammar 源的语言（TypeScript/Rust/TOML/YAML/Dockerfile 已内置）。
 ;; 缺 grammar 时执行 M-x treesit-install-language-grammar 即可按此列表拉取。
@@ -35,7 +63,7 @@
   (setq eglot-send-changes-idle-time 0.5)   ; 停止输入 0.5s 后才把变更推给 LSP（默认值，显式写出）
   (setq eglot-ignored-server-capabilities   ; 关闭 inlay hints 推送，减少 gopls → Emacs 的通知量
         '(:inlayHintProvider))
-  (setq eldoc-idle-delay 0.5)               ; 延迟 eldoc hover 请求，减少光标移动触发的 LSP 请求
+  (setq eldoc-idle-delay 0.5)               ; 延迟 eldoc hover 请求（= 默认值，显式写出；调小会明显增加 LSP 请求）
 
   ;; gopls 专项调优：关闭代价高的静态分析，按需开启
   (setq-default eglot-workspace-configuration

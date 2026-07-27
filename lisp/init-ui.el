@@ -33,8 +33,9 @@
 ;; (require 'rainbow-delimiters)
 (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
 
-;; whitespace：display-table 只做字形映射，勿在 glyph 上绑独立 face，否则与 `region`
-;; 合并异常（选区发灰/断层）；颜色只设在 `whitespace-space` / `whitespace-tab`（font-lock）。
+;; whitespace：本配置只显示 Tab（不显示空格占位符）。
+;; display-table 只做字形映射，勿在 glyph 上绑独立 face，否则与 `region' 合并异常
+;; （选区发灰/断层）；颜色只设在 `whitespace-tab'（font-lock）。
 ;; Tab 用 GNU 默认向量；font-lock prepend 减轻 treesit 盖住的问题。
 (setq whitespace-style '(face tabs tab-mark)
       whitespace-display-mappings
@@ -90,10 +91,10 @@
          (base (my-ui--fg 'default "#d4d4d4")))
     (when (or (null faded) (string= faded base))
       (setq faded (my-ui--whitespace-muted-fg base bg)))
-    (dolist (x '((whitespace-tab . semi-bold)))
-      (set-face-attribute (car x) nil :foreground faded :background 'unspecified :weight (cdr x)))
-    (dolist (sym '(whitespace-space whitespace-hspace))
-      (set-face-attribute sym nil :foreground faded :background 'unspecified :weight 'normal))))
+    ;; 只有 whitespace-tab：`whitespace-style' 里没开 spaces/space-mark，
+    ;; 设 whitespace-space / whitespace-hspace 是没人用的死代码，已删。
+    (set-face-attribute 'whitespace-tab nil
+                        :foreground faded :background 'unspecified :weight 'semi-bold)))
 
 (add-hook 'after-init-hook #'my-ui-setup-whitespace-faces t)
 (when (boundp 'enable-theme-functions)
@@ -104,7 +105,7 @@
     (my-ui-setup-whitespace-faces)
     (when (and (bound-and-true-p whitespace-font-lock-keywords) font-lock-mode)
       (font-lock-remove-keywords nil whitespace-font-lock-keywords)
-      ;; prepend：优先于 treesit / 其它 append 的 font-lock，空格背景色才可见
+      ;; prepend：优先于 treesit / 其它 append 的 font-lock，Tab 标记才不被盖住
       (font-lock-add-keywords nil whitespace-font-lock-keywords 'prepend)
       (font-lock-flush))))
 (add-hook 'whitespace-mode-hook #'my-ui-whitespace--after-on)
@@ -117,7 +118,7 @@
 ;; dashboard 首屏已禁用以提速启动（启动直接进 scratch/文件；inhibit-startup-screen 见 early-init.el）。
 ;; 若想恢复：取消下面 with-eval-after-load 与 (dashboard-setup-startup-hook) 的注释。
 ;; (with-eval-after-load 'dashboard
-;;   (setq dashboard-startup-banner "~/.emacs.d/logo.svg")
+;;   (setq dashboard-startup-banner (expand-file-name "logo.svg" user-emacs-directory))
 ;;   (setq dashboard-icon-type 'nerd-icons)
 ;;   (setq dashboard-set-heading-icons t)
 ;;   (setq dashboard-set-file-icons t))

@@ -10,13 +10,24 @@
 (let ((root (file-name-directory (or load-file-name buffer-file-name default-directory))))
   (setq user-emacs-directory (file-name-as-directory root)
         package-user-dir (expand-file-name "elpa" root)
-        gc-cons-threshold most-positive-fixnum))
+        gc-cons-threshold most-positive-fixnum)
+  ;; -Q 启动，load-path 里没有 lisp/；加进去才能 require 'init-mirrors。
+  (add-to-list 'load-path (expand-file-name "lisp" root)))
+
+(setq native-comp-jit-compilation nil)
 
 ;; dump 里不能含 .eln（native-comp）引用：加载 dump 时 LoadLibrary 调用时序早于
 ;; Windows DLL 搜索路径完全建立，会报 "找不到指定的模块"。清空 eln-load-path
 ;; 让包在 dump 构建期只加载字节编译版本，不把 .eln 地址烤进映像。
-(setq native-comp-jit-compilation nil)
-(when (boundp 'native-comp-eln-load-path)
+;;
+;; ⚠ 但**只在本 Emacs 真支持 native-comp 时才清**。不支持 native-comp 的构建
+;; （如 scoop 的 Emacs 30.2）根本不存在 .eln，清空这个路径没有任何防御价值，
+;; 反而会让转出的映像在加载时段错误（0xC0000005）——且需要「包激活得足够多」
+;; 才触发，所以以前 package 激活有 bug 只烤到 9 个包时看不出来，属实难查。
+;; 实测对照：65 个包激活 + 清空 → 段错误；同样 65 个包不清 → 正常启动。
+(when (and (fboundp 'native-comp-available-p)
+           (native-comp-available-p)
+           (boundp 'native-comp-eln-load-path))
   (setq native-comp-eln-load-path nil))
 
 ;; 与 early-init 同逻辑：新机器无 keyring 时关签名校验，避免装/读包失败
@@ -24,11 +35,25 @@
   (setq package-check-signature nil))
 
 (require 'package)
-(setq package-archives '(("gnu"    . "https://mirrors.ustc.edu.cn/elpa/gnu/")
-                         ("melpa"  . "https://mirrors.ustc.edu.cn/elpa/melpa/")
-                         ("nongnu" . "https://mirrors.ustc.edu.cn/elpa/nongnu/")
-                         ("org"    . "https://mirrors.ustc.edu.cn/elpa/org/")))
+(require 'init-mirrors)                 ; package-archives 的唯一定义处
+
+;; ⚠ 必须复位后再 package-initialize，否则会静默少烤一大半包。
+;; 原因：Emacs 启动阶段（早于本文件被 -l 加载）已按**默认** `user-emacs-directory'
+;; 跑过一轮 `package-activate-all'。从 Git Bash / make 里跑时 HOME 被设成
+;; C:\Users\Administrator，`~/.emacs.d' 于是不再是本仓库（%APPDATA%\.emacs.d），
+;; 那边残留的过期 package-quickstart.el 被当成激活清单读进来，结果只激活到零星几个包；
+;; 后面 my/dump-packages 的 require 便大批 file-missing，转储出一个「看着成功」的残缺映像。
+;; 对策：把 quickstart 指回本仓库（那里没有该文件 → 走真正的目录扫描），
+;; 并清空 package 记账，强制按本仓库 elpa/ 重新激活一遍。
+(setq package-quickstart nil
+      package-quickstart-file (expand-file-name "package-quickstart.el" user-emacs-directory)
+      package--initialized nil
+      package--activated nil
+      package-alist nil
+      package-activated-list nil)
 (package-initialize)
+(message "dump: 已激活 %d/%d 个包（elpa: %s）"
+         (length package-activated-list) (length package-alist) package-user-dir)
 
 ;; evil-want-* 必须在 evil 加载【前】设好（尤其 evil-want-keybinding）。否则烤进映像的 evil
 ;; 会以默认值加载，启动时 evil-collection 报 issue #60。与 init-evil.el 顶部保持一致。
