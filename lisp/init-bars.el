@@ -286,10 +286,51 @@ Windows IME，得在 `my/switch-to-english-input-method' 那侧自己维护一�
                        (string-match-p "\\`\\s-*\\*eglot" name)))
           (push buf result))))))
 
+;; ---- 标签文本：图标 + 修改标记（找回 centaur-tabs 的观感）----
+;; 图标复用已装的 nerd-icons（mode-line 也在用，非新增依赖），取不到时回退纯文本。
+(defvar-local my/tab-line--icon-cache 'unset
+  "本 buffer 的 tab 图标串缓存。图标由 major-mode/文件类型决定、基本不变，
+故按 buffer 缓存一次；'unset 表示尚未计算。")
+
+(defun my/tab-line--icon (buffer)
+  "返回 BUFFER 的 nerd-icons 文件类型图标串（含尾随空格）；
+非 GUI / 无 nerd-icons / 出错时返回空串。结果缓存到 buffer-local。"
+  (with-current-buffer buffer
+    (if (eq my/tab-line--icon-cache 'unset)
+        (setq my/tab-line--icon-cache
+              (or (and (display-graphic-p)
+                       (require 'nerd-icons nil t)
+                       (ignore-errors
+                         (let ((ic (nerd-icons-icon-for-buffer)))
+                           (and (stringp ic) (not (string-empty-p ic))
+                                (concat ic " ")))))
+                  ""))
+      my/tab-line--icon-cache)))
+
+(defun my/tab-line-tab-name (buffer &optional _buffers)
+  "tab 标签文本：图标 + buffer 名 +（文件改动未存时）● 标记。
+覆写 `tab-line-tab-name-function'。截断仍由 `tab-line-tab-name-truncated-max' 处理。"
+  (concat (my/tab-line--icon buffer)
+          (buffer-name buffer)
+          (and (buffer-local-value 'buffer-file-name buffer)
+               (buffer-modified-p buffer)
+               " ●")))
+
+(defun my/tab-line-refresh (&rest _)
+  "改动/保存后刷新 tab-line，让 ● 修改标记及时更新
+（tab-line 的默认缓存键不含 `buffer-modified-p'，不主动刷会滞后）。"
+  (force-mode-line-update t))
+
 (progn
   (setq tab-line-tabs-function 'tab-line-tabs-buffer-groups)
   (setq tab-line-tabs-buffer-group-function #'my/tab-line-buffer-group-by-project)
+  (setq tab-line-tab-name-function #'my/tab-line-tab-name)
+  (setq tab-line-close-button-show t)      ; 每个标签都显关闭按钮（× ），像 centaur-tabs
+  (setq tab-line-separator " ")            ; 相邻标签间留一丝缝
   (advice-add 'tab-line-tabs-buffer-list :filter-return #'my/tab-line-filter))
+
+(add-hook 'first-change-hook #'my/tab-line-refresh)
+(add-hook 'after-save-hook   #'my/tab-line-refresh)
 
 (add-hook 'after-init-hook 'global-tab-line-mode)
 
@@ -320,6 +361,10 @@ Windows IME，得在 `my/switch-to-english-input-method' 那侧自己维护一�
 
 (defconst my-ui-tab-side-padding 8
   "tab-line 每个标签的左右内边距（像素），让标签之间松一些。")
+
+(defvar my-ui--tab-accent "#4c9eff"
+  "选中标签下划线 / 悬浮高亮 / 修改标记的 accent 色。
+主题相关，每次 `my-ui-setup-bars' 时按当前主题重算。")
 
 (defun my-ui--real-color (c)
   "C 是真实颜色名就返回它，否则 nil。
@@ -366,7 +411,36 @@ Windows IME，得在 `my/switch-to-english-input-method' 那侧自己维护一�
       (set-face-attribute
        f nil :height my-ui-mode-line-height
        :box `(:line-width (,my-ui-tab-side-padding . ,my-ui-bar-padding)
-              :color ,(my-ui--bg-of f))))))
+              :color ,(my-ui--bg-of f)))))
+  ;; ---- tab-line：找回 centaur-tabs 观感（选中下划线 accent + 选中/非选中对比）----
+  ;; accent 色取主题里的强调色，回退固定蓝；下面选中下划线、悬浮、修改标记都复用它。
+  (setq my-ui--tab-accent
+        (or (my-ui--real-color (face-foreground 'font-lock-function-name-face nil t))
+            (my-ui--real-color (face-foreground 'font-lock-keyword-face nil t))
+            "#4c9eff"))
+  ;; 选中标签：底部 accent 下划线 + 加粗。不动背景，免得跟主题打架。
+  ;; （:box 的下 padding 仍在，下划线落在文字底、padding 之上，呈现为一条底部彩条。）
+  (when (facep 'tab-line-tab-current)
+    (set-face-attribute 'tab-line-tab-current nil
+                        :weight 'bold
+                        :underline `(:color ,my-ui--tab-accent :style line)))
+  ;; 非选中标签：前景调暗（取 shadow 前景），与选中拉开对比。
+  (when (facep 'tab-line-tab-inactive)
+    (set-face-attribute 'tab-line-tab-inactive nil
+                        :weight 'normal
+                        :foreground (or (my-ui--real-color (face-foreground 'shadow nil t))
+                                        'unspecified)))
+  ;; 鼠标悬浮标签：accent 前景高亮。
+  (when (facep 'tab-line-highlight)
+    (set-face-attribute 'tab-line-highlight nil :foreground my-ui--tab-accent))
+  ;; 改动未存的标签（原生 `tab-line-tab-face-modified' 会自动套 `tab-line-tab-modified'）：
+  ;; accent 色 + 斜体，与标签名后的 ● 呼应（颜色/斜体 + 小圆点双保险）。
+  (when (facep 'tab-line-tab-modified)
+    (set-face-attribute 'tab-line-tab-modified nil
+                        :foreground my-ui--tab-accent :slant 'italic))
+  ;; 关闭按钮 × 悬浮时变红，醒目。
+  (when (facep 'tab-line-close-highlight)
+    (set-face-attribute 'tab-line-close-highlight nil :foreground "#e06c75")))
 
 (add-hook 'after-init-hook #'my-ui-setup-bars t)
 (when (boundp 'enable-theme-functions)
