@@ -20,7 +20,9 @@ consult/embark/embark-consult/marginalia/orderless/cape）、doom-themes、hydra
 
 构建时留意这两行输出，能一眼看出是不是又踩了下面的静默 bug：
 ```
-dump: 已激活 68/68 个包        ← 分子远小于分母 = 包激活出问题（见「三个静默 bug」①）
+dump: 已激活 63/68 个包        ← 分子远小于分母 = 包激活出问题（见「三个静默 bug」①）
+                               （Emacs 31 下 63/68 是正常值：project/jsonrpc/flymake/eglot/compat
+                                 已内置且版本更高，package.el 主动跳过 elpa 副本）
 dump: 预加载 20 个包，跳过 0 个 ← 跳过不为 0 = 映像残缺
 ```
 
@@ -46,14 +48,28 @@ dump: 预加载 20 个包，跳过 0 个 ← 跳过不为 0 = 映像残缺
 
 ## Windows 已知问题与 runemacs.exe
 
-### Emacs 31.0.90 预发布版：`--dump-file` 必然崩溃（暂停使用 pdmp）
+### ~~Emacs 31.0.90 预发布版：`--dump-file` 必然崩溃~~ —— 已证伪（2026-07-27）
+
+**结论推翻**：换到自编的 **Emacs 31.0.91**（msys2 UCRT64）后实测，本仓库的 `emacs.pdmp`
+**加载正常**（`PDMP-OK evil=t magit=t`，exit 0）。所谓「二进制级 bug」并不存在。
+
+真凶是下面「三个静默 bug」里的 ② 和 ③——**这两个坑都要 native-comp 构建才暴露**，
+而当时的对照组是 scoop 的 Emacs 30.2（没有 native-comp），于是症状看着只在 31 上出现，
+被误记成「31 的锅」。`dump.el` 修好后 31 用 pdmp 没有任何问题。
+
+> 教训：把「换了 A 之后出问题」直接写成「A 的 bug」之前，先确认对照组在**同样的能力集**下
+> 也能复现。native-comp 有无这一条差异，当时整整骗了一轮。
+
+下面保留原始记录备查：
+
+#### 原记录（已知有误）
 **现象**：`runemacs.exe --dump-file=emacs.pdmp` 静默退出（exit 0），`emacs.exe --dump-file=emacs.pdmp`
 报 `Error using execdir D:\emacs31\bin\: 找不到指定的模块`，Windows 事件日志 `0xC0000005`
 （STATUS_ACCESS_VIOLATION）在 `emacs.exe` 自身偏移 `0x17ad35`。
 **根因**：Emacs 31.0.90 预发布版在 Windows 上加载任意 `--dump-file` 时触发二进制级 bug，与
 dump 内容无关（空 dump 也崩）。
-**处置**：开始菜单快捷方式改为直接用 `runemacs.exe`（无 `--dump-file`），等 Emacs 31 正式版修复后
-再 `make dump` 重建并恢复快捷方式参数。
+**处置（当时）**：开始菜单快捷方式改为直接用 `runemacs.exe`（无 `--dump-file`）。
+**现已恢复**带 `--dump-file` 的快捷方式，见本文件末尾「开始菜单快捷方式」。
 > ⚠ 下面「三个静默 bug ②」会产生**一模一样**的症状（静默 exit 0 / `0xC0000005`），但那个是
 > 内容相关、可修的。判断哪一种，用那节末尾的**空 dump 判据**，别直接按本节结论放弃 pdmp。
 > Emacs 30.2（scoop）实测：空 dump 正常 → 属于 ②，修完 pdmp 已恢复可用。
@@ -137,7 +153,7 @@ trampoline 的路径，于是 `ERROR_MOD_NOT_FOUND`。
 - `emacs.exe`：控制台子系统，启动时**必然弹一个额外终端窗口**。
 - `runemacs.exe`：Windows GUI 子系统，启动**无终端窗口**。
 - 快捷方式应始终指向 `runemacs.exe`；msys2 那份在
-  `<scoop>\apps\msys2\current\mingw64\bin\runemacs.exe`。
+  `<scoop>\apps\msys2\current\ucrt64\bin\runemacs.exe`。
 - `runemacs.exe` 会把参数原样转给 `emacs.exe`，所以**开始菜单快捷方式直接带 `--dump-file` 即可**，
   不必绕 `emacs-dump.cmd`（那是 .cmd，会挂一个控制台窗口）。当前 `开始菜单\Programs` 下两个：
 
@@ -151,8 +167,9 @@ trampoline 的路径，于是 `ERROR_MOD_NOT_FOUND`。
 
 ## 维护成本（pdmp 与 emacs 二进制强绑定）
 - **装/删包后** → `make dump` 重建。
-- **升级 emacs 后**（现在是 msys2 shell 里 `pacman -Syu`，不再是 `scoop update emacs`）
-  → 二进制 hash 变，旧 pdmp 不兼容、启动报错 → `make dump` 重建。
+- **升级 emacs 后**（现在是回源码树重编重装，见
+  [emacs-install-msys2.md](emacs-install-msys2.md)）→ 二进制 fingerprint 变，旧 pdmp 不兼容、
+  启动报错 → `make dump` 重建。
 - 启动器对「pdmp 缺失」会回退普通启动；对「不兼容」仍会报错——见到就重建。
 
 ## 和 daemon 的取舍

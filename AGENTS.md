@@ -3,10 +3,12 @@
 个人 Emacs 配置仓库（Emacs Lisp）。本文件是 **AI 协作的单一事实源**：项目规范、构建/运行/开发流程都写在这里，其他 agent 适配文件（`CLAUDE.md`、`.cursor/rules/`）只做引用，不复制内容。
 
 > 平台：Windows（scoop 工具链，`emacs` / `make` / `git` 均在 PATH）。命令以 PowerShell 给出。
-> **emacs 本身来自 msys2 的 mingw64 包**（msys2 由 scoop 装），PATH 上是 scoop shim 指过去的；
-> 这份带 native-comp。升级走 msys2 里的 `pacman -Syu`，不是 `scoop update emacs`。
-> ⚠ 别改用 msys2 的 **ucrt64** 版：那份 `--batch` 没有任何控制台输出，本仓库靠读 batch 输出的
-> 流程（`/run` `/build` `make compile`）会全部变成睁眼瞎。详见
+> **emacs 是在 msys2 UCRT64 环境里从上游源码自编的 Emacs 31.0.91**（msys2 由 scoop 装，
+> 装在 `<scoop>\apps\msys2\current\ucrt64`），PATH 上是 scoop shim 指过去的；带 native-comp。
+> 升级 = 回源码树 `git pull` 重编重装，**不是** `pacman -Syu`（那只升 msys2 的库）。
+> ⚠ 别改用 pacman 装的 `mingw-w64-ucrt-x86_64-emacs`：MSYS2 自家的 `001-ucrt.patch` 破坏了
+> stdout，那份的 `--batch` 没有任何控制台输出，本仓库靠读 batch 输出的流程
+> （`/run` `/build` `make compile`）会全部变成睁眼瞎。装法、坑、分步 install 见
 > [docs/notes/emacs-install-msys2.md](docs/notes/emacs-install-msys2.md)。
 
 ## 这个项目是什么
@@ -91,9 +93,11 @@ make dump            # = /build，调用 dump.el 生成 emacs.pdmp
   （`0xC0000005`）。这条已从 `dump.el` 删除，见 pdump 笔记 ②。
 - `dump.el` 在 `package-initialize` 前把 `package-quickstart-file` 指回本仓库并复位 package 记账，
   否则从 Git Bash / make 里跑（`HOME` 被设）会读到别处的过期 quickstart，静默只激活一小部分包。
-- 构建输出要盯两行：`已激活 68/68 个包` 与 `预加载 20 个包，跳过 0 个`。分子偏小 / 跳过不为 0
-  = 映像残缺（历史上这里静默只烤进过 9/20）。
-- ⚠️ **装/删包、或升级 emacs（msys2 `pacman -Syu`）后必须 `make dump` 重建**，否则映像不兼容、启动报错。
+- 构建输出要盯两行：`已激活 63/68 个包` 与 `预加载 20 个包，跳过 0 个`。**跳过不为 0**、或分子
+  突然大幅下滑 = 映像残缺（历史上这里静默只烤进过 9/20）。
+  63/68 里少的 5 个（`project` `jsonrpc` `flymake` `eglot` `compat`）是 Emacs 31 已内置且版本更高、
+  package.el 主动跳过 elpa 副本，属正常，见安装笔记。
+- ⚠️ **装/删包、或重编升级 emacs 后必须 `make dump` 重建**，否则映像不兼容、启动报错。
   「装/删包后忘了重建」这种**不报错**的情况，由 `init-full.el` 的 `my/check-pdmp-freshness`
   在启动时比对 `emacs.pdmp` 与 `elpa/` 的时间戳并弹 `*Warnings*` 提醒。
 

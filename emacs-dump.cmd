@@ -3,7 +3,7 @@
 :: 用法：双击或在命令行执行，支持传额外参数，如 emacs-dump.cmd somefile.txt
 ::
 :: dump 映像（emacs.pdmp）必须与当前 emacs 二进制匹配。
-:: 装/删包或升级 emacs（msys2 里 pacman -Syu）后须先 make dump 重建。
+:: 装/删包或重编升级 emacs 后须先 make dump 重建。
 :: 「装/删包后忘了重建」这种静默失效由 init-full.el 的 my/check-pdmp-freshness
 :: 在启动时检查并告警（比在本脚本里比时间戳更准，也覆盖手动 --dump-file 启动）。
 

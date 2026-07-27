@@ -20,7 +20,7 @@ param(
 
 if (-not $Bin) {
   $prefix = & scoop prefix msys2 2>$null
-  if ($prefix) { $Bin = Join-Path $prefix "mingw64\bin" }
+  if ($prefix) { $Bin = Join-Path $prefix "ucrt64\bin" }
 }
 
 $runemacs = Join-Path $Bin "runemacs.exe"
@@ -46,5 +46,5 @@ function New-Lnk($name, $argline, $desc) {
   Write-Output $path
 }
 
-New-Lnk "Emacs" "--dump-file=`"$pdmp`"" "GNU Emacs (msys2/mingw64)，用 emacs.pdmp 映像加速启动"
-New-Lnk "Emacs (不用 dump 映像)" "" "GNU Emacs (msys2/mingw64)，普通启动；emacs.pdmp 过期或损坏时用这个"
+New-Lnk "Emacs" "--dump-file=`"$pdmp`"" "GNU Emacs (msys2/ucrt64 自编)，用 emacs.pdmp 映像加速启动"
+New-Lnk "Emacs (不用 dump 映像)" "" "GNU Emacs (msys2/ucrt64 自编)，普通启动；emacs.pdmp 过期或损坏时用这个"

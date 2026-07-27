@@ -7,7 +7,8 @@ description: 生成自定义 portable dump（emacs.pdmp）加速启动；预加�
 启动时用 `--dump-file` 内存映射回来，省掉 `require` 的几秒。脚本是 `dump.el`。
 
 > 用映像启动：`emacs --dump-file=<.emacs.d>/emacs.pdmp`，或用仓库根的 `emacs-dump.cmd`。
-> ⚠️ 装/删包或升级 emacs（msys2 里 `pacman -Syu`）后**必须重跑本命令**，否则映像不兼容、启动报错。
+> ⚠️ 装/删包或重编升级 emacs 后**必须重跑本命令**，否则映像不兼容、启动报错。
+> 正常输出：`已激活 63/68 个包`（Emacs 31 下 63/68 是健康值）+ `预加载 20 个包，跳过 0 个`。
 
 ## 循环
 

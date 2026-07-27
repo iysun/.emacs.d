@@ -58,7 +58,7 @@
 - ~~**native-comp 不可用**~~（2026-07-27 已失效）：那时的 emacs 来自 scoop，
   `(native-comp-available-p)` => nil、0 个 `.eln`，`require evil`(~0.5s)、
   doom-modeline+nerd-icons(~0.67s) 是没法再压的**硬地板**。
-  现在 emacs 换成 msys2 mingw64 那份，**native-comp 可用**，`early-init.el` 已开 JIT，
+  现在 emacs 换成 msys2 UCRT64 下自编的 **Emacs 31.0.91**，**native-comp 可用**，`early-init.el` 已开 JIT，
   包会逐步编进 `eln-cache/`——上面这块「硬地板」的数字需要重测（本页其余数据仍为 scoop 时代所测）。
   安装方式见 [emacs-install-msys2.md](emacs-install-msys2.md)。
 - **Windows Defender 不是瓶颈**：`Get-MpPreference` 显示 `C:\` 和 `D:\` 整盘已被排除（Sangfor 安全软件设的），

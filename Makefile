@@ -9,7 +9,7 @@ all: dump
 
 # 预加载重包并转储成 emacs.pdmp（脚本见 dump.el）。
 # 启动：emacs --dump-file=$(DUMP)  或用 emacs-dump.cmd。
-# 注意：装/删包或升级 emacs（msys2 里 pacman -Syu）后必须重跑 `make dump`，否则映像不兼容。
+# 注意：装/删包或重编升级 emacs 后必须重跑 `make dump`，否则映像不兼容。
 dump:
 	@echo "Building portable dump -> emacs.pdmp ..."
 	@$(EMACS) --batch -Q -l "$(ROOT)/dump.el"
