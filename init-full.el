@@ -31,7 +31,6 @@
            ace-window
            hydra
            rainbow-delimiters
-           indent-bars
            nerd-icons
            doom-themes
            popper

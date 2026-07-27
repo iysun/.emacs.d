@@ -100,16 +100,6 @@
 ;; (require 'rainbow-delimiters)
 (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
 
-;; indent-bars：缩进参考线（VSCode 的 indent guides）。
-;; 配置照 zdn 的克制路线——细线、不显示在空行、不高亮当前层级，避免变成视觉噪音。
-(setq indent-bars-display-on-blank-lines nil
-      indent-bars-width-frac 0.1              ; 线宽占字符宽度的比例，越小越细
-      indent-bars-color '(highlight :blend 0.4) ; 取主题 highlight 色再向背景混，融进配色
-      indent-bars-zigzag nil
-      indent-bars-highlight-current-depth nil
-      indent-bars-pattern "|")
-(add-hook 'prog-mode-hook 'indent-bars-mode)
-
 ;; whitespace：显示 Tab（»）与空格（·）占位符。
 ;; 空格显示曾在 37605ee（2026-06-25「tab 字符设置」）里被一并去掉，这里按需加回。
 ;; display-table 只做字形映射，勿在 glyph 上绑独立 face，否则与 `region' 合并异常
