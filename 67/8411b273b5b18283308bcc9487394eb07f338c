@@ -1,0 +1,19 @@
+dump.el
+  s_9dbae537b51e48::t_aa24bb23bfa76b 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "678411b273b5b18283308bcc9487394eb07f338c",
+  "prompts": {},
+  "sessions": {
+    "s_9dbae537b51e48": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f2077-aea6-7431-81a8-baf56d24c741",
+        "model": "gpt-5.4"
+      },
+      "human_author": "mingzhou <mingzhou@tsign.cn>"
+    }
+  }
+}
