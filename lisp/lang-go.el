@@ -32,7 +32,7 @@
 ;; Golang
 (use-package go-mode
   :ensure t
-  ;; :functions (go-install-tools exec-path-from-shell-copy-envs)
+  ;; :functions (go-install-tools)
   :autoload godoc-gogetdoc
   :bind (:map go-mode-map
          ("<f1>" . godoc))
@@ -40,10 +40,6 @@
   (setq godoc-at-point-function #'godoc-gogetdoc)
 
   :config
-  ;; Env vars
-  (with-eval-after-load 'exec-path-from-shell
-    (exec-path-from-shell-copy-envs '("GOPATH" "GO111MODULE" "GOPROXY")))
-
   ;; Try to install go tools if `gopls' is not found
   ;; (when (and (executable-find "go")
              ;; (not (executable-find "gopls")))

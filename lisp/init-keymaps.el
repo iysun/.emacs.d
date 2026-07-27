@@ -112,9 +112,6 @@
     (evil-normalize-keymaps))
   (add-hook 'eshell-mode-hook #'my/eshell-evil-insert-keys 90)
 
-  (with-eval-after-load 'capf-autosuggest
-    (evil-define-key 'insert capf-autosuggest-active-mode-map (kbd "C-f") 'capf-autosuggest-end-of-line))
-
   (dolist (state '(normal insert visual))
     (evil-define-key state dired-mode-map (kbd "C-a") 'dired-create-empty-file)
     (evil-define-key state dired-mode-map (kbd "C-d") 'dired-create-directory))
