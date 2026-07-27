@@ -3,6 +3,11 @@
 个人 Emacs 配置仓库（Emacs Lisp）。本文件是 **AI 协作的单一事实源**：项目规范、构建/运行/开发流程都写在这里，其他 agent 适配文件（`CLAUDE.md`、`.cursor/rules/`）只做引用，不复制内容。
 
 > 平台：Windows（scoop 工具链，`emacs` / `make` / `git` 均在 PATH）。命令以 PowerShell 给出。
+> **emacs 本身来自 msys2 的 mingw64 包**（msys2 由 scoop 装），PATH 上是 scoop shim 指过去的；
+> 这份带 native-comp。升级走 msys2 里的 `pacman -Syu`，不是 `scoop update emacs`。
+> ⚠ 别改用 msys2 的 **ucrt64** 版：那份 `--batch` 没有任何控制台输出，本仓库靠读 batch 输出的
+> 流程（`/run` `/build` `make compile`）会全部变成睁眼瞎。详见
+> [docs/notes/emacs-install-msys2.md](docs/notes/emacs-install-msys2.md)。
 
 ## 这个项目是什么
 
@@ -43,6 +48,7 @@
 | `README.md` | 简洁项目介绍 + 文档入口（规范/流程仍以本文件为准） |
 | `docs/startup-benchmark.md` | 多机启动速度基准记录 + 测法（脚本 `-a` 追加到此） |
 | `scripts/bench-startup.py` | 跨平台测速脚本：采集机器信息 + 三场景测真实 GUI 启动耗时，输出/追加基准块 |
+| `scripts/make-shortcuts.ps1` | Windows：在开始菜单建 Emacs 快捷方式（指向 `runemacs.exe`，带/不带 pdmp 两个入口） |
 | `emacs-dump.cmd` | Windows：带 `--dump-file` 启动 Emacs（pdmp 缺失则回退普通启动） |
 | `emacs-dump.sh` | Linux/macOS：同上 |
 | `emacs.pdmp` | 生成的 dump 映像，**已 gitignore，按需 `make dump` 重建** |
@@ -78,13 +84,16 @@ make dump            # = /build，调用 dump.el 生成 emacs.pdmp
 - `dump.el` 转储前复位 `package--initialized`/`package-activated-list`/`package-alist`，
   让启动时 `init.el` 的 `package-initialize` 重建 load-path（否则没烤进映像的包如 `fd-dired` 找不到）。
 - evil 须在 dump.el 里先设 `evil-want-keybinding nil` 再 require（否则报 evil-collection #60）。
-- `native-comp-eln-load-path` **只在本 Emacs 真支持 native-comp 时才清空**；在不支持的构建上清空
-  会让映像加载时段错误（`0xC0000005`）。见 pdump 笔记「两个静默 bug ②」。
+- **dump 期禁 subr trampoline**（`native-comp-enable-subr-trampolines` 设 nil，转储前再恢复）：
+  包 advice 原语会现场编出 trampoline `.eln`，被烤进映像后启动时加载不回来，报
+  `Error using execdir …: 找不到指定的模块`。见 pdump 笔记 ③。
+- 别再动 `native-comp-eln-load-path`：清空它救不了任何东西，反而让映像加载时段错误
+  （`0xC0000005`）。这条已从 `dump.el` 删除，见 pdump 笔记 ②。
 - `dump.el` 在 `package-initialize` 前把 `package-quickstart-file` 指回本仓库并复位 package 记账，
   否则从 Git Bash / make 里跑（`HOME` 被设）会读到别处的过期 quickstart，静默只激活一小部分包。
-- 构建输出要盯两行：`已激活 65/65 个包` 与 `预加载 20 个包，跳过 0 个`。分子偏小 / 跳过不为 0
+- 构建输出要盯两行：`已激活 68/68 个包` 与 `预加载 20 个包，跳过 0 个`。分子偏小 / 跳过不为 0
   = 映像残缺（历史上这里静默只烤进过 9/20）。
-- ⚠️ **装/删包、或升级 emacs（scoop 更新）后必须 `make dump` 重建**，否则映像不兼容、启动报错。
+- ⚠️ **装/删包、或升级 emacs（msys2 `pacman -Syu`）后必须 `make dump` 重建**，否则映像不兼容、启动报错。
   「装/删包后忘了重建」这种**不报错**的情况，由 `init-full.el` 的 `my/check-pdmp-freshness`
   在启动时比对 `emacs.pdmp` 与 `elpa/` 的时间戳并弹 `*Warnings*` 提醒。
 

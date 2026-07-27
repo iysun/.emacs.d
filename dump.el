@@ -16,19 +16,18 @@
 
 (setq native-comp-jit-compilation nil)
 
-;; dump 里不能含 .eln（native-comp）引用：加载 dump 时 LoadLibrary 调用时序早于
-;; Windows DLL 搜索路径完全建立，会报 "找不到指定的模块"。清空 eln-load-path
-;; 让包在 dump 构建期只加载字节编译版本，不把 .eln 地址烤进映像。
+;; ⚠ dump 期必须禁掉 subr trampoline（msys2/mingw64 的 Emacs 是 native-comp 构建才有此问题）。
+;; 包在 require 时 advice 原语（select-window / read-key-sequence / all-completions…），
+;; Emacs 会现场 native-compile 一个 trampoline .eln 到 `eln-cache/' 并加载；这个 comp unit
+;; 会被烤进映像，启动 --dump-file 时 pdumper 要把它 LoadLibrary 回来却解析不到路径，直接
+;; `Error using execdir …: 找不到指定的模块' 起不来。
+;; 转储前再恢复成 t（见文件末尾），让映像在运行期仍能正常 advice 原语。
 ;;
-;; ⚠ 但**只在本 Emacs 真支持 native-comp 时才清**。不支持 native-comp 的构建
-;; （如 scoop 的 Emacs 30.2）根本不存在 .eln，清空这个路径没有任何防御价值，
-;; 反而会让转出的映像在加载时段错误（0xC0000005）——且需要「包激活得足够多」
-;; 才触发，所以以前 package 激活有 bug 只烤到 9 个包时看不出来，属实难查。
-;; 实测对照：65 个包激活 + 清空 → 段错误；同样 65 个包不清 → 正常启动。
-(when (and (fboundp 'native-comp-available-p)
-           (native-comp-available-p)
-           (boundp 'native-comp-eln-load-path))
-  (setq native-comp-eln-load-path nil))
+;; 历史坑：这里曾试图改用「清空 `native-comp-eln-load-path'」来避免 .eln 进映像——那条路
+;; 不通，映像加载时会段错误（0xC0000005）。清空既拦不住已加载的 AOT comp unit，也没有
+;; 防御价值，别再走回去。禁 trampoline 才是对的开关。
+(defvar my/dump--trampolines native-comp-enable-subr-trampolines)
+(setq native-comp-enable-subr-trampolines nil)
 
 ;; 与 early-init 同逻辑：新机器无 keyring 时关签名校验，避免装/读包失败
 (unless (file-exists-p (expand-file-name "elpa/gnupg/pubring.kbx" user-emacs-directory))
@@ -99,6 +98,10 @@
 (setq package--initialized nil
       package-activated-list nil
       package-alist nil)
+
+;; 恢复 trampoline 开关：只在 dump 构建期禁用，映像本身要带回默认值，
+;; 否则启动后 advice 原语的包（vertico/consult/evil…）会失效。
+(setq native-comp-enable-subr-trampolines my/dump--trampolines)
 
 (let ((out (expand-file-name "emacs.pdmp" user-emacs-directory)))
   (message "dump: 开始转储 -> %s" out)

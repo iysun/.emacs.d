@@ -9,10 +9,14 @@
             (setq gc-cons-threshold (* 20 1024 1024)) ; 例如设置为 20MB
             (setq gc-cons-percentage 0.1)))
 
-;; Prevent unwanted runtime compilation for gccemacs (native-comp) users;
-;; packages are compiled ahead-of-time when they are installed and site files
-;; are compiled when gccemacs is installed.
-(setq native-comp-jit-compilation nil)
+;; native-comp：本机 Emacs 由 msys2/mingw64 提供，是带 native-comp 的 AOT 构建
+;; （旧的 scoop 版没有 native-comp，这里曾设成 nil，在那台构建上纯属空操作）。
+;; 开着 JIT，elpa 里的包会在后台逐步编译进 `eln-cache/'，之后运行更快；
+;; 首次启动/装包后会有一段后台 CPU 占用，属正常。
+;; 编译告警只写 *Warnings*，不自动弹缓冲区（第三方包的告警干扰太多）。
+;; ⚠ dump 构建期是另一回事：`dump.el' 会关掉 JIT 和 subr trampoline，原因见该文件注释。
+(setq native-comp-jit-compilation t)
+(setq native-comp-async-report-warnings-errors 'silent)
 
 ;; Package initialize occurs automatically, before `user-init-file' is
 ;; loaded, but after `early-init-file'. We handle package

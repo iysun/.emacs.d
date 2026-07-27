@@ -55,9 +55,12 @@
 
 ## 走到头的与不能动的
 
-- **native-comp 不可用**：本机 emacs（scoop）`(native-comp-available-p)` => nil，0 个 `.eln`。
-  包只能跑字节码——`require evil`(~0.5s)、doom-modeline+nerd-icons(~0.67s) 是**硬地板**，
-  没法靠原生编译再压。`early-init.el` 里 `native-comp-jit-compilation nil` 在本机是空操作。
+- ~~**native-comp 不可用**~~（2026-07-27 已失效）：那时的 emacs 来自 scoop，
+  `(native-comp-available-p)` => nil、0 个 `.eln`，`require evil`(~0.5s)、
+  doom-modeline+nerd-icons(~0.67s) 是没法再压的**硬地板**。
+  现在 emacs 换成 msys2 mingw64 那份，**native-comp 可用**，`early-init.el` 已开 JIT，
+  包会逐步编进 `eln-cache/`——上面这块「硬地板」的数字需要重测（本页其余数据仍为 scoop 时代所测）。
+  安装方式见 [emacs-install-msys2.md](emacs-install-msys2.md)。
 - **Windows Defender 不是瓶颈**：`Get-MpPreference` 显示 `C:\` 和 `D:\` 整盘已被排除（Sangfor 安全软件设的），
   即 `.emacs.d` / `scoop` 本就不被实时扫描。加目录排除是冗余，实测几乎无变化。
 - **剩余 ~5.3s 里约 2s 是真实 GUI 开销**：建帧 + `toggle-frame-maximized` 最大化重绘 +

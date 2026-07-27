@@ -20,7 +20,7 @@ consult/embark/embark-consult/marginalia/orderless/cape）、doom-themes、hydra
 
 构建时留意这两行输出，能一眼看出是不是又踩了下面的静默 bug：
 ```
-dump: 已激活 65/65 个包        ← 分子远小于分母 = 包激活出问题（见「两个静默 bug」①）
+dump: 已激活 68/68 个包        ← 分子远小于分母 = 包激活出问题（见「三个静默 bug」①）
 dump: 预加载 20 个包，跳过 0 个 ← 跳过不为 0 = 映像残缺
 ```
 
@@ -54,18 +54,18 @@ dump: 预加载 20 个包，跳过 0 个 ← 跳过不为 0 = 映像残缺
 dump 内容无关（空 dump 也崩）。
 **处置**：开始菜单快捷方式改为直接用 `runemacs.exe`（无 `--dump-file`），等 Emacs 31 正式版修复后
 再 `make dump` 重建并恢复快捷方式参数。
-> ⚠ 下面「两个静默 bug ②」会产生**一模一样**的症状（静默 exit 0 / `0xC0000005`），但那个是
+> ⚠ 下面「三个静默 bug ②」会产生**一模一样**的症状（静默 exit 0 / `0xC0000005`），但那个是
 > 内容相关、可修的。判断哪一种，用那节末尾的**空 dump 判据**，别直接按本节结论放弃 pdmp。
 > Emacs 30.2（scoop）实测：空 dump 正常 → 属于 ②，修完 pdmp 已恢复可用。
 
 ### dump.el 已加的两个 Windows 防御性配置
-1. `(setq native-comp-eln-load-path nil)`（dump 构建期）：让包回退字节编译版本，避免 dump 里烤入
-   `.eln`（native-comp DLL）路径引用——加载 dump 时 `LoadLibrary` 调用时序早于 PATH 完全建立，
-   会导致"找不到指定的模块"。
-   ⚠ **现已改为「仅当本 Emacs 真支持 native-comp 时才清」**，见下面「清空 eln 路径反而把映像弄崩」。
+1. `(setq native-comp-enable-subr-trampolines nil)`（**仅 dump 构建期**，转储前恢复原值）：
+   不让包 advice 原语时现场编出 trampoline `.eln` 被烤进映像——那会导致启动时
+   `Error using execdir …: 找不到指定的模块`。详见下面 ③。
+   （⚠ 这一条早先写的是 `(setq native-comp-eln-load-path nil)`，那是**错的**，见下面 ②。）
 2. `eat` 从预加载集中排除：`eat` 含 C 扩展（`eat-core.dll`），烤进 dump 后恢复时有额外崩溃风险。
 
-## 两个静默 bug（2026-07-27 排查，均已修）
+## 三个静默 bug（2026-07-27 排查，均已修）
 
 ### ① 构建期只烤进了 9/20 个包（静默）
 **现象**：`make dump` 报 `dump: 跳过 vertico/consult/corfu/magit/...`（11 个 file-missing），
@@ -94,8 +94,40 @@ Emacs 30.2）没有任何防御价值（根本不存在 `.eln`），却会让转
 | 65 包激活 + **清空** eln 路径 | ❌ 段错误 0xC0000005 |
 | 11 包激活 + 清空 eln 路径 | ✅ 正常启动（包不够多，没触发） |
 
-**修复**：加 `native-comp-available-p` 守卫，只在真有 native-comp 时才清空。
-native-comp 可用的机器上原防御照旧生效。
+**修复（当时）**：加 `native-comp-available-p` 守卫，只在真有 native-comp 时才清空。
+
+**后续推翻（2026-07-27，换到 msys2 的 native-comp 构建后）**：那个守卫等于把炸弹留给了
+「真有 native-comp」的机器——换成 msys2 mingw64 的 Emacs 后守卫首次成立，清空生效，
+映像立刻又是 `0xC0000005`。**清空 `native-comp-eln-load-path` 从来没有防御价值**
+（拦不住已加载的 comp unit），现已从 `dump.el` 整段删除。要防 `.eln` 进映像，正确开关见下面 ③。
+
+### ③ subr trampoline 被烤进映像 → `找不到指定的模块`（native-comp 构建才有）
+**现象**：`make dump` 一切正常（68/68 激活、20 个包 0 跳过），但 `--dump-file` 启动直接死在：
+
+```
+Error using execdir D:\...\mingw64\bin\:
+emacs: 找不到指定的模块。
+```
+
+**根因**：包在 `require` 阶段 advice 原语（`select-window` / `read-key-sequence` /
+`all-completions` / `use-local-map` …）。native-comp 构建遇到这种情况会**现场编译一个
+trampoline `.eln`** 丢进 `eln-cache/` 并加载。它成了一个 comp unit，被 `dump-emacs-portable`
+一起烤进映像；启动时 pdumper 要把每个 comp unit `LoadLibrary` 回来，却解析不到这些
+trampoline 的路径，于是 `ERROR_MOD_NOT_FOUND`。
+（判据：dump 前清空 `eln-cache/`，跑完 `make dump` 后那里凭空多出 7 个
+`subr--trampoline-*.eln`，就是它们。）
+
+**修复**：`dump.el` 在 require 之前 `(setq native-comp-enable-subr-trampolines nil)`，
+**并在 `dump-emacs-portable` 之前恢复原值**——这个变量会被烤进映像，若留成 nil，
+启动后 vertico/consult/evil 那些 advice 原语的包就会失效。
+
+**对照实验**（msys2 mingw64 Emacs 30.2，68 包）：
+
+| 组合 | 结果 |
+|------|------|
+| 禁 trampoline + 不清 eln 路径 | ✅ 正常启动 |
+| 开 trampoline + 不清 eln 路径 | ❌ `找不到指定的模块` |
+| 开 trampoline + 清空 eln 路径 | ❌ 段错误 0xC0000005 |
 
 > 判据：先转一个**空 dump**（`emacs --batch -Q --eval '(dump-emacs-portable "/tmp/e.pdmp")'`）
 > 试启动。空 dump 能起 → 是**内容相关**的问题（往这两条查）；空 dump 也崩 → 才是
@@ -104,11 +136,23 @@ native-comp 可用的机器上原防御照旧生效。
 ### 开始菜单快捷方式：用 runemacs.exe，不用 emacs.exe
 - `emacs.exe`：控制台子系统，启动时**必然弹一个额外终端窗口**。
 - `runemacs.exe`：Windows GUI 子系统，启动**无终端窗口**。
-- 快捷方式应始终指向 `runemacs.exe`（`D:\emacs31\bin\runemacs.exe`）。
+- 快捷方式应始终指向 `runemacs.exe`；msys2 那份在
+  `<scoop>\apps\msys2\current\mingw64\bin\runemacs.exe`。
+- `runemacs.exe` 会把参数原样转给 `emacs.exe`，所以**开始菜单快捷方式直接带 `--dump-file` 即可**，
+  不必绕 `emacs-dump.cmd`（那是 .cmd，会挂一个控制台窗口）。当前 `开始菜单\Programs` 下两个：
+
+  | 名称 | 参数 |
+  |------|------|
+  | `Emacs` | `--dump-file="<repo>\emacs.pdmp"` |
+  | `Emacs (不用 dump 映像)` | 无（映像过期/损坏时用它进去重跑 `make dump`） |
+
+  快捷方式没有 `emacs-dump.cmd` 那种「pdmp 缺失就回退」的逻辑，第二个入口就是手工兜底。
+  重建：`powershell -ExecutionPolicy Bypass -File scripts\make-shortcuts.ps1`（幂等，可重复跑）。
 
 ## 维护成本（pdmp 与 emacs 二进制强绑定）
 - **装/删包后** → `make dump` 重建。
-- **`scoop update emacs` 后** → 二进制 hash 变，旧 pdmp 不兼容、启动报错 → `make dump` 重建。
+- **升级 emacs 后**（现在是 msys2 shell 里 `pacman -Syu`，不再是 `scoop update emacs`）
+  → 二进制 hash 变，旧 pdmp 不兼容、启动报错 → `make dump` 重建。
 - 启动器对「pdmp 缺失」会回退普通启动；对「不兼容」仍会报错——见到就重建。
 
 ## 和 daemon 的取舍
