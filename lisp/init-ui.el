@@ -4,6 +4,9 @@
 ;; （同 init-evil.el 顶层 require evil 的道理）。
 (require 'cl-lib)
 
+(defvar my-ui-default-font-family nil
+  "实际选中的默认字体族名。供 nerd-icons 复用，见下方图标字体一节。")
+
 ;; ---- 字体 ----
 ;; 每类字符集各给一串候选，取第一个**系统真装了**的；都没有就沉默跳过，用 Emacs 默认。
 ;; 用 `find-font' 而非 `(member f (font-family-list))'：后者只比家族名字符串，
@@ -11,12 +14,17 @@
 ;; 容易漏判；`find-font' 走真正的字体匹配。
 ;; 只在图形界面下做——tty 里 set-fontset-font 无意义且可能报错。
 (when (display-graphic-p)
-  ;; 默认（英文/等宽）
+  ;; 默认（英文/等宽）。**不写死字号**——`:height 150' 这种绝对磅值是 zdn 那台机器的
+  ;; 合适值，换一台 DPI/缩放不同的机器就会明显偏大或偏小。这里跟随系统/frame 默认，
+  ;; 由 mode-line 那边用**相对比例**去贴合，缩放才跨机器一致。
+  ;; 真要固定字号，在 custom.el 里设 default 的 :height，别写死在这里。
   (cl-loop for f in '("JetBrainsMono Nerd Font" "JetBrainsMono NFM"
                       "FiraCode Nerd Font" "FiraCode NFM" "Cascadia Code")
            for spec = (font-spec :family f)
            when (find-font spec)
-           return (set-frame-font f nil t))
+           return (progn
+                    (set-frame-font f nil t)
+                    (setq my-ui-default-font-family f)))
   ;; 中文。不写死 :size——固定字号会比英文小，导致中英不等高；跟随默认字号才对齐。
   ;; prepend：插到该字符集候选表最前，优先于 Emacs 自带的回退链。
   (cl-loop for f in '("微软雅黑" "Microsoft YaHei" "Sarasa Term SC Nerd" "DengXian")
@@ -36,6 +44,22 @@
 
 ;; 若想微调中文相对英文的大小（或解决中英行高不齐），用 rescale：>1 放大中文，<1 缩小。
 ;; (setq face-font-rescale-alist '(("微软雅黑" . 1.1)))
+
+;; ---- 图标字体 ----
+;; nerd-icons 默认把所有图标**硬绑**在字体族 "Symbols Nerd Font Mono" 上
+;; （它给图标字符串加的是 face `(:family "Symbols Nerd Font Mono")'）。
+;; 本机没装这个族，于是 mode-line 的分支/诊断图标全渲染成豆腐块 □。
+;;
+;; 但本机装的 JetBrainsMono NFM / FiraCode Nerd Font **本身就是打过 Nerd 补丁的字体**，
+;; 私用区码位（分支 U+E0A0、诊断 U+EA87 等）都在里面。所以不必再下载字体，
+;; 直接把 nerd-icons 指向上面选中的默认字体即可——顺带让图标和正文字体完全一致。
+;;
+;; 另一条路是 `M-x nerd-icons-install-fonts' 下载安装 Symbols Nerd Font Mono；
+;; 那样 nerd-icons 的全部图标集都可用，但要联网 + 装系统字体。
+(with-eval-after-load 'nerd-icons
+  (when my-ui-default-font-family
+    (unless (find-font (font-spec :name nerd-icons-font-family))
+      (setq nerd-icons-font-family my-ui-default-font-family))))
 
 ;; 连字（ligature）。原先用的 `global-prettify-symbols-mode' 其实是把 "->" 之类
 ;; **替换成单个字符**（如 →），并非真连字，且会改变列宽、干扰对齐。
@@ -60,17 +84,42 @@
 ;; auto pair
 (electric-pair-mode t)
 
+;; 括号匹配：当配对的开括号已滚出屏幕时，在顶部浮层显示它所在那行。
+;; 读长函数 / 深嵌套时很有用，且是内置能力，零依赖。
+(setq show-paren-style 'parenthesis
+      show-paren-context-when-offscreen 'overlay
+      blink-matching-paren-highlight-offscreen t)
+(show-paren-mode 1)
+
+;; 标题栏显示文件名，未保存时前置 ●（比默认那串 user@host 有用）
+(setq frame-title-format
+      '(:eval (concat (if (and buffer-file-name (buffer-modified-p)) "● " "")
+                      (buffer-name))))
+
 ;; rainbow-delimiters
 ;; (require 'rainbow-delimiters)
 (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
 
-;; whitespace：本配置只显示 Tab（不显示空格占位符）。
+;; indent-bars：缩进参考线（VSCode 的 indent guides）。
+;; 配置照 zdn 的克制路线——细线、不显示在空行、不高亮当前层级，避免变成视觉噪音。
+(setq indent-bars-display-on-blank-lines nil
+      indent-bars-width-frac 0.1              ; 线宽占字符宽度的比例，越小越细
+      indent-bars-color '(highlight :blend 0.4) ; 取主题 highlight 色再向背景混，融进配色
+      indent-bars-zigzag nil
+      indent-bars-highlight-current-depth nil
+      indent-bars-pattern "|")
+(add-hook 'prog-mode-hook 'indent-bars-mode)
+
+;; whitespace：显示 Tab（»）与空格（·）占位符。
+;; 空格显示曾在 37605ee（2026-06-25「tab 字符设置」）里被一并去掉，这里按需加回。
 ;; display-table 只做字形映射，勿在 glyph 上绑独立 face，否则与 `region' 合并异常
-;; （选区发灰/断层）；颜色只设在 `whitespace-tab'（font-lock）。
+;; （选区发灰/断层）；颜色统一设在 `whitespace-tab' / `whitespace-space'（走 font-lock）。
 ;; Tab 用 GNU 默认向量；font-lock prepend 减轻 treesit 盖住的问题。
-(setq whitespace-style '(face tabs tab-mark)
+(setq whitespace-style '(face tabs tab-mark spaces space-mark)
       whitespace-display-mappings
-      '((tab-mark ?\t [?» ?\t] [?\\ ?\t])))
+      '((tab-mark   ?\t   [?» ?\t] [?\\ ?\t])
+        (space-mark ?\s   [?·]     [?.])
+        (space-mark ?\xa0 [?¤]     [?_])))   ; 不换行空格，单独标出来便于发现
 
 (defun my-ui--fg (face fallback)
   (let ((v (face-attribute face :foreground nil t)))
@@ -122,10 +171,12 @@
          (base (my-ui--fg 'default "#d4d4d4")))
     (when (or (null faded) (string= faded base))
       (setq faded (my-ui--whitespace-muted-fg base bg)))
-    ;; 只有 whitespace-tab：`whitespace-style' 里没开 spaces/space-mark，
-    ;; 设 whitespace-space / whitespace-hspace 是没人用的死代码，已删。
+    ;; Tab 稍重一点（» 比 · 需要更明显），空格用常规字重，避免整片缩进太吵。
     (set-face-attribute 'whitespace-tab nil
-                        :foreground faded :background 'unspecified :weight 'semi-bold)))
+                        :foreground faded :background 'unspecified :weight 'semi-bold)
+    (dolist (sym '(whitespace-space whitespace-hspace))
+      (set-face-attribute sym nil
+                          :foreground faded :background 'unspecified :weight 'normal))))
 
 (add-hook 'after-init-hook #'my-ui-setup-whitespace-faces t)
 (when (boundp 'enable-theme-functions)
@@ -136,7 +187,7 @@
     (my-ui-setup-whitespace-faces)
     (when (and (bound-and-true-p whitespace-font-lock-keywords) font-lock-mode)
       (font-lock-remove-keywords nil whitespace-font-lock-keywords)
-      ;; prepend：优先于 treesit / 其它 append 的 font-lock，Tab 标记才不被盖住
+      ;; prepend：优先于 treesit / 其它 append 的 font-lock，Tab/空格标记才不被盖住
       (font-lock-add-keywords nil whitespace-font-lock-keywords 'prepend)
       (font-lock-flush))))
 (add-hook 'whitespace-mode-hook #'my-ui-whitespace--after-on)
@@ -172,55 +223,6 @@
   )
 
 
-;; 原生 mode-line（VSCode 风格分栏，基于 Emacs 默认段）——替代 doom-modeline。
-;; early-init.el 启动时把 mode-line-format 置 nil（提速），这里在 init 阶段恢复为自定义格式。
-(setq-default mode-line-format
-              '("%e"
-                mode-line-front-space
-                (:eval
-                 (if (bound-and-true-p evil-local-mode)
-                     (format "%s " evil-mode-line-tag)
-                   ""))
-                mode-line-buffer-identification
-                mode-line-format-right-align
-                (:eval
-                 (when (and (bound-and-true-p flymake-mode)
-                            (boundp 'flymake-mode-line-format))
-                   (format-mode-line flymake-mode-line-format)))
-                " "
-                (:eval (when vc-mode (format-mode-line '(vc-mode vc-mode))))
-                " "
-                mode-line-misc-info
-                " "
-                mode-line-front-space
-                mode-line-end-spaces))
-
-;; 加粗 mode-line / tab-line 并加内边距。box 颜色取各自背景色 → 呈现为 padding 而非边框。
-;; 主题加载会重置这些 face，故挂到 enable-theme-functions（每次启用主题后重新应用）+ after-init 兜底。
-(defun my-ui--bg-of (face)
-  "取 FACE 背景色（含继承）；取不到则回退 default 背景。"
-  (or (face-background face nil t) (face-background 'default nil t) "#1e1e1e"))
-
-(defun my-ui-setup-bars (&rest _)
-  "把 mode-line / tab-line 调粗并加内边距。"
-  (require 'tab-line nil t)                       ; 确保 tab-line-* face 已定义
-  ;; mode-line：只用 box 上下 padding 加粗，不动字号（线宽 cons = (左右 . 上下)）
-  (dolist (f '(mode-line mode-line-inactive))
-    (when (facep f)
-      (set-face-attribute f nil :height 'unspecified
-                          :box `(:line-width (1 . 6) :color ,(my-ui--bg-of f)))))
-  ;; tab-line 整条：只用 box padding，不动字号
-  (when (facep 'tab-line)
-    (set-face-attribute 'tab-line nil :height 'unspecified
-                        :box `(:line-width (1 . 5) :color ,(my-ui--bg-of 'tab-line))))
-  ;; 每个标签：左右 + 上下 padding，让标签之间更宽松
-  (dolist (f '(tab-line-tab tab-line-tab-current tab-line-tab-inactive))
-    (when (facep f)
-      (set-face-attribute f nil :box `(:line-width (8 . 6) :color ,(my-ui--bg-of f))))))
-
-(add-hook 'after-init-hook #'my-ui-setup-bars t)
-(when (boundp 'enable-theme-functions)
-  (add-hook 'enable-theme-functions #'my-ui-setup-bars))
 
 (defun set-bigger-spacing ()                                               
   (interactive)

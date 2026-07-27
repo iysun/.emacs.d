@@ -1,6 +1,20 @@
 ;; init-window.el 	-*- lexical-binding: t -*-
 (add-hook 'after-init-hook 'winner-mode)
 
+;; 窗口分隔线：比默认的 `vertical-border' 干净（它会和 fringe 挤在一起）。
+;; 底部分隔线宽度置 0，只在真的有上下分屏时才由下面的钩子临时给 1，
+;; 避免单窗口时 mode-line 底下多出一条没用的线。
+(setq window-divider-default-places t
+      window-divider-default-right-width 1
+      window-divider-default-bottom-width 0)
+(add-hook 'after-init-hook #'window-divider-mode)
+
+(defun my/update-bottom-divider ()
+  "只有存在上下相邻窗口时才显示底部分隔线。"
+  (set-frame-parameter nil 'bottom-divider-width
+                       (if (eq (next-window) (selected-window)) 0 1)))
+(add-hook 'window-configuration-change-hook #'my/update-bottom-divider)
+
 ;; defhydra 来自 hydra 包；显式 require，确保宏在此处可用（否则 fresh 机器
 ;; 上 hydra 未被自动加载时会报 void-function defhydra）。
 (require 'hydra)
@@ -13,33 +27,6 @@
   ("l" enlarge-window-horizontally "向右加宽")
   ("q" nil "退出"))
 
-;; 原生 tab-line（按项目分组 + 过滤 eglot buffer）——替代 centaur-tabs，零第三方、零启动开销。
-(defun my/tab-line-buffer-group-by-project (&optional buffer)
-  "Group buffers by project root via project.el."
-  (with-current-buffer (or buffer (current-buffer))
-    (let* ((dir (or (buffer-file-name) nil))
-           (proj (project-current nil dir))
-           (root (when proj (project-root proj))))
-      (if (and root dir)
-          (file-name-nondirectory (directory-file-name root))
-        "Other"))))
-
-(defun my/tab-line-filter (buffers)
-  "Filter out Eglot-generated buffers from tab-line."
-  (let (result)
-    (dolist (buf buffers (nreverse result))
-      (let ((name (buffer-name buf)))
-        (unless (and name
-                     (let ((case-fold-search t))
-                       (string-match-p "\\`\\s-*\\*eglot" name)))
-          (push buf result))))))
-
-(progn
-  (setq tab-line-tabs-function 'tab-line-tabs-buffer-groups)
-  (setq tab-line-tabs-buffer-group-function #'my/tab-line-buffer-group-by-project)
-  (advice-add 'tab-line-tabs-buffer-list :filter-return #'my/tab-line-filter))
-
-(add-hook 'after-init-hook 'global-tab-line-mode)
 
 ;; (require 'popper)
 (with-eval-after-load 'popper

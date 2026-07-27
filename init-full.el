@@ -31,6 +31,8 @@
            ace-window
            hydra
            rainbow-delimiters
+           indent-bars
+           nerd-icons
            doom-themes
            popper
            consult
@@ -63,6 +65,7 @@
 (require 'init-base)
 (require 'init-evil)
 (require 'init-ui)
+(require 'init-bars)                    ; mode-line + tab-line（须在 init-ui 之后：复用其字体选择结果）
 (require 'init-window)
 (require 'init-completion)
 (require 'init-dired)

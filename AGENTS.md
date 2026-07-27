@@ -33,6 +33,7 @@
 | `init-minimal.el` | 精简 profile 全部内容（与 `init.el` 同级，按路径 load） |
 | `lisp/init-*.el` | 全量 profile 的功能模块（每个 `(provide 'init-xxx)`） |
 | `lisp/init-mirrors.el` | **包源镜像的唯一定义处**（全量/精简/dump 三处都 require 它，换镜像只改这一个文件） |
+| `lisp/init-bars.el` | **mode-line + tab-line**（两条 bar 要在字号/内边距上保持一致，放一起改；须在 `init-ui` 之后加载，复用其字体选择结果） |
 | `lisp/lang-*.el` | 语言专属配置（如 `lang-go.el`，当前未启用） |
 | `custom.el` | Customize 自动生成，**已 gitignore，勿手改** |
 | `elpa/` | 第三方包，**已 gitignore，勿编辑/勿提交** |
@@ -46,7 +47,7 @@
 | `emacs-dump.sh` | Linux/macOS：同上 |
 | `emacs.pdmp` | 生成的 dump 映像，**已 gitignore，按需 `make dump` 重建** |
 
-当前启用的模块（见 `init-full.el` 末尾）：`init-base` `init-evil` `init-ui` `init-window`
+当前启用的模块（见 `init-full.el` 末尾）：`init-base` `init-evil` `init-ui` `init-bars` `init-window`
 `init-completion` `init-dired` `init-git` `init-term` `init-project` `init-mc`
 `init-keymaps` `init-lsp`。`init-ai` / `init-evil-plugins` / `lang-go` 已写好但注释停用。
 
