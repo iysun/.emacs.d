@@ -91,7 +91,7 @@
 ;; (require 'corfu)
 ;; 设置 corfu 变量
 (progn
-  (setq corfu-auto t)
+  (setq corfu-auto nil)
   (setq corfu-auto-prefix 2)
   (setq corfu-preview-current nil)
   (setq corfu-auto-delay 0.5)
@@ -147,5 +147,21 @@
 
 ;; cape-wrap-buster 已移除：它每次按键都绕过 eglot 缓存强制重新请求 LSP，是输入卡顿的主因。
 ;; eglot 29+ 自身的缓存机制已足够，无需 buster。
+
+;; 行内补全预览（Emacs 30+ 内置）：打字时在光标后 inline 显示候选词（灰字），
+;; 不弹窗、不发 LSP 请求，与 corfu 互补——corfu 负责弹出完整候选列表。
+(add-hook 'prog-mode-hook  #'completion-preview-mode)
+(add-hook 'text-mode-hook  #'completion-preview-mode)
+(with-eval-after-load 'comint
+  (add-hook 'comint-mode-hook #'completion-preview-mode))
+(with-eval-after-load 'completion-preview
+  (setq completion-preview-minimum-symbol-length 1)
+  ;; evil insert 模式下退格/删除后也刷新行内预览
+  (dolist (cmd '(evil-delete-backward-char
+                 evil-delete-backward-char-and-join
+                 evil-delete-char))
+    (push cmd completion-preview-commands))
+  ;; M-n/M-p 与 diff-hl 的 evil insert 绑定冲突，不覆盖；用 TAB 确认，C-M-i 看完整列表
+  )
 
 (provide 'init-completion)

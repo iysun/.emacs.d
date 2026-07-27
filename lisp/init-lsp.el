@@ -83,7 +83,26 @@
   (add-to-list 'eglot-server-programs '((python-ts-mode python-mode) "pyright-langserver" "--stdio"))
   (add-to-list 'eglot-server-programs '((typescript-ts-mode tsx-ts-mode js-ts-mode) "typescript-language-server" "--stdio"))
   (require 'consult-eglot)
-  (require 'eldoc-mouse))
+  (require 'eldoc-mouse)
+
+  (defun my/lsp-complete ()
+    "手动触发含 LSP 的完整补全（C-M-i）。
+用 cape-capf-super 合并 eglot + 本地 capf，corfu 弹窗显示所有来源的候选。"
+    (interactive)
+    (let ((completion-at-point-functions
+           (list (cape-capf-super
+                  #'eglot-completion-at-point
+                  #'cape-dabbrev
+                  #'cape-keyword
+                  #'cape-file))))
+      (call-interactively #'completion-at-point)))
+
+  (add-hook 'eglot-managed-mode-hook
+            (lambda ()
+              (setq-local completion-at-point-functions
+                          (remq 'eglot-completion-at-point
+                                completion-at-point-functions))
+              (local-set-key (kbd "C-M-i") #'my/lsp-complete))))
 
 ;; jsonrpc 每条 LSP 消息都会调 `jsonrpc--log-event' 构造日志对象。上面已把事件缓冲区
 ;; 设为 0（不保留内容），但**构造开销仍在**——直接 fset 成 ignore 才能整条掐掉。
