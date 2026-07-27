@@ -45,6 +45,11 @@
 (setq completion-ignore-case t)                   ; capf 匹配时不区分大小写
 (setq read-process-output-max (* 4 1024 1024))    ; 4MB，减少 LSP 大响应的分批 I/O
 
+;; xref 用 ripgrep 而非默认 grep（本机 rg 已装）。影响 xref-find-references
+;; 在无 LSP 时的回退搜索，以及 project 相关的查找。
+(when (executable-find "rg")
+  (setq xref-search-program 'ripgrep))
+
 ;; 不再 eager (require 'eglot)（省 ~1.1s 启动）。
 ;; 下面的 eglot-ensure 钩子会在打开对应代码文件时自动加载 eglot。
 (add-hook 'go-ts-mode-hook 'eglot-ensure)
@@ -58,11 +63,18 @@
 ;; eglot 专属设置移进 with-eval-after-load，避免 setq 早于 defcustom 定义的不确定性。
 (with-eval-after-load 'eglot
   (setq eglot-autoshutdown t)
-  (setq eglot-events-buffer-size 0)         ; 关闭事件日志，减少内存分配
+  ;; 关闭事件日志（省内存 + 省每条消息的日志构造开销）。
+  ;; ⚠ 这里**必须**设 `eglot-events-buffer-config'，不能设旧的 `eglot-events-buffer-size'：
+  ;; 后者自 eglot 1.16 起废弃，全 eglot 只在 `eglot-events-buffer-config' 的 defcustom
+  ;; 默认值表达式里被读一次，即 **eglot 加载那一刻**。写在 with-eval-after-load 里必然太晚，
+  ;; 静默无效（本仓库此前就是这样，"关掉事件日志"其实一直没生效）。
+  (setq eglot-events-buffer-config '(:size 0 :format short))
   (setq eglot-sync-connect 0)               ; 异步连接，打开文件不阻塞
   (setq eglot-send-changes-idle-time 0.5)   ; 停止输入 0.5s 后才把变更推给 LSP（默认值，显式写出）
-  (setq eglot-ignored-server-capabilities   ; 关闭 inlay hints 推送，减少 gopls → Emacs 的通知量
-        '(:inlayHintProvider))
+  (setq eglot-ignored-server-capabilities   ; 关掉这几项高频、低收益的服务端推送
+        '(:inlayHintProvider                ; inlay hints：通知量大
+          :documentHighlightProvider        ; 光标停留就高亮同名符号，每次移动都发请求
+          :foldingRangeProvider))           ; 折叠区间：本配置没用折叠
   (setq eldoc-idle-delay 0.5)               ; 延迟 eldoc hover 请求（= 默认值，显式写出；调小会明显增加 LSP 请求）
 
   ;; gopls 专项调优：关闭代价高的静态分析，按需开启
@@ -77,6 +89,13 @@
   (add-to-list 'eglot-server-programs '((typescript-ts-mode tsx-ts-mode js-ts-mode) "typescript-language-server" "--stdio"))
   (require 'consult-eglot)
   (require 'eldoc-mouse))
+
+;; jsonrpc 每条 LSP 消息都会调 `jsonrpc--log-event' 构造日志对象。上面已把事件缓冲区
+;; 设为 0（不保留内容），但**构造开销仍在**——直接 fset 成 ignore 才能整条掐掉。
+;; 代价：`M-x eglot-events-buffer' 里永远是空的。要抓 LSP 协议时把这行注释掉，
+;; 并把 eglot-events-buffer-config 的 :size 调大。
+(with-eval-after-load 'jsonrpc
+  (fset #'jsonrpc--log-event #'ignore))
 
 ;; Workaround: eglot 的 track-changes 回调有时把 marker 对象直接放进 LSP 消息结构，
 ;; 导致 jsonrpc--json-encode 在序列化时报 "Wrong type argument: consp, #<marker>"。

@@ -10,6 +10,16 @@
 
 (require 'use-package)
 
+;; no-littering：把各包的运行期文件收进 var/ 与 etc/，不再往仓库根目录乱丢
+;; （原先根目录躺着 recentf / history / bookmarks / projects / tramp / transient/ …，
+;; .gitignore 得一条条列）。
+;; ⚠ 必须在 require 各模块**之前**加载：它靠改 `recentf-save-file' / `savehist-file'
+;; 这类变量生效，晚于相关包初始化就来不及了。
+(unless (package-installed-p 'no-littering)
+  (package-install 'no-littering))
+(require 'no-littering)
+(no-littering-theme-backups)            ; 备份/自动保存文件也一并收编
+
 (dolist (package
          '(evil
            evil-collection

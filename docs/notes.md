@@ -8,4 +8,5 @@
 - [包镜像与新机器首次安装](notes/package-mirrors-and-first-install.md) — 换镜像、或新机器装包失败（签名/缺包）时读
 - [启动性能：测了什么、延迟了什么](notes/startup-performance.md) — 动启动速度、想知道某包为何延迟/为何不 eager、或 magit/dired/eglot 首次慢时读
 - [用 portable dump 加速启动](notes/pdump-startup.md) — 改 dump.el / build、用 emacs.pdmp 启动、装包或升级 emacs 后重建、或 dump 相关报错时读
+- [eglot / LSP 手感调优（含静默失效的陷阱）](notes/lsp-eglot-tuning.md) — 调 LSP 卡顿/日志/能力开关、或想设某个 eglot 变量却"没反应"时读
 - [AI 补全（minuet + SiliconFlow）](notes/ai-completion-minuet.md) — 启用/配置 `init-ai.el`、处理 API key 时读

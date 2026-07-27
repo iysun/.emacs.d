@@ -1,33 +1,32 @@
-amx-items
-/auto-save-list
-/.cache
-/eln-cache
+# ---- 运行期文件（由 no-littering 收编到 var/）----
+# 加了 no-littering 后，recentf / history / bookmarks / projects / tramp /
+# eshell 历史 / transient / auto-save 等不再散落在根目录，忽略 var/ 即可。
+#
+# 注意 etc/ **不在**忽略之列：按 no-littering 的约定，var/ 放"程序自己改的数据"，
+# etc/ 放"你会手动编辑的配置"（如 etc/eshell/alias）——后者应当入库。
+/var/
+
+# ---- 包与编译产物 ----
 /elpa
-/transient
-.lsp-session-v1
-eshell/*
-!eshell/alias
-/notes
-recentf
-tramp
-custom.el
-/projectile-bookmarks.eld
-/projects
-/history
-/bookmarks
-/.mc-lists.el
-/.emacs.rej
-/tree-sitter/
+/eln-cache
 /straight/
 **/*.elc
 
 # 自定义 portable dump（机器/emacs 版本相关，按需 `make dump` 重建）
 /emacs.pdmp
-# /emacs-dump.cmd
 
-# 运行期噪音（Emacs daemon socket / 教程副本）
+# tree-sitter grammar 二进制（平台相关，按需 M-x treesit-install-language-grammar）
+/tree-sitter/
+
+# ---- Customize 自动生成 ----
+custom.el
+
+# ---- 其它运行期噪音 ----
 /server
 /tutorial
+/.cache
+.lsp-session-v1
+/.emacs.rej
 
-# AI agent 本地配置（含机器相关路径/密钥），勿入库
+# ---- AI agent 本地配置（含机器相关路径/密钥），勿入库 ----
 .claude/settings.local.json

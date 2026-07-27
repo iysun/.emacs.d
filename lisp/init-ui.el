@@ -1,22 +1,53 @@
 ;; init-ui.el   -*- lexical-binding: t -*-
 
-;; (set-frame-font "-CTDB-FiraCode Nerd Font-medium-normal-normal-*-26-*-*-*-m-0-iso10646-1" nil t)
-;; 按候选顺序选第一个已安装的字体；都没有则用默认，避免缺字体时启动报错。
-;; （Windows 上 JetBrainsMono 的家族名常为 "JetBrainsMono NFM"，故一并列入。）
-(catch 'font-set
-  (dolist (f '("JetBrainsMono Nerd Font" "JetBrainsMono NFM"
-               "FiraCode Nerd Font" "FiraCode NFM"))
-    (when (member f (font-family-list))
-      (set-frame-font f nil t)
-      (throw 'font-set t))))
-;; 中文字体回退（仅当系统装有该字体时生效）。
-;; 不写死 :size——之前固定 16 比英文小，导致中文偏小。去掉 size 后中文跟随默认（英文）字号，等大对齐。
-(when (member "微软雅黑" (font-family-list))
-  (set-fontset-font t 'han (font-spec :family "微软雅黑")))
+;; `cl-loop' 是宏，字节编译期必须先加载 cl-lib，否则被当函数编译成坏 .elc
+;; （同 init-evil.el 顶层 require evil 的道理）。
+(require 'cl-lib)
+
+;; ---- 字体 ----
+;; 每类字符集各给一串候选，取第一个**系统真装了**的；都没有就沉默跳过，用 Emacs 默认。
+;; 用 `find-font' 而非 `(member f (font-family-list))'：后者只比家族名字符串，
+;; 对同一字体的不同注册名（Windows 上 "JetBrainsMono Nerd Font" vs "JetBrainsMono NFM"）
+;; 容易漏判；`find-font' 走真正的字体匹配。
+;; 只在图形界面下做——tty 里 set-fontset-font 无意义且可能报错。
+(when (display-graphic-p)
+  ;; 默认（英文/等宽）
+  (cl-loop for f in '("JetBrainsMono Nerd Font" "JetBrainsMono NFM"
+                      "FiraCode Nerd Font" "FiraCode NFM" "Cascadia Code")
+           for spec = (font-spec :family f)
+           when (find-font spec)
+           return (set-frame-font f nil t))
+  ;; 中文。不写死 :size——固定字号会比英文小，导致中英不等高；跟随默认字号才对齐。
+  ;; prepend：插到该字符集候选表最前，优先于 Emacs 自带的回退链。
+  (cl-loop for f in '("微软雅黑" "Microsoft YaHei" "Sarasa Term SC Nerd" "DengXian")
+           for spec = (font-spec :family f)
+           when (find-font spec)
+           return (set-fontset-font t 'han spec nil 'prepend))
+  ;; 符号（制表符、箭头、几何图形等；magit/dired 的框线字符会用到）
+  (cl-loop for f in '("Segoe UI Symbol" "Symbola" "Symbol")
+           for spec = (font-spec :family f)
+           when (find-font spec)
+           return (set-fontset-font t 'symbol spec nil 'prepend))
+  ;; Emoji
+  (cl-loop for f in '("Noto Color Emoji" "Segoe UI Emoji")
+           for spec = (font-spec :family f)
+           when (find-font spec)
+           return (set-fontset-font t 'emoji spec nil 'prepend)))
+
 ;; 若想微调中文相对英文的大小（或解决中英行高不齐），用 rescale：>1 放大中文，<1 缩小。
 ;; (setq face-font-rescale-alist '(("微软雅黑" . 1.1)))
-;; 开启连体字
-(global-prettify-symbols-mode 1)
+
+;; 连字（ligature）。原先用的 `global-prettify-symbols-mode' 其实是把 "->" 之类
+;; **替换成单个字符**（如 →），并非真连字，且会改变列宽、干扰对齐。
+;; 这里改用 `composition-function-table'：让字体自己的连字字形生效，字符本身不变。
+;; 需要字体支持（JetBrainsMono / FiraCode / Cascadia 都带）。
+(dolist (chars '("::" "..." "->" "=>" "<=" ">=" "!==" "!=" "===" "==" "<!--" "-->"
+                 "/*" "*/" "&&" "||" "??" "|>" "<|" "++" "--" "<<" ">>"))
+  (set-char-table-range
+   composition-function-table
+   (aref chars 0)
+   (nconc (char-table-range composition-function-table (aref chars 0))
+          (list (vector (regexp-quote chars) 0 'font-shape-gstring)))))
 
 ;; 精准像素滚动（Emacs 29+，31 更稳定）
 (pixel-scroll-precision-mode 1)

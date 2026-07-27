@@ -32,6 +32,12 @@
 ;; eshell 配置
 (add-hook 'completion-at-point-functions 'pcomplete-completations-at-point nil t)
 
+;; eshell 别名文件。no-littering 把 `eshell-directory-name' 指到了 var/eshell/（运行期数据），
+;; 但**别名是配置、要入库**，所以单独指到 etc/eshell/alias（etc/ 不在 gitignore 里）。
+;; 历史 / lastdir 仍留在 var/eshell/。
+(setq eshell-aliases-file
+      (expand-file-name "etc/eshell/alias" user-emacs-directory))
+
 ;; eshell 自定义变量
 (setq eshell-banner-message "")
 (setq eshell-visual-commands '("bat" "less" "more" "htop" "man" "vim" "fish"))

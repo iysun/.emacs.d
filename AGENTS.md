@@ -36,6 +36,7 @@
 | `lisp/lang-*.el` | 语言专属配置（如 `lang-go.el`，当前未启用） |
 | `custom.el` | Customize 自动生成，**已 gitignore，勿手改** |
 | `elpa/` | 第三方包，**已 gitignore，勿编辑/勿提交** |
+| `var/` `etc/` | no-littering 收编的运行期文件（recentf/savehist/bookmark/project/tramp/eshell/transient…），**已 gitignore，勿手改** |
 | `docs/` | 配置笔记，`docs/notes.md` 是索引，正文在 `docs/notes/*.md`（按需读取） |
 | `dump.el` | portable dump 构建脚本（预加载重包→`emacs.pdmp`），`make dump` / `/build` 调用 |
 | `README.md` | 简洁项目介绍 + 文档入口（规范/流程仍以本文件为准） |
@@ -141,7 +142,12 @@ $env:SILICONFLOW_API_KEY = "sk-xxxx"   # 由用户在自己的 shell/系统环�
 - **改了行为/加了模块** → 同步更新本文件相关小节（结构表、启用模块列表、命令）。纯重构 / 小修可不动文档。
 - **新增模块**：在 `lisp/` 下建 `init-xxx.el`，文件末 `(provide 'init-xxx)`，并在 `init.el` 末尾 `(require 'init-xxx)`。
 - **改完怎么验证**：用 `/run`（批处理加载全量 + 精简两套 profile，确认无错）；语法快查用 `/build`（编译后自动清理 `.elc`）。
-- **别碰** `elpa/`、`custom.el`、`server/`；不要提交 `.elc`（已 gitignore），也不要把 `.elc` 留在工作区——交互会话 `load-prefer-newer` 为 nil，旧 `.elc` 会盖过更新的 `.el`。
+- **别碰** `elpa/`、`var/`、`etc/`、`custom.el`、`server/`；不要提交 `.elc`（已 gitignore），也不要把 `.elc` 留在工作区——交互会话 `load-prefer-newer` 为 nil，旧 `.elc` 会盖过更新的 `.el`。
+- **运行期文件一律走 `var/` / `etc/`**（全量 profile 由 no-littering 统一收编；精简 profile 手动指了
+  `savehist-file` / `package-quickstart-file`）。新加的包若往仓库根写文件，先看 no-littering 有没有覆盖，
+  没有就显式把它的路径指进 `var/`，**别让根目录再长出运行期文件**。
+  ⚠ 尤其是 `package-quickstart.el`：根目录一旦有过期的那份，会被 `package-activate-all` 当成激活清单
+  读走，导致大批包"装了却没激活"（dump 踩过这个坑，见 pdump 笔记）。
 - 包源用 USTC 镜像；**只在 `lisp/init-mirrors.el` 里改**（全量/精简/dump 都 require 它，不要再在别处写 `package-archives`）。
 - 路径别硬编码 `~/.emacs.d/`，一律用 `user-emacs-directory`。Windows 上 Git Bash 等会设 `HOME`，
   届时 `~/.emacs.d` 指向 `C:\Users\<user>\.emacs.d`，而本仓库在 `%APPDATA%\.emacs.d`，两者不是一个地方。

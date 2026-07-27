@@ -25,6 +25,10 @@
   (tool-bar-mode -1)
 
   (setq inhibit-startup-screen t)
+  ;; 运行期文件也收进 var/，与全量 profile 的 no-littering 保持一致的根目录整洁。
+  ;; 精简 profile 刻意不引第三方包，所以手动指路径而不是用 no-littering。
+  ;; 注意 savehist-file 必须在 savehist-mode 之前设好。
+  (setq savehist-file (expand-file-name "var/savehist.el" user-emacs-directory))
   (savehist-mode 1)
   (global-auto-revert-mode t) ;; 其他文件更新时更新文件
   (setq make-backup-files nil) ;; 关闭备份文件
@@ -35,7 +39,11 @@
   )
 
 (require 'package)
-(setq package-quickstart t)
+;; quickstart 文件也放 var/（须在 package-initialize 之前设）。
+;; 别让它落在仓库根：根目录的 quickstart 一旦过期，会被 package-activate-all
+;; 当成激活清单读走，导致大批包"装了却没激活"——dump 就踩过这个坑。
+(setq package-quickstart t
+      package-quickstart-file (expand-file-name "var/package-quickstart.el" user-emacs-directory))
 (require 'init-mirrors)                 ; package-archives 的唯一定义处
 (package-initialize)
 
