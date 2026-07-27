@@ -39,7 +39,7 @@ description: 生成自定义 portable dump（emacs.pdmp）加速启动；预加�
 - **不要在 `dump.el` 里跑用户 init**：dump 期无 GUI，跑 init 会踩字体/frame/主题坑。只预加载第三方库。
 - `dump.el` 末尾会复位 `package--initialized` / `package-activated-list` / `package-alist`，
   让启动时 `init.el` 的 `package-initialize` 重建 load-path（否则没烤进映像的包如 fd-dired 会找不到）。
-- evil 必须在 `dump.el` 里先设 `evil-want-keybinding nil` 再 require，否则启动报 evil-collection #60。
+- evil 的 `evil-want-*`（含 `evil-want-keybinding`，默认 `t`）必须在 `dump.el` 里先设好再 require。
 - 本命令**不校验用户 config 语法**（dump 只加载第三方库）。config 正确性用 `/run`；纯语法 lint 用 `make compile`
   （注意它产 `.elc`，检查完用 PowerShell 清掉：`Get-ChildItem -Path .,lisp -Filter *.elc -File | Remove-Item -Force`）。
 - `emacs.pdmp` 已 gitignore，勿提交。

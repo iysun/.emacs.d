@@ -1,11 +1,13 @@
 ;; init-evil.el 	-*- lexical-binding: t -*-
 ;; 启用 Evil 全局配置
 
-;; evil-want-* 必须在 evil 加载【前】设置。尤其 evil-want-keybinding：
-;; 加载 evil 后再设会触发 evil-collection issue #60 警告。
+;; evil-want-* 必须在 evil 加载【前】设置。
+;; evil-want-keybinding t（默认）：让 evil 加载自带的 evil-keybindings.el，为 dired/help/
+;; ibuffer 等 special mode 提供基础 evil 键位。已移除 evil-collection，故用默认 t 而非 nil
+;; （设 nil 是给 evil-collection 接管用的，没有它时会导致 special mode 完全没有 evil 键位）。
 (progn
   (setq evil-want-integration t)                ; 与 Emacs minor modes 集成
-  (setq evil-want-keybinding nil)
+  (setq evil-want-keybinding t)
   (setq evil-shift-width 2)
   (setq evil-search-module 'evil-search)        ; 必须！支持 gn / cgn
   (setq evil-respect-visual-line-mode t)        ; 在 visual-line-mode 中按行移动
@@ -20,8 +22,6 @@
 
 (evil-mode 1)
 (with-eval-after-load 'evil
-  (require 'evil-collection)
-  (evil-collection-init)
   (require 'evil-surround)
   (global-evil-surround-mode 1)
   (require 'evil-visualstar)

@@ -49,7 +49,6 @@
 
 (dolist (package
          '(evil
-           evil-collection
            multiple-cursors
            ;; corfu
            doom-themes))
@@ -94,7 +93,7 @@
 
 (progn
   (setq evil-want-integration t)		; 与 Emacs minor modes 集成
-  (setq evil-want-keybinding nil)
+  (setq evil-want-keybinding t)			; 用 evil 自带键位（已移除 evil-collection）
   (setq evil-shift-width 2)
   (setq evil-search-module 'evil-search)	; 必须！支持 gn / cgn
   (setq evil-respect-visual-line-mode t)	; 在 visual-line-mode 中按行移动
@@ -140,9 +139,6 @@
 
 (add-hook 'after-init-hook 'global-tab-line-mode)
 (add-hook 'after-init-hook 'evil-mode)
-(add-hook 'emacs-startup-hook
-          (lambda ()
-            (run-with-idle-timer 0.2 nil #'evil-collection-init)))
 
 
 (defvar my/is-multiple-cursors-mode nil)

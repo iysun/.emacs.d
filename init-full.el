@@ -22,7 +22,6 @@
 
 (dolist (package
          '(evil
-           evil-collection
            evil-surround
            evil-visualstar
            evil-commentary

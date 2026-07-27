@@ -36,7 +36,7 @@ Remove-Item Env:\EMACS_MINIMAL
 - **真 bug（要修）**：`Cannot open load file`（缺包/缺 require）、`void-function`、`void-variable`、
   `Symbol's value as variable is void`、`wrong-type-argument`、模块加载顺序错。
   按回溯定位 `文件:行` 修，回到对应步骤重验。
-- **可忽略**：evil-collection 关于 issue #60 的提示等信息性输出（非错误）。
+- **可忽略**：包在字节编译期的 obsolete/deprecation 警告等信息性输出（非错误）。
 
 ## 注意
 

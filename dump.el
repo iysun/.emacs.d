@@ -54,10 +54,10 @@
 (message "dump: 已激活 %d/%d 个包（elpa: %s）"
          (length package-activated-list) (length package-alist) package-user-dir)
 
-;; evil-want-* 必须在 evil 加载【前】设好（尤其 evil-want-keybinding）。否则烤进映像的 evil
-;; 会以默认值加载，启动时 evil-collection 报 issue #60。与 init-evil.el 顶部保持一致。
+;; evil-want-* 必须在 evil 加载【前】设好（尤其 evil-want-keybinding）。与 init-evil.el 顶部一致：
+;; 用默认 t，让烤进映像的 evil 带上自带的 evil-keybindings.el（已移除 evil-collection）。
 (setq evil-want-integration t
-      evil-want-keybinding nil
+      evil-want-keybinding t
       evil-shift-width 2
       evil-search-module 'evil-search
       evil-respect-visual-line-mode t
@@ -68,7 +68,7 @@
 ;; 核心组（启动期，最稳）+ 加分组（常用重包；若转储报错优先从加分组里删）。
 (defvar my/dump-packages
   '(;; --- 核心 ---
-    evil evil-collection evil-surround evil-visualstar evil-commentary
+    evil evil-surround evil-visualstar evil-commentary
     vertico marginalia consult embark embark-consult orderless
     corfu cape doom-themes hydra project
     ;; --- 加分 ---

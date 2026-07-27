@@ -100,9 +100,9 @@
   (global-set-key (kbd "C--") 'popper-toggle)
   (global-set-key (kbd "C-=") 'popper-cycle)
 
-  ;; eshell-mode-map 每次进入 eshell-mode 都会被重建，evil-collection 经
-  ;; eshell-first-time-mode-hook 重设键位（其中把 insert 态 RET 绑成 newline → 回车只换行不执行）。
-  ;; 因此这些绑定必须放在 eshell-mode-hook（晚于 first-time 钩子）里、且 depth 靠后，才能覆盖。
+  ;; eshell-mode-map 每次进入 eshell-mode 都会被重建，eshell 的 first-time 钩子会重设键位。
+  ;; 为确保 insert 态 RET = 执行命令（而非只换行），这些绑定放在 eshell-mode-hook（晚于
+  ;; first-time 钩子）里、且 depth 靠后，才能稳定覆盖。
   (defun my/eshell-evil-insert-keys ()
     (evil-define-key 'insert eshell-mode-map (kbd "RET") 'eshell-send-input)        ; 回车=执行命令
     (evil-define-key 'insert eshell-mode-map (kbd "<return>") 'eshell-send-input)

@@ -85,7 +85,8 @@ make dump            # = /build，调用 dump.el 生成 emacs.pdmp
 - **只预加载第三方库，不在 dump 期跑用户 init**（dump 期无 GUI，会踩字体/frame/主题坑）。
 - `dump.el` 转储前复位 `package--initialized`/`package-activated-list`/`package-alist`，
   让启动时 `init.el` 的 `package-initialize` 重建 load-path（否则没烤进映像的包如 `fd-dired` 找不到）。
-- evil 须在 dump.el 里先设 `evil-want-keybinding nil` 再 require（否则报 evil-collection #60）。
+- evil 的 `evil-want-keybinding` 等 `evil-want-*` 须在 dump.el 里先设好再 require（用默认 `t`，
+  与 init-evil.el 一致；已移除 evil-collection）。
 - **dump 期禁 subr trampoline**（`native-comp-enable-subr-trampolines` 设 nil，转储前再恢复）：
   包 advice 原语会现场编出 trampoline `.eln`，被烤进映像后启动时加载不回来，报
   `Error using execdir …: 找不到指定的模块`。见 pdump 笔记 ③。
