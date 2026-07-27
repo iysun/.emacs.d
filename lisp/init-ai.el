@@ -1,3 +1,5 @@
+;;; init-ai.el --- AI 补全（minuet + SiliconFlow）  -*- lexical-binding: t -*-
+
 (use-package minuet
   :ensure t
   :init

@@ -1,36 +1,31 @@
 ;;; -*- lexical-binding: t; -*-
 
-;; tree-sitter 模式路由。
+;; tree-sitter 模式路由（Emacs 31 内置 `treesit-enabled-modes'，替代第三方 treesit-auto）。
 ;;
-;; Emacs 31 内置 `treesit-enabled-modes'：设 t 即自动把所有有 ts 变体的 major mode
-;; 切到 tree-sitter 版本，替代第三方 treesit-auto。
+;; ⚠ **必须用 `setopt'，不能用 `setq'**。`treesit-enabled-modes' 的 defcustom 带 `:set'
+;; 处理器，真正干活的是那个 `:set'——它按 `treesit-major-mode-remap-alist' 去填
+;; `major-mode-remap-alist'。`setq' 只改变量值、不触发 `:set'，于是一条 remap 都不会生成，
+;; 而且**没有任何报错**。实测（31.0.91）：setq → 0 条，setopt → 26 条。
+;; 连带后果是下面的 `eglot-ensure' 全部失效（它们只挂在 *-ts-mode-hook 上）。
 ;;
-;; Emacs ≤30 没有这个变量，`setq' 它只是凭空造一个没人读的全局量（静默失效）。
-;; 该分支下手动填 `major-mode-remap-alist'，逐语言用 `treesit-ready-p' 把关：
-;; grammar 装了才 remap，没装就留在原生 mode，不会开出一个报错的空 ts buffer。
-;; （Windows 上 grammar DLL 常因 ABI 不匹配加载失败，此时全部跳过，行为同未配置。）
-(if (boundp 'treesit-enabled-modes)
-    (setq treesit-enabled-modes t)
-  (when (and (fboundp 'treesit-available-p) (treesit-available-p))
-    (require 'treesit)
-    ;; (语言 . (原 mode . ts mode))；只覆盖下面 eglot-ensure 挂钩的那几门语言。
-    (dolist (spec '((go         (go-mode        . go-ts-mode))
-                    (gomod      (go-dot-mod-mode . go-mod-ts-mode))
-                    (python     (python-mode    . python-ts-mode))
-                    (javascript (js-mode        . js-ts-mode)
-                                (javascript-mode . js-ts-mode)
-                                (js2-mode       . js-ts-mode))
-                    (typescript (typescript-mode . typescript-ts-mode))
-                    (c          (c-mode         . c-ts-mode))
-                    (cpp        (c++-mode       . c++-ts-mode))))
-      (when (treesit-ready-p (car spec) t)
-        (dolist (pair (cdr spec))
-          (add-to-list 'major-mode-remap-alist pair))))
-    ;; .ts/.tsx 在 Emacs 30 没有非 ts 的内置 major mode 可 remap，直接进 auto-mode-alist。
-    (when (treesit-ready-p 'typescript t)
-      (add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-ts-mode)))
-    (when (treesit-ready-p 'tsx t)
-      (add-to-list 'auto-mode-alist '("\\.tsx\\'" . tsx-ts-mode)))))
+;; 这里显式列出要启用的 mode，而不是图省事写 t：t 会把 26 个 ts-mode 全部 remap，
+;; 包括本机没装 grammar 的，打开对应文件就会被 `treesit-auto-install-grammar'（默认 'ask）
+;; 拦下来问要不要现场编译 grammar。列白名单等价于旧版逐语言 `treesit-ready-p' 把关：
+;; 缺 grammar 的语言留在原生 mode，安静且可预期。
+;; （Windows 上 grammar DLL 常因 ABI 不匹配加载失败，这一点尤其重要。）
+;;
+;; 下面这份是「仓库 tree-sitter/ 下实际可用的 grammar」∩「31 能 remap 的 ts-mode」，
+;; 用 `treesit-language-available-p' 逐个验过。装了新 grammar 后记得往这里加。
+;; 当前缺 grammar 而被排除的：c / c-or-c++（缺 c）、typescript、tsx、bash、csharp、cmake。
+;; `setopt' 会自动 require treesit，无需手动 require。
+(setopt treesit-enabled-modes
+        '(go-ts-mode go-mod-ts-mode go-work-ts-mode
+          python-ts-mode js-ts-mode json-ts-mode
+          c++-ts-mode
+          css-ts-mode mhtml-ts-mode php-ts-mode
+          java-ts-mode lua-ts-mode ruby-ts-mode rust-ts-mode
+          yaml-ts-mode toml-ts-mode dockerfile-ts-mode
+          elixir-ts-mode heex-ts-mode))
 
 ;; 补充 Emacs 31 尚未内置 grammar 源的语言（TypeScript/Rust/TOML/YAML/Dockerfile 已内置）。
 ;; 缺 grammar 时执行 M-x treesit-install-language-grammar 即可按此列表拉取。

@@ -84,8 +84,11 @@
                 mode-line-front-space
                 mode-line-end-spaces))
 
-(set-face-attribute 'mode-line nil :box nil :height 110)
-(set-face-attribute 'mode-line-inactive nil :box nil :height 110)
+;; mode-line-active 是 Emacs 29+ 才有的 face（选中窗口实际用的是它，不是 mode-line）；
+;; 漏掉它会让选中窗口的 mode-line 保持默认字号/边框，和其它窗口不一致。用 facep 兜住。
+(dolist (f '(mode-line mode-line-active mode-line-inactive))
+  (when (facep f)
+    (set-face-attribute f nil :box nil :height 110)))
 
 (add-hook 'after-init-hook 'fido-vertical-mode)
 

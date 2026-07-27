@@ -100,8 +100,16 @@ foreach ($n in "emacs","emacsclient","emacsclientw","etags","ctags") {
 - **仓库里那条「Emacs 31.0.90 加载任意 `--dump-file` 必崩」是误判**，已在
   [pdump-startup.md](pdump-startup.md) 推翻。真凶是 trampoline 和 eln-load-path 两个内容坑，
   只是它们要 native-comp 构建才暴露，而当时对照组 scoop 30.2 没有 native-comp。
-- **Emacs 31 会对缺 `lexical-binding` cookie 的文件告警**，`custom.el`（Customize 自动生成、
-  已 gitignore）每次启动都会报一条。无害，不用管。
+- **Emacs 31 会对缺 `lexical-binding` cookie 的文件告警**（30 只在字节编译期告警，31 提前到
+  `load` 时）。`custom.el`（Customize 自动生成、已 gitignore）和 `lisp/init-ai.el` 都补了首行
+  cookie；`custom.el` 那行实测过 `custom-save-all` 重写时不会被冲掉。
+  换机器时 `custom.el` 是重新生成的，需要再补一次。
+- **配置侧唯一的实质改动在 `lisp/init-lsp.el` 的 tree-sitter 路由**：`treesit-enabled-modes`
+  必须用 `setopt`（`setq` 静默失效，会导致 ts-mode 和 eglot 全部不生效），且列白名单而非写 `t`。
+  原委见 [lsp-eglot-tuning.md](lsp-eglot-tuning.md)。
+- **两条新默认值配置里没覆盖，先用着**：`split-window-preferred-direction` 默认 `longest`
+  （宽屏下 `display-buffer` 改为左右分屏；不适应就设 `'vertical`）、终端下
+  `xterm-mouse-mode` 默认开启（只影响 TTY）。
 - **升级方式**：不再是 `pacman -Syu` 升 emacs（那只升 msys2 的库和工具链）。要升 Emacs 本身，
   回 `/d/dev-cache/emacs31` `git pull` 重编重装。**升完必须 `make dump` 重建 pdmp。**
 

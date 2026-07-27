@@ -350,10 +350,15 @@ Windows IME，得在 `my/switch-to-english-input-method' 那侧自己维护一�
     (when (facep f)
       (set-face-attribute f nil :height my-ui-mode-line-height
                           :box (my-ui--bar-box f))))
-  ;; tab-line 整条：同字号、同上下 padding
-  (when (facep 'tab-line)
-    (set-face-attribute 'tab-line nil :height my-ui-mode-line-height
-                        :box (my-ui--bar-box 'tab-line)))
+  ;; tab-line 整条：同字号、同上下 padding。
+  ;; tab-line-active / tab-line-inactive 是 Emacs 31 新增（选中窗口用 active，其余用
+  ;; inactive），目前定义为纯继承 `((t :inherit tab-line))'，所以只设 tab-line 也生效；
+  ;; 但主题一旦给它们设了显式属性，继承链就断了，两条 bar 会厚度不一致。
+  ;; 与上面 mode-line 一样用 facep 逐个判断，把新 face 一起兜住。
+  (dolist (f '(tab-line tab-line-active tab-line-inactive))
+    (when (facep f)
+      (set-face-attribute f nil :height my-ui-mode-line-height
+                          :box (my-ui--bar-box f))))
   ;; 每个标签：左右加宽让标签之间松一些，上下用与整条 bar 相同的 padding，
   ;; 否则标签会比它所在的 bar 更高/更矮，边缘出现台阶。
   (dolist (f '(tab-line-tab tab-line-tab-current tab-line-tab-inactive))

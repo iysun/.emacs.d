@@ -77,7 +77,9 @@
            ;;("C-c t c" . go-test-current-coverage)
            ;;("C-c t x" . go-run))))
 
+;; 注意变量名：Emacs 31 起是 `go-ts-indent-offset'（旧名 `go-ts-mode-indent-offset'
+;; 已废弃，见 NEWS「When the new TS modes were introduced, a mistake was made」）。
 ;;(use-package go-ts-mode
-;;    :init (setq go-ts-mode-indent-offset 4))
+;;    :init (setq go-ts-indent-offset 4))
 
 (provide 'lang-go)
