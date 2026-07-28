@@ -11,3 +11,4 @@
 - [用 portable dump 加速启动](notes/pdump-startup.md) — 改 dump.el / build、用 emacs.pdmp 启动、装包或升级 emacs 后重建、或 dump 相关报错时读
 - [eglot / LSP 手感调优（含两个静默失效的陷阱）](notes/lsp-eglot-tuning.md) — 调 LSP 卡顿/日志/能力开关、改 tree-sitter 模式路由、或想设某个变量却"没反应"时读
 - [AI 补全（minuet + SiliconFlow）](notes/ai-completion-minuet.md) — 启用/配置 `init-ai.el`、处理 API key 时读
+- [Vendor 字体：assets/fonts/](notes/vendored-fonts.md) — mode-line/tab-line 图标出豆腐块、换新机器需要装字体、想知道为什么某几个字体没收进仓库、或要重新 vendor 字体时读

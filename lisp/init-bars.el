@@ -16,7 +16,12 @@
 ;;
 ;; 和 zdn 的两处**有意不同**（照抄会是功能倒退，见各处注释）：
 ;;   1. 保留 evil 状态段——zdn 不用 evil。
-;;   2. 用 `setq-default' 兜底，而不是只在几个 mode-hook 里 `setq-local'。
+;;   2. 图标改惰性缓存（`after-init-hook' 里取一次、取不到就退回纯文本），而不是
+;;      zdn 那种加载期直接 `defconst' 调 `nerd-icons-*'——那要求 nerd-icons 那一刻
+;;      已经加载完，本仓库 nerd-icons 是 `:defer t'，字面照抄会在启动时直接报
+;;      `void-function'。两种写法用户看到的最终效果一样，只是本仓库这种不用把
+;;      nerd-icons 从"按需加载"改回"启动就加载"。
+;; 其余（mode-line 可见范围、VC 段点击动作、major-mode 段显示条件）都已对齐 zdn。
 ;; 尺寸取它的观感（细窄状态条、无 box），但用**相对字号**而非它写死的绝对磅值，
 ;; 以免换机器/换 DPI 走形。见文件末尾 `my-ui-setup-bars'。
 ;;
@@ -39,14 +44,27 @@
 (defun my-ui--ml-icon (key fallback)
   (or (alist-get key my-ui--ml-icons) fallback))
 
+(defun my-ui--glyph-displayable-p (str)
+  "STR 里的字符是否都能在当前 frame 上找到字体显示。
+nerd-icons 的私用区图标即使字体族没装/没那个码位，`nerd-icons-*' 调用本身
+也不报错——只会插入一个没人认得的码位，渲染成豆腐块 □。`ignore-errors' 兜
+不住这种情况，得用 `char-displayable-p' 显式探测，探测不到就别用这个字符串，
+回退纯文本比顶着豆腐块强。"
+  (and (stringp str)
+       (not (string-empty-p str))
+       (display-graphic-p)
+       (seq-every-p #'char-displayable-p str)))
+
 (defun my-ui--ml-init-icons ()
   (when (and (display-graphic-p) (require 'nerd-icons nil t))
     (setq my-ui--ml-icons
           (ignore-errors
-            `((git     . ,(nerd-icons-powerline "nf-pl-branch"))
-              (error   . ,(nerd-icons-codicon "nf-cod-error"))
-              (warning . ,(nerd-icons-codicon "nf-cod-warning"))
-              (info    . ,(nerd-icons-codicon "nf-cod-info")))))))
+            (seq-filter
+             (lambda (cell) (my-ui--glyph-displayable-p (cdr cell)))
+             `((git     . ,(nerd-icons-powerline "nf-pl-branch"))
+               (error   . ,(nerd-icons-codicon "nf-cod-error"))
+               (warning . ,(nerd-icons-codicon "nf-cod-warning"))
+               (info    . ,(nerd-icons-codicon "nf-cod-info"))))))))
 (add-hook 'after-init-hook #'my-ui--ml-init-icons)
 
 ;; ---- 可点击段 ----
@@ -68,7 +86,7 @@
 
 ;; ---- 各段 ----
 (defun my-ui-ml-vc ()
-  "分支名（带图标）。点击开 magit，没有则退回 vc-dir。"
+  "分支名（带图标）。点击开 vc-dir。"
   (or my-ui--ml-vc-cache
       (setq my-ui--ml-vc-cache
             (let* ((root (ignore-errors (vc-root-dir)))
@@ -83,11 +101,8 @@
                              "-")))
               (my-ui--ml-click
                (concat (my-ui--ml-icon 'git "") " " (substring-no-properties branch))
-               "mouse-1: magit-status"
-               (lambda () (interactive)
-                 (if (fboundp 'magit-status)
-                     (magit-status)
-                   (vc-dir default-directory))))))))
+               "mouse-1: vc-dir"
+               #'vc-dir)))))
 
 (defun my-ui-ml-flymake ()
   "诊断计数（错误/警告/提示），带图标。点击列出本缓冲区诊断。"
@@ -186,14 +201,16 @@
                     #'string<)))))
 
 (defun my-ui-ml-major-mode ()
-  "major mode 名。点击可切换到别的 major mode（照抄 zdn 的行为）。"
-  (my-ui--ml-click
-   (string-trim-right (symbol-name major-mode) "-mode\\'")
-   "mouse-1: 切换 major mode"
-   (lambda () (interactive)
-     (let* ((name (completing-read "语言: " (my-ui--ml-prog-modes) nil t))
-            (mode (intern (concat name "-mode"))))
-       (when (commandp mode) (funcall mode))))))
+  "major mode 名。点击可切换到别的 major mode（照抄 zdn 的行为）。
+只在有文件的 buffer 显示，跟 zdn 一致。"
+  (when buffer-file-name
+    (my-ui--ml-click
+     (string-trim-right (symbol-name major-mode) "-mode\\'")
+     "mouse-1: 切换 major mode"
+     (lambda () (interactive)
+       (let* ((name (completing-read "语言: " (my-ui--ml-prog-modes) nil t))
+              (mode (intern (concat name "-mode"))))
+         (when (commandp mode) (funcall mode)))))))
 
 (defun my-ui-ml-input-method ()
   "输入法指示。
@@ -245,12 +262,11 @@ Windows IME，得在 `my/switch-to-english-input-method' 那侧自己维护一�
     (:eval (my-ui-ml-major-mode))
     "  "))
 
-;; zdn 只在这几个 mode-hook 里 setq-local，其余缓冲区（magit/eshell/help/*scratch*…）
-;; 保持 early-init 设的 nil，即**完全没有 mode-line**——那是它刻意的极简取向。
-;; 本仓库改为同时 setq-default 兜底：观感在 prog/text/conf/dired 下与 zdn 一致，
-;; 但 magit / eshell / popper 弹窗等仍有 mode-line（那些地方正需要上下文）。
-;; 想要 zdn 那种「其余一律无 mode-line」，把下面这行 setq-default 删掉即可。
-(setq-default mode-line-format my-ui-mode-line-format)
+;; 跟 zdn 一致：只在下面这几个 mode-hook 里 setq-local，其余缓冲区
+;; （magit/eshell/help/*scratch*/popper 弹窗…）保持 early-init.el 设的
+;; `(setq-default mode-line-format nil)'，即**完全没有 mode-line**——刻意的极简取向。
+;; 想要「其余也都有 mode-line」的兜底，加一行
+;; `(setq-default mode-line-format my-ui-mode-line-format)' 即可。
 
 ;; 进这些 mode 时清一次缓存：同一个 buffer 换了文件/换了 mode，分支和诊断都可能变。
 (dolist (hook '(prog-mode-hook text-mode-hook conf-mode-hook dired-mode-hook))
@@ -314,7 +330,9 @@ popper 未加载/`popper-mode' 未开启时 `popper-popup-p' 不存在，做特�
 
 (defun my/tab-line--icon (buffer)
   "返回 BUFFER 的 nerd-icons 文件类型图标串（含尾随空格）；
-非 GUI / 无 nerd-icons / 出错时返回空串。结果缓存到 buffer-local。"
+非 GUI / 无 nerd-icons / 出错 / 当前字体显示不出该图标时返回空串
+（用 `my-ui--glyph-displayable-p' 探测，避免顶着一个豆腐块 □）。
+结果缓存到 buffer-local。"
   (with-current-buffer buffer
     (if (eq my/tab-line--icon-cache 'unset)
         (setq my/tab-line--icon-cache
@@ -322,7 +340,7 @@ popper 未加载/`popper-mode' 未开启时 `popper-popup-p' 不存在，做特�
                        (require 'nerd-icons nil t)
                        (ignore-errors
                          (let ((ic (nerd-icons-icon-for-buffer)))
-                           (and (stringp ic) (not (string-empty-p ic))
+                           (and (my-ui--glyph-displayable-p ic)
                                 (concat ic " ")))))
                   ""))
       my/tab-line--icon-cache)))
@@ -533,30 +551,52 @@ buffer tab 的场景已经超出人工数字母找 tab 的实用范围，不值�
     (when (facep f)
       (set-face-attribute f nil :height my-ui-mode-line-height
                           :box (my-ui--bar-box f))))
-  ;; tab-line 整条：同字号、同上下 padding。
+  ;; tab-line 整条 + 每个标签：同字号、同上下 padding，且**统一背景/前景到 mode-line**。
+  ;; 关键坑：nn-world 主题（跟大多数主题一样）根本没定义任何 tab-line-* face，
+  ;; 于是 tab-line/tab-line-tab/tab-line-tab-current 全落回 Emacs 内建 defface 里
+  ;; 硬编码的 "grey20"/"grey40" 之类通用灰——跟主题配色毫无关系，选中标签因此顶着一块
+  ;; 突兀的灰色方框（视觉上像原生 Emacs 按钮），和左边不带底色的分组名 "Other" 明显不是
+  ;; 一套。以前只设 :box 不设 :background，注释说"不动背景免得跟主题打架"，实际效果正相反：
+  ;; 不设等于放任 Emacs 的硬编码灰色顶替主题色，才是真正在打架。这里统一取 mode-line
+  ;; 的背景/前景（两条 bar 本来就该是一对），tab 的选中态改由下面的下划线+加粗承担，
+  ;; 不再依赖背景色差异。
   ;; tab-line-active / tab-line-inactive 是 Emacs 31 新增（选中窗口用 active，其余用
   ;; inactive），目前定义为纯继承 `((t :inherit tab-line))'，所以只设 tab-line 也生效；
-  ;; 但主题一旦给它们设了显式属性，继承链就断了，两条 bar 会厚度不一致。
-  ;; 与上面 mode-line 一样用 facep 逐个判断，把新 face 一起兜住。
-  (dolist (f '(tab-line tab-line-active tab-line-inactive))
-    (when (facep f)
-      (set-face-attribute f nil :height my-ui-mode-line-height
-                          :box (my-ui--bar-box f))))
-  ;; 每个标签：左右加宽让标签之间松一些，上下用与整条 bar 相同的 padding，
-  ;; 否则标签会比它所在的 bar 更高/更矮，边缘出现台阶。
-  (dolist (f '(tab-line-tab tab-line-tab-current tab-line-tab-inactive))
-    (when (facep f)
-      (set-face-attribute
-       f nil :height my-ui-mode-line-height
-       :box `(:line-width (,my-ui-tab-side-padding . ,my-ui-bar-padding)
-              :color ,(my-ui--bg-of f)))))
+  ;; 但主题一旦给它们设了显式属性，继承链就断了，两条 bar 会厚度/颜色不一致，故仍逐个设。
+  ;; tab-line-tab-group（分组名，如 "Other"）原生 `:box nil'，不在标签三件套里，
+  ;; 于是尺寸/颜色都跟标签对不上——这里把它一起纳入，观感上才像同一条 bar 的一部分。
+  (let* ((bar-bg (my-ui--bg-of 'mode-line))
+         (bar-fg (or (my-ui--real-color (face-foreground 'mode-line nil t))
+                     (my-ui--real-color (face-foreground 'default nil t))
+                     "white"))
+         (bar-box (and (> my-ui-bar-padding 0)
+                       `(:line-width (1 . ,my-ui-bar-padding) :color ,bar-bg)))
+         (tab-box (and (> my-ui-bar-padding 0)
+                       `(:line-width (,my-ui-tab-side-padding . ,my-ui-bar-padding)
+                         :color ,bar-bg))))
+    (dolist (f '(tab-line tab-line-active tab-line-inactive))
+      (when (facep f)
+        (set-face-attribute f nil :height my-ui-mode-line-height
+                            :background bar-bg :foreground bar-fg
+                            :box bar-box)))
+    (dolist (f '(tab-line-tab tab-line-tab-current tab-line-tab-inactive tab-line-tab-group))
+      (when (facep f)
+        (set-face-attribute f nil :height my-ui-mode-line-height
+                            :background bar-bg :foreground bar-fg
+                            :box tab-box)))
+    ;; 鼠标悬浮标签同样有硬编码灰底 + released-button 边框，一并中和。
+    (when (facep 'tab-line-highlight)
+      (set-face-attribute 'tab-line-highlight nil
+                          :background bar-bg :box tab-box)))
   ;; ---- tab-line：找回 centaur-tabs 观感（选中下划线 accent + 选中/非选中对比）----
   ;; accent 色取主题里的强调色，回退固定蓝；下面选中下划线、悬浮、修改标记都复用它。
   (setq my-ui--tab-accent
         (or (my-ui--real-color (face-foreground 'font-lock-function-name-face nil t))
             (my-ui--real-color (face-foreground 'font-lock-keyword-face nil t))
             "#4c9eff"))
-  ;; 选中标签：底部 accent 下划线 + 加粗。不动背景，免得跟主题打架。
+  ;; 选中标签：底部 accent 下划线 + 加粗。背景已在上面统一成与 bar 相同，
+  ;; 选中态完全靠下划线 + 加粗表达，不再靠背景色块——这是 centaur-tabs 观感里
+  ;; "选中下划线" 那部分，也顺带避开了 Emacs 内建灰色块的问题。
   ;; （:box 的下 padding 仍在，下划线落在文字底、padding 之上，呈现为一条底部彩条。）
   (when (facep 'tab-line-tab-current)
     (set-face-attribute 'tab-line-tab-current nil
@@ -566,6 +606,11 @@ buffer tab 的场景已经超出人工数字母找 tab 的实用范围，不值�
   (when (facep 'tab-line-tab-inactive)
     (set-face-attribute 'tab-line-tab-inactive nil
                         :weight 'normal
+                        :foreground (or (my-ui--real-color (face-foreground 'shadow nil t))
+                                        'unspecified)))
+  ;; 分组名（"Other" 之类）：跟非选中标签一样调暗前景，标明它不是可点的 tab。
+  (when (facep 'tab-line-tab-group)
+    (set-face-attribute 'tab-line-tab-group nil
                         :foreground (or (my-ui--real-color (face-foreground 'shadow nil t))
                                         'unspecified)))
   ;; 鼠标悬浮标签：accent 前景高亮。

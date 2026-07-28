@@ -18,8 +18,16 @@
   ;; 合适值，换一台 DPI/缩放不同的机器就会明显偏大或偏小。这里跟随系统/frame 默认，
   ;; 由 mode-line 那边用**相对比例**去贴合，缩放才跨机器一致。
   ;; 真要固定字号，在 custom.el 里设 default 的 :height，别写死在这里。
+  ;; 候选表倒数第二项 "JetBrainsMonoNL NFM" 是 assets/fonts/ 里 vendor 的字体
+  ;; （JetBrainsMono Nerd Font Mono，NoLigatures 变体，装法见
+  ;; scripts/install-fonts.ps1），放在 "Cascadia Code" 之前——都没有的话，宁可用
+  ;; 一个保证装得上、打过图标补丁的字体，也不要落到没图标的 Cascadia Code。
+  ;; 名字里的 "NL" 是这个变体在字体自身 name table 里的真实 family 名（不是
+  ;; "JetBrainsMono NFM"，实测过，见 install-fonts.ps1 头部注释），系统装的官方
+  ;; Ligatures 版才叫 "JetBrainsMono NFM"，两者不是一回事，候选表里都留着。
   (cl-loop for f in '("JetBrainsMono Nerd Font" "JetBrainsMono NFM"
-                      "FiraCode Nerd Font" "FiraCode NFM" "Cascadia Code")
+                      "FiraCode Nerd Font" "FiraCode NFM"
+                      "JetBrainsMonoNL NFM" "Cascadia Code")
            for spec = (font-spec :family f)
            when (find-font spec)
            return (progn
@@ -27,16 +35,24 @@
                     (setq my-ui-default-font-family f)))
   ;; 中文。不写死 :size——固定字号会比英文小，导致中英不等高；跟随默认字号才对齐。
   ;; prepend：插到该字符集候选表最前，优先于 Emacs 自带的回退链。
-  (cl-loop for f in '("微软雅黑" "Microsoft YaHei" "Sarasa Term SC Nerd" "DengXian")
+  ;; "更纱终端书呆黑体-简"/"思源黑体" 是 assets/fonts/ 里 vendor 的两个字体
+  ;; （Sarasa Term SC Nerd 的实际 family 名、Source Han Sans SC 的实际 family
+  ;; 名——都是中文名，不是候选表旧项 "Sarasa Term SC Nerd" 那个英文名，实测过），
+  ;; 系统装的微软雅黑/DengXian 优先，这两个 vendor 的作为保底，装法见
+  ;; scripts/install-fonts.ps1。
+  (cl-loop for f in '("微软雅黑" "Microsoft YaHei" "Sarasa Term SC Nerd"
+                      "更纱终端书呆黑体-简" "思源黑体" "DengXian")
            for spec = (font-spec :family f)
            when (find-font spec)
            return (set-fontset-font t 'han spec nil 'prepend))
-  ;; 符号（制表符、箭头、几何图形等；magit/dired 的框线字符会用到）
+  ;; 符号（制表符、箭头、几何图形等；magit/dired 的框线字符会用到）。
+  ;; "Symbola" 是 assets/fonts/ 里 vendor 的字体，候选名不用改，字体名本来就叫这个。
   (cl-loop for f in '("Segoe UI Symbol" "Symbola" "Symbol")
            for spec = (font-spec :family f)
            when (find-font spec)
            return (set-fontset-font t 'symbol spec nil 'prepend))
-  ;; Emoji
+  ;; Emoji。"Noto Color Emoji" 同样是 vendor 的字体，候选名本来就对得上，排第一位——
+  ;; 系统自带的 Segoe UI Emoji 只在没装 vendor 字体时才会用到。
   (cl-loop for f in '("Noto Color Emoji" "Segoe UI Emoji")
            for spec = (font-spec :family f)
            when (find-font spec)
@@ -48,18 +64,70 @@
 ;; ---- 图标字体 ----
 ;; nerd-icons 默认把所有图标**硬绑**在字体族 "Symbols Nerd Font Mono" 上
 ;; （它给图标字符串加的是 face `(:family "Symbols Nerd Font Mono")'）。
-;; 本机没装这个族，于是 mode-line 的分支/诊断图标全渲染成豆腐块 □。
+;; 本机没装这个族，于是 mode-line/tab-line 的图标全渲染成豆腐块 □。
 ;;
 ;; 但本机装的 JetBrainsMono NFM / FiraCode Nerd Font **本身就是打过 Nerd 补丁的字体**，
 ;; 私用区码位（分支 U+E0A0、诊断 U+EA87 等）都在里面。所以不必再下载字体，
 ;; 直接把 nerd-icons 指向上面选中的默认字体即可——顺带让图标和正文字体完全一致。
 ;;
+;; 只在 `my-ui-default-font-family' **确实是打过 Nerd 补丁的那几个**里挑时才这么改：
+;; 上面英文字体候选表最后一项 "Cascadia Code" 是没打过 Nerd 补丁的兜底项，本机若连
+;; JetBrainsMono/FiraCode 的 Nerd 变体都没装、落到 Cascadia Code，把 nerd-icons 指过去
+;; 反而必现豆腐块（之前就是这样：豆腐块换了张脸，还是豆腐块）。这种机器不重定向，
+;; 保持 nerd-icons 找不到字体的状态，让各处图标函数走各自的 ignore-errors 回退纯文本，
+;; 好过顶着一个看着像字符实则不可读的方块。
+;;
 ;; 另一条路是 `M-x nerd-icons-install-fonts' 下载安装 Symbols Nerd Font Mono；
 ;; 那样 nerd-icons 的全部图标集都可用，但要联网 + 装系统字体。
+(defconst my-ui--nerd-patched-font-families
+  '("JetBrainsMono Nerd Font" "JetBrainsMono NFM" "FiraCode Nerd Font" "FiraCode NFM"
+    "JetBrainsMonoNL NFM")
+  "英文字体候选表里真正打过 Nerd Font 补丁（含图标私用区码位）的族名子集。
+特意不含候选表末尾的 \"Cascadia Code\"——见上方「图标字体」一节注释。
+\"JetBrainsMonoNL NFM\" 是 assets/fonts/ 里 vendor 的那个变体。")
+
 (with-eval-after-load 'nerd-icons
-  (when my-ui-default-font-family
-    (unless (find-font (font-spec :name nerd-icons-font-family))
-      (setq nerd-icons-font-family my-ui-default-font-family))))
+  (when (and my-ui-default-font-family
+             (member my-ui-default-font-family my-ui--nerd-patched-font-families)
+             (not (find-font (font-spec :name nerd-icons-font-family))))
+    (setq nerd-icons-font-family my-ui-default-font-family)))
+
+;; ---- vendor 的字体：装了没 ----
+;; assets/fonts/ 里的字体文件本身进了仓库，但 Windows 上还得跑一遍
+;; scripts/install-fonts.ps1 才会真正装进当前用户、被 find-font 认到——字体候选表
+;; 本身"找不到就沉默跳过"的哲学不变（见上面几组 cl-loop），但"vendor 的字体明明
+;; 在仓库里、却没跑安装脚本"是另一件事：忘跑了比沉默更值得提醒一下。
+;; 照抄 init-full.el 里 `my/check-pdmp-freshness' 的思路——正常沉默，
+;; 只在"有个手动步骤大概率忘跑了"时才 `display-warning'。
+(defconst my-ui--vendored-fonts
+  '(("assets/fonts/JetBrainsMonoNLNerdFontMono-Regular.ttf" . "JetBrainsMonoNL NFM")
+    ("assets/fonts/SarasaTermSCNerd-Regular.ttf" . "更纱终端书呆黑体-简")
+    ("assets/fonts/SourceHanSansSC-Regular.otf" . "思源黑体")
+    ("assets/fonts/NotoColorEmoji-WindowsCompatible.ttf" . "Noto Color Emoji")
+    ("assets/fonts/Symbola.ttf" . "Symbola"))
+  "（仓库内相对路径 . 装好后的 family 名）。供 `my-ui--check-vendored-fonts' 逐项探测。")
+
+(defun my-ui--check-vendored-fonts ()
+  "assets/fonts/ 里有字体文件、但 find-font 探测不到对应 family，说明
+scripts/install-fonts.ps1 大概率没跑过（或跑了但没重启 Emacs）——`*Warnings*'
+里提示一下，别人换新机器 clone 完直接用，容易忘这一步。"
+  (when (eq system-type 'windows-nt)
+    (let ((missing
+           (seq-filter
+            (lambda (cell)
+              (and (file-exists-p (expand-file-name (car cell) user-emacs-directory))
+                   (not (find-font (font-spec :family (cdr cell))))))
+            my-ui--vendored-fonts)))
+      (when missing
+        (display-warning
+         'my-ui
+         (format "assets/fonts/ 里有 vendor 的字体，但本机还没装：%s
+跑一次：
+  powershell -ExecutionPolicy Bypass -File scripts\\install-fonts.ps1
+装完重启 Emacs。"
+                 (mapconcat #'cdr missing "、"))
+         :warning)))))
+(add-hook 'emacs-startup-hook #'my-ui--check-vendored-fonts)
 
 ;; 连字（ligature）。原先用的 `global-prettify-symbols-mode' 其实是把 "->" 之类
 ;; **替换成单个字符**（如 →），并非真连字，且会改变列宽、干扰对齐。

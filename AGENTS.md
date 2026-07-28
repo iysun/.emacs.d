@@ -47,6 +47,7 @@
 | `lisp/init-bars.el` | **mode-line + tab-line**（两条 bar 要在字号/内边距上保持一致，放一起改；须在 `init-ui` 之后加载，复用其字体选择结果） |
 | `lisp/lang-*.el` | 语言专属配置（如 `lang-go.el`，当前未启用） |
 | `themes/` | 本仓库自维护的主题文件（`*-theme.el`），由 `custom-theme-load-path` 接入（`lisp/init-ui.el`）。当前只有 `nn-world`（借自 zdn/.emacs.d，GPLv3，见文件头注释），默认主题；不再依赖 `doom-themes` 包 |
+| `assets/fonts/` | vendor 进仓库的字体文件（OFL 等自由许可，随 git 一起到位），配 `scripts/install-fonts.ps1` 装进当前用户；`lisp/init-ui.el` 英文/中文/符号/emoji 四组字体候选表里各有一项对应这里的文件。见 [docs/notes/vendored-fonts.md](docs/notes/vendored-fonts.md) |
 | `custom.el` | Customize 自动生成，**已 gitignore，勿手改** |
 | `elpa/` | 第三方包，**已 gitignore，勿编辑/勿提交** |
 | `var/` `etc/` | no-littering 收编的运行期文件（recentf/savehist/bookmark/project/tramp/eshell/transient…），**已 gitignore，勿手改** |
@@ -56,6 +57,7 @@
 | `docs/startup-benchmark.md` | 多机启动速度基准记录 + 测法（脚本 `-a` 追加到此） |
 | `scripts/bench-startup.py` | 跨平台测速脚本：采集机器信息 + 三场景测真实 GUI 启动耗时，输出/追加基准块 |
 | `scripts/make-shortcuts.ps1` | Windows：在开始菜单建 Emacs 快捷方式（指向 `runemacs.exe`，带/不带 pdmp 两个入口） |
+| `scripts/install-fonts.ps1` | Windows：把 `assets/fonts/` 里 vendor 的字体装进当前用户（不需要管理员），装法/原理见文件头注释和 [docs/notes/vendored-fonts.md](docs/notes/vendored-fonts.md) |
 | `emacs-dump.cmd` | Windows：带 `--dump-file` 启动 Emacs（pdmp 缺失则回退普通启动） |
 | `emacs-dump.sh` | Linux/macOS：同上 |
 | `emacs.pdmp` | 生成的 dump 映像，**已 gitignore，按需 `make dump` 重建** |
