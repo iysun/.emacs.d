@@ -15,6 +15,7 @@
       (bright       "#9a9a9a")
       (dim          "#6a6a6a")
       (secondary    "#4a4a4a")
+      (hl-line-bg   "#323234")
       (tertiary     "#2e2e2e")
       (quaternary   "#1a1a1a")
       (pink         "#f0b0e0")
@@ -45,6 +46,7 @@
    `(highlight      ((t :background ,secondary)))
    `(lazy-highlight ((t :inherit highlight)))
    `(region         ((t :inherit highlight)))
+   `(hl-line        ((t :background ,hl-line-bg)))
 
    `(vertical-border            ((t :foreground ,secondary)))
    `(window-divider             ((t :inherit vertical-border)))
