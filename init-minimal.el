@@ -51,14 +51,13 @@
          '(evil
            multiple-cursors
            ;; corfu
-           doom-themes))
+           ))
   (eval `(use-package ,package :ensure t :defer t)))
 
-(progn
-  (setq doom-themes-enable-bold t)   ; if nil, bold is universally disabled
-  (setq doom-themes-enable-italic t) ; if nil, italics is universally disabled
-  (load-theme 'doom-ayu-light t)
-  )
+;; 主题跟全量 profile 共用 themes/ 目录下的 nn-world（不再依赖 doom-themes 包，
+;; 呼应本文件开头"精简 profile 刻意不引第三方包"的原则）。
+(add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
+(load-theme 'nn-world t)
 
 ;; VSCode-like split layout, based on Emacs default mode-line segments.
 

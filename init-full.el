@@ -31,7 +31,6 @@
            hydra
            rainbow-delimiters
            nerd-icons
-           doom-themes
            popper
            consult
            embark

@@ -197,23 +197,10 @@
 ;;   (setq dashboard-set-file-icons t))
 ;; (dashboard-setup-startup-hook)
 
-;; (load-theme 'wombat)
-;; doom-themes
-(with-eval-after-load 'doom-themes
-  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-        doom-themes-enable-italic t) ; if nil, italics is universally disabled
-  ;; Enable flashing mode-line on errors
-  (doom-themes-visual-bell-config)
-  ;; Enable custom neotree theme (nerd-icons must be installed!)
-  (doom-themes-neotree-config)
-  ;; or for treemacs users
-  (setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
-  (doom-themes-treemacs-config)
-  ;; Corrects (and improves) org-mode's native fontification.
-  (doom-themes-org-config)
-  )
-
-
+;; 本仓库自维护的主题目录（不依赖 doom-themes 包）。当前只有 zdn/.emacs.d 借来的
+;; nn-world，见 themes/nn-world-theme.el。加了新主题文件放这个目录即可，
+;; switch-emacs-theme 靠 custom-available-themes 现场扫这条 load-path，自动出现在候选里。
+(add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
 
 (defun set-bigger-spacing ()                                               
   (interactive)
@@ -244,7 +231,7 @@
            (symbolp custom-emacs-theme)
            (not (null custom-emacs-theme)))
       (load-theme custom-emacs-theme t)
-    (load-theme 'doom-one t))
+    (load-theme 'nn-world t))
   )
 (add-hook 'after-init-hook 'use-emacs-theme)
 

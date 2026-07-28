@@ -70,7 +70,7 @@
   '(;; --- 核心 ---
     evil evil-surround evil-visualstar evil-commentary
     vertico marginalia consult embark embark-consult orderless
-    corfu cape doom-themes hydra project
+    corfu cape hydra project
     ;; --- 加分 ---
     ;; eat 含 C 扩展（eat-core.dll），烤进 dump 后恢复时可能触发段错误，排除在外
     eglot magit popper ace-window)

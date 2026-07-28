@@ -46,6 +46,7 @@
 | `lisp/init-mirrors.el` | **包源镜像的唯一定义处**（全量/精简/dump 三处都 require 它，换镜像只改这一个文件） |
 | `lisp/init-bars.el` | **mode-line + tab-line**（两条 bar 要在字号/内边距上保持一致，放一起改；须在 `init-ui` 之后加载，复用其字体选择结果） |
 | `lisp/lang-*.el` | 语言专属配置（如 `lang-go.el`，当前未启用） |
+| `themes/` | 本仓库自维护的主题文件（`*-theme.el`），由 `custom-theme-load-path` 接入（`lisp/init-ui.el`）。当前只有 `nn-world`（借自 zdn/.emacs.d，GPLv3，见文件头注释），默认主题；不再依赖 `doom-themes` 包 |
 | `custom.el` | Customize 自动生成，**已 gitignore，勿手改** |
 | `elpa/` | 第三方包，**已 gitignore，勿编辑/勿提交** |
 | `var/` `etc/` | no-littering 收编的运行期文件（recentf/savehist/bookmark/project/tramp/eshell/transient…），**已 gitignore，勿手改** |
