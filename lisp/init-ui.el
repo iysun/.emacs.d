@@ -86,10 +86,19 @@
 特意不含候选表末尾的 \"Cascadia Code\"——见上方「图标字体」一节注释。
 \"JetBrainsMonoNL NFM\" 是 assets/fonts/ 里 vendor 的那个变体。")
 
+;; 只要 `my-ui-default-font-family' 在白名单里就无条件重定向，**不再**额外判断
+;; "nerd-icons-font-family 现在的值是不是已经能 find-font 到"——这个判断曾经的用意
+;; 是"用户已经手动装好默认字体 Symbols Nerd Font Mono 就别多管"，但实测踩了坑：
+;; 有台机器上确实注册了一个叫 "Symbols Nerd Font Mono" 的字体（来自某次半途而废的
+;; `nerd-icons-install-fonts'，文件名是可疑的 "NFM.ttf"），find-font 能找到它，
+;; 于是这个判断为真、跳过重定向，结果图标 face 挂着这个字体名却渲染不出实际字形
+;; （不是豆腐块，是完全空白——`char-displayable-p' 只保证*某个*已装字体能显示该码位，
+;; 不保证请求的这个 family 本身真的显示得出来）。我们自己选出来的
+;; `my-ui-default-font-family' 是刚刚原地 `find-font' 验证过、且正被当前 frame
+;; 实际使用的字体，比一个来路不明的同名字体可信得多，直接用它更稳妥。
 (with-eval-after-load 'nerd-icons
   (when (and my-ui-default-font-family
-             (member my-ui-default-font-family my-ui--nerd-patched-font-families)
-             (not (find-font (font-spec :name nerd-icons-font-family))))
+             (member my-ui-default-font-family my-ui--nerd-patched-font-families))
     (setq nerd-icons-font-family my-ui-default-font-family)))
 
 ;; ---- vendor 的字体：装了没 ----

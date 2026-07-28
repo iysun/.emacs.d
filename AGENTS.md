@@ -44,7 +44,10 @@
 | `lisp/init-windows.el` | Windows 专项、无其它调用方的设置（文件属性/管道调优、控制台+剪贴板编码、git 环境变量…），非 Windows 平台空操作。由 `early-init.el` 在最早期用绝对路径 `load`（此时 `lisp/` 还没进 load-path）。新增纯 OS-only 代码都加进这一个文件，别再散落到别处；跨平台功能不放这里，见下条与「多平台代码怎么归位」 |
 | `lisp/init-ime.el` | 跨平台输入法切换（`my/switch-to-english-input-method`，Windows 用 im-select.exe / Linux·macOS 用 fcitx5-remote），全量/精简两套 profile 共用一份。同样由 `early-init.el` 绝对路径 `load` |
 | `lisp/init-mirrors.el` | **包源镜像的唯一定义处**（全量/精简/dump 三处都 require 它，换镜像只改这一个文件） |
-| `lisp/init-bars.el` | **mode-line + tab-line**（两条 bar 要在字号/内边距上保持一致，放一起改；须在 `init-ui` 之后加载，复用其字体选择结果） |
+| `lisp/init-bars.el` | **mode-line + tab-line** 的入口：两条 bar 共用的工具函数 + 字号/内边距统一设置（放一起改才不会顾此失彼），本体 `load` 自 `lisp/extensions/`。须在 `init-ui` 之后加载，复用其字体选择结果 |
+| `lisp/extensions/mode-line/mode-line.el` | mode-line 实现本体，`(provide 'init-mode-line)`，由 `init-bars.el` `load` |
+| `lisp/extensions/tab-line/tab-line.el` | tab-line 实现本体，`(provide 'init-tab-line)`（特意不叫 `tab-line'，避免跟内置库撞名），由 `init-bars.el` `load`。较复杂的、原生 tab-line 本身有坑要绕的实现（比如覆写 `tab-line-tab-name-format-function` 保留图标 face）放在这里，跟 `init-bars.el` 里两条 bar 共用的简单工具函数分开 |
+| `lisp/extensions/` | 约定：每个扩展独立一个子目录（如 `mode-line/`、`tab-line/`），不直接在 `extensions/` 下放 .el 文件 |
 | `lisp/lang-*.el` | 语言专属配置（如 `lang-go.el`，当前未启用） |
 | `themes/` | 本仓库自维护的主题文件（`*-theme.el`），由 `custom-theme-load-path` 接入（`lisp/init-ui.el`）。当前只有 `nn-world`（借自 zdn/.emacs.d，GPLv3，见文件头注释），默认主题；不再依赖 `doom-themes` 包 |
 | `assets/fonts/` | vendor 进仓库的字体文件（OFL 等自由许可，随 git 一起到位），配 `scripts/install-fonts.ps1` 装进当前用户；`lisp/init-ui.el` 英文/中文/符号/emoji 四组字体候选表里各有一项对应这里的文件。见 [docs/notes/vendored-fonts.md](docs/notes/vendored-fonts.md) |
