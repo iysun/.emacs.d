@@ -46,7 +46,7 @@
 | `lisp/init-mirrors.el` | **包源镜像的唯一定义处**（全量/精简/dump 三处都 require 它，换镜像只改这一个文件） |
 | `lisp/init-bars.el` | **mode-line + tab-line** 的入口：两条 bar 共用的工具函数 + 字号/内边距统一设置（放一起改才不会顾此失彼），本体 `load` 自 `lisp/extensions/`。须在 `init-ui` 之后加载，复用其字体选择结果 |
 | `lisp/extensions/mode-line/mode-line.el` | mode-line 实现本体，`(provide 'init-mode-line)`，由 `init-bars.el` `load` |
-| `lisp/extensions/tab-line/tab-line.el` | tab-line 实现本体，`(provide 'init-tab-line)`（特意不叫 `tab-line'，避免跟内置库撞名），由 `init-bars.el` `load`。较复杂的、原生 tab-line 本身有坑要绕的实现（比如覆写 `tab-line-tab-name-format-function` 保留图标 face）放在这里，跟 `init-bars.el` 里两条 bar 共用的简单工具函数分开 |
+| `lisp/extensions/tab-line/tab-line.el` | tab-line 实现本体，`(provide 'init-tab-line)`（特意不叫 `tab-line'，避免跟内置库撞名），由 `init-bars.el` `load`。标签按项目分组、不带图标（纯文字，跟 mode-line 一样简约优先），较复杂的实现（如按组操作、ace-jump 跳标签）放在这里，跟 `init-bars.el` 里两条 bar 共用的简单工具函数分开 |
 | `lisp/extensions/` | 约定：每个扩展独立一个子目录（如 `mode-line/`、`tab-line/`），不直接在 `extensions/` 下放 .el 文件 |
 | `lisp/lang-*.el` | 语言专属配置（如 `lang-go.el`，当前未启用） |
 | `themes/` | 本仓库自维护的主题文件（`*-theme.el`），由 `custom-theme-load-path` 接入（`lisp/init-ui.el`），新增主题放进去即可被 `switch-emacs-theme` 自动发现，不用改代码。共 5 个：`nn-world`（借自 zdn/.emacs.d，GPLv3，默认主题）、`catppuccin`/`crafters`/`gits`/`matrix`（调色板移植自 [LionyxML/emacs-solo](https://github.com/LionyxML/emacs-solo)，GPL-3.0-or-later，face 结构复用 `nn-world-theme.el`，见各文件头注释）；不再依赖 `doom-themes` 包 |

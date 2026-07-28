@@ -2,8 +2,8 @@
 ;;
 ;; tab-line 实现本体，由 `lisp/init-bars.el' `load'。原生 tab-line（按项目分组 +
 ;; 过滤 eglot buffer），替代 centaur-tabs，零第三方、零启动开销。两条 bar（mode-line +
-;; tab-line）的共享工具函数（`my-ui--glyph-displayable-p' 等）和字号/内边距统一逻辑
-;; 留在 `init-bars.el' 里，这个文件只管 tab-line 本身。
+;; tab-line）字号/内边距统一逻辑留在 `init-bars.el' 里，这个文件只管 tab-line 本身。
+;; 标签不带图标（跟 mode-line 一样走纯文字，简约优先），故不依赖 nerd-icons。
 ;;
 ;; ⚠ 本文件 `provide' 的符号是 `init-tab-line'，**不是** `tab-line'——内置库
 ;; `tab-line.el' 自己 `(provide 'tab-line)'，本文件如果也用这个名字会在同一个
@@ -16,14 +16,23 @@
 (require 'tab-line)
 
 (defun my/tab-line-buffer-group-by-project (&optional buffer)
-  "Group buffers by project root via project.el."
+  "Group buffers by project root via project.el.
+返回值尾部带一个空格：`tab-line-separator' 现在是空串（标签之间紧挨着，见下面
+setup 那段），但分组名（如 \".emacs.d\"）和第一个标签之间还是需要一点视觉间隔，
+不然会跟标签糊在一起分不清。这个尾随空格直接是分组名字符串的一部分，会跟着
+`tab-line-tab-group' 的背景色一起渲染（原理同标签自己的 `my/tab-line-tab-padding'：
+文本里的字符必然跟着所在标签共享同一个容器 face，颜色不会错）。
+⚠ 这个返回值同时也是分组的\"身份\"标识——`my/tab-line--group-buffers' 等函数用
+`equal' 比较它来判断两个 buffer 是否同组，尾随空格对所有 buffer 一视同仁地加，
+比较结果不受影响，不用担心带来分组错乱。"
   (with-current-buffer (or buffer (current-buffer))
     (let* ((dir (or (buffer-file-name) nil))
            (proj (project-current nil dir))
            (root (when proj (project-root proj))))
-      (if (and root dir)
-          (file-name-nondirectory (directory-file-name root))
-        "Other"))))
+      (concat (if (and root dir)
+                  (file-name-nondirectory (directory-file-name root))
+                "Other")
+              " "))))
 
 (defun my/tab-line--popup-buffer-p (buf)
   "BUF 是否应该被排除在 tab-line 之外：popper 弹窗或 dashboard 首页。
@@ -48,120 +57,30 @@ popper 未加载/`popper-mode' 未开启时 `popper-popup-p' 不存在，做特�
                     (my/tab-line--popup-buffer-p buf))
           (push buf result))))))
 
-;; ---- 标签文本：图标 + 修改标记（找回 centaur-tabs 的观感）----
-;; 图标复用已装的 nerd-icons（mode-line 也在用，非新增依赖），取不到时回退纯文本。
-(defvar-local my/tab-line--icon-cache 'unset
-  "本 buffer 的 tab 图标串缓存。图标由 major-mode/文件类型决定、基本不变，
-故按 buffer 缓存一次；'unset 表示尚未计算。
-只缓存*成功*的结果——见 `my/tab-line--icon' 里的说明，别改成无条件缓存。")
-
-(defun my/tab-line--icon (buffer)
-  "返回 BUFFER 的 nerd-icons 文件类型图标串（含尾随空格）；
-非 GUI / 无 nerd-icons / 出错 / 当前字体显示不出该图标时返回空串
-（用 `my-ui--glyph-displayable-p' 探测，避免顶着一个豆腐块 □）。
-结果缓存到 buffer-local，但**只缓存非空结果**：*scratch* 这类在 Emacs 启动早期
-就存在的 buffer，第一次触发 tab-line 渲染的时机可能早于 `nerd-icons-font-family'
-重定向就绪（取决于 `after-init-hook' 里各个函数的实际触发顺序，属于时序竞争，
-不是每次都一样），这时算出来的是空串——如果连空串也当成\"算过了\"缓存死，
-之后哪怕字体环境已经就绪，这个 buffer 的图标也永远不会重算，表现为\"改了配置、
-重启 Emacs、图标还是没有\"。只缓存非空结果，空结果不缓存、留着下次重绘时再试一次，
-一旦哪次成功了就定住——重试成本很低（tab-line 重绘本来就会调这个函数），
-没必要为了省这几次重试引入这种「一次失败、永久失败」的缓存语义。"
-  (with-current-buffer buffer
-    (if (and (stringp my/tab-line--icon-cache)
-             (not (string-empty-p my/tab-line--icon-cache)))
-        my/tab-line--icon-cache
-      (setq my/tab-line--icon-cache
-            (or (and (display-graphic-p)
-                     (require 'nerd-icons nil t)
-                     (ignore-errors
-                       (let ((ic (nerd-icons-icon-for-buffer)))
-                         (and (my-ui--glyph-displayable-p ic)
-                              (concat ic " ")))))
-                "")))))
+;; ---- 标签文本：左右 padding + buffer 名 + 修改标记（不带图标，简约优先）----
+(defconst my/tab-line-tab-padding " "
+  "每个标签左右各留的字面空格 padding。用文本字符撑，而不是 face 的 `:box'
+水平 line-width——实测 tab-line 下 `:box' 的水平 line-width 不会用 `:color' 真正
+填充那片区域，会透出整条 tab-line bar 自己的背景色，达不到\"padding 属于标签
+自己\"的效果（同样的 `:box' 用在垂直方向撑上下 padding 则没这个问题，见
+`lisp/init-bars.el' 的 `my-ui--v-box'）。字面空格必然跟标签名共享同一个容器
+face（由 `tab-line-tab-name-format-default' 统一 propertize/套用），颜色不会错，
+是更可靠的写法。
+选中/未选中标签统一用这一个值，不做宽度上的区分——\"当前调用是否在渲染选中
+标签\"这个判断在更下游的 `tab-line-tab-name-format-default' 里（依赖 window 而
+非单纯 buffer），要在这里复现同样判断只为了让选中标签的 padding 宽一点，不值得
+为宽度差异专门搭一份逻辑；选中态靠颜色块 + 加粗已经足够醒目，见 `init-bars.el'
+的 `my-ui-setup-bars'。")
 
 (defun my/tab-line-tab-name (buffer &optional _buffers)
-  "tab 标签文本：图标 + buffer 名 +（文件改动未存时）● 标记。
-覆写 `tab-line-tab-name-function'。截断仍由 `tab-line-tab-name-truncated-max' 处理。
-非当前窗口正显示的 buffer，图标额外调暗——`nerd-icons-icon-for-buffer' 返回的图标串
-自带显式 face（含图标专属颜色），只设 `tab-line-tab-inactive' 前景色压不过它，
-须在图标串上另外*前插*一层 `shadow' face（`add-face-text-property' 的 APPEND=nil
-即最高优先级）。只对拷贝操作、不动 buffer-local 的图标缓存，否则该 buffer 变为
-选中标签时也会带着暗色。"
-  (let* ((icon (my/tab-line--icon buffer))
-         (icon (if (or (string-empty-p icon) (eq buffer (current-buffer)))
-                   icon
-                 (let ((dimmed (copy-sequence icon)))
-                   (add-face-text-property 0 (length dimmed) 'shadow nil dimmed)
-                   dimmed))))
-    (concat icon
-            (buffer-name buffer)
-            (and (buffer-local-value 'buffer-file-name buffer)
-                 (buffer-modified-p buffer)
-                 " ●"))))
-
-;; ---- 保留图标自己的 face：原生 tab-line 的一个真实 bug/限制 ----
-;; `tab-line-tab-name-format-default'（内置 tab-line.el，`tab-line-tab-name-format-function'
-;; 的默认值）拿到 `tab-line-tab-name-function' 返回的整条名字（我们在上面塞了图标，
-;; 图标自带 `nerd-icons-*' 的颜色/字体族 face）之后，最后一步用
-;; `(propertize name 'face face ...)' 把*整条*名字统一套上 tab 的容器 face
-;; （`tab-line-tab-current'/`tab-line-tab-inactive' 等）。`propertize' 对 'face
-;; 是整段覆盖式设置，不是叠加/追加——图标自己那段 face 就这样被冲掉了，图标的颜色/
-;; 字体族全部换成容器 face 的，观感上图标要么变成大路货灰色文字色、要么因为容器 face
-;; 没显式设某些图标需要的属性而干脆画不出来。
-;;
-;; 内置代码其实知道这个坑：给关闭按钮那段用的是 `add-face-text-property'
-;; （APPEND=t，不覆盖已有 face），注释原文就是 "Don't overwrite the icon face"——
-;; 只是这个处理只用在关闭按钮，没用在 tab 名字本身（我们的图标恰好嵌在名字里）。
-;; 这里整个覆写 `tab-line-tab-name-format-function'（比 `tab-line-tab-name-function'
-;; 更底层的定制点，能控制最终 propertize 这一步），把 name 那段的 `propertize'
-;; 换成同样的 `add-face-text-property'（APPEND=t）：图标自带 face 里设过的属性
-;; （字体族、颜色）保持最高优先级不被冲掉，图标没设的属性（比如选中态的下划线/加粗）
-;; 仍然从容器 face 里继承下来。其余逻辑原样照抄
-;; `tab-line-tab-name-format-default'（Emacs 31.0.91 版本），只改了这一处。
-(defun my/tab-line-tab-name-format (tab tabs)
-  "同 `tab-line-tab-name-format-default'，但保留 tab 名字里图标自带的 face。"
-  (let* ((buffer-p (bufferp tab))
-         (selected-p (if buffer-p
-                         (eq tab (window-buffer))
-                       (cdr (assq 'selected tab))))
-         (name (if buffer-p
-                   (funcall tab-line-tab-name-function tab tabs)
-                 (cdr (assq 'name tab))))
-         (face (if selected-p
-                   (if (mode-line-window-selected-p)
-                       'tab-line-tab-current
-                     'tab-line-tab)
-                 'tab-line-tab-inactive)))
-    (dolist (fn tab-line-tab-face-functions)
-      (setf face (funcall fn tab tabs face buffer-p selected-p)))
-    (apply 'propertize
-           (concat (let ((name (copy-sequence (string-replace "%" "%%" name))))
-                     ;; 关键改动：`add-face-text-property' APPEND=t，不是 `propertize'。
-                     (add-face-text-property 0 (length name) face t name)
-                     (propertize name
-                                 'keymap tab-line-tab-map
-                                 'help-echo (if selected-p "Current tab"
-                                              "Click to select tab")
-                                 'follow-link 'ignore))
-                   (let ((close (or (and (or buffer-p (assq 'buffer tab)
-                                             (assq 'close tab))
-                                         tab-line-close-button-show
-                                         (not (eq tab-line-close-button-show
-                                                  (if selected-p 'non-selected
-                                                    'selected)))
-                                         (if (and tab-line-close-modified-button-show
-                                                  (tab-line-tab-modified-p tab buffer-p))
-                                             tab-line-close-modified-button
-                                           tab-line-close-button))
-                                    "")))
-                     (setq close (copy-sequence close))
-                     (add-face-text-property 0 (length close) face t close)
-                     close))
-           `(
-             tab ,tab
-             ,@(if selected-p '(selected t))
-             mouse-face tab-line-highlight))))
+  "tab 标签文本：左右 padding + buffer 名 +（文件改动未存时）● 标记。
+覆写 `tab-line-tab-name-function'。截断仍由 `tab-line-tab-name-truncated-max' 处理。"
+  (concat my/tab-line-tab-padding
+          (buffer-name buffer)
+          (and (buffer-local-value 'buffer-file-name buffer)
+               (buffer-modified-p buffer)
+               " ●")
+          my/tab-line-tab-padding))
 
 (defun my/tab-line-refresh (&rest _)
   "改动/保存后刷新 tab-line，让 ● 修改标记及时更新
@@ -251,9 +170,11 @@ buffer tab 的场景已经超出人工数字母找 tab 的实用范围，不值�
   (setq tab-line-tabs-function 'tab-line-tabs-buffer-groups)
   (setq tab-line-tabs-buffer-group-function #'my/tab-line-buffer-group-by-project)
   (setq tab-line-tab-name-function #'my/tab-line-tab-name)
-  (setq tab-line-tab-name-format-function #'my/tab-line-tab-name-format)
-  (setq tab-line-close-button-show t)      ; 每个标签都显关闭按钮（× ），像 centaur-tabs
-  (setq tab-line-separator " ")            ; 相邻标签间留一丝缝
+  (setq tab-line-close-button-show nil)    ; 不显关闭按钮，标签只留文字，更简约
+  ;; 不留分隔符：标签之间紧挨着，边界靠每个标签自己的背景块（选中/未选中/分组名
+  ;; 各自不同深浅，见 init-bars.el）和标签自带的 `my/tab-line-tab-padding' 表达，
+  ;; 不再额外插入分隔空白。
+  (setq tab-line-separator "")
   (advice-add 'tab-line-tabs-buffer-list :filter-return #'my/tab-line-filter))
 
 (add-hook 'first-change-hook #'my/tab-line-refresh)
