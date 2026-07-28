@@ -18,16 +18,17 @@
   ;; 合适值，换一台 DPI/缩放不同的机器就会明显偏大或偏小。这里跟随系统/frame 默认，
   ;; 由 mode-line 那边用**相对比例**去贴合，缩放才跨机器一致。
   ;; 真要固定字号，在 custom.el 里设 default 的 :height，别写死在这里。
-  ;; 候选表倒数第二项 "JetBrainsMonoNL NFM" 是 assets/fonts/ 里 vendor 的字体
+  ;; 候选表第一项 "JetBrainsMonoNL NFM" 是 assets/fonts/ 里 vendor 的字体
   ;; （JetBrainsMono Nerd Font Mono，NoLigatures 变体，装法见
-  ;; scripts/install-fonts.ps1），放在 "Cascadia Code" 之前——都没有的话，宁可用
-  ;; 一个保证装得上、打过图标补丁的字体，也不要落到没图标的 Cascadia Code。
+  ;; scripts/install-fonts.ps1），优先于系统装的 JetBrainsMono/FiraCode 各变体——
+  ;; 跑过 install-fonts.ps1 的机器由此落在一个可控、可复现的字体上，不用管系统上
+  ;; 恰好装了哪个版本。系统变体、以及没打图标补丁的 Cascadia Code 仍留在候选表
+  ;; 垫底，供还没跑安装脚本的机器兜底。
   ;; 名字里的 "NL" 是这个变体在字体自身 name table 里的真实 family 名（不是
   ;; "JetBrainsMono NFM"，实测过，见 install-fonts.ps1 头部注释），系统装的官方
   ;; Ligatures 版才叫 "JetBrainsMono NFM"，两者不是一回事，候选表里都留着。
-  (cl-loop for f in '("JetBrainsMono Nerd Font" "JetBrainsMono NFM"
-                      "FiraCode Nerd Font" "FiraCode NFM"
-                      "JetBrainsMonoNL NFM" "Cascadia Code")
+  (cl-loop for f in '("JetBrainsMonoNL NFM" "JetBrainsMono Nerd Font" "JetBrainsMono NFM"
+                      "FiraCode Nerd Font" "FiraCode NFM" "Cascadia Code")
            for spec = (font-spec :family f)
            when (find-font spec)
            return (progn
@@ -35,19 +36,20 @@
                     (setq my-ui-default-font-family f)))
   ;; 中文。不写死 :size——固定字号会比英文小，导致中英不等高；跟随默认字号才对齐。
   ;; prepend：插到该字符集候选表最前，优先于 Emacs 自带的回退链。
-  ;; "更纱终端书呆黑体-简"/"思源黑体" 是 assets/fonts/ 里 vendor 的两个字体
-  ;; （Sarasa Term SC Nerd 的实际 family 名、Source Han Sans SC 的实际 family
-  ;; 名——都是中文名，不是候选表旧项 "Sarasa Term SC Nerd" 那个英文名，实测过），
-  ;; 系统装的微软雅黑/DengXian 优先，这两个 vendor 的作为保底，装法见
-  ;; scripts/install-fonts.ps1。
-  (cl-loop for f in '("微软雅黑" "Microsoft YaHei" "Sarasa Term SC Nerd"
-                      "更纱终端书呆黑体-简" "思源黑体" "DengXian")
+  ;; 候选表前两项 "更纱终端书呆黑体-简"/"思源黑体" 是 assets/fonts/ 里 vendor 的
+  ;; 两个字体（Sarasa Term SC Nerd 的实际 family 名、Source Han Sans SC 的实际
+  ;; family 名——都是中文名，不是候选表里 "Sarasa Term SC Nerd" 那个英文名，
+  ;; 实测过），优先于系统装的微软雅黑/DengXian，装法见 scripts/install-fonts.ps1；
+  ;; "Sarasa Term SC Nerd" 是历史遗留的错误英文名，实测不会真的命中，留着无害。
+  (cl-loop for f in '("更纱终端书呆黑体-简" "思源黑体" "微软雅黑" "Microsoft YaHei"
+                      "Sarasa Term SC Nerd" "DengXian")
            for spec = (font-spec :family f)
            when (find-font spec)
            return (set-fontset-font t 'han spec nil 'prepend))
   ;; 符号（制表符、箭头、几何图形等；magit/dired 的框线字符会用到）。
-  ;; "Symbola" 是 assets/fonts/ 里 vendor 的字体，候选名不用改，字体名本来就叫这个。
-  (cl-loop for f in '("Segoe UI Symbol" "Symbola" "Symbol")
+  ;; "Symbola" 是 assets/fonts/ 里 vendor 的字体（候选名不用改，字体名本来就叫这个），
+  ;; 排第一优先于系统的 Segoe UI Symbol。
+  (cl-loop for f in '("Symbola" "Segoe UI Symbol" "Symbol")
            for spec = (font-spec :family f)
            when (find-font spec)
            return (set-fontset-font t 'symbol spec nil 'prepend))
