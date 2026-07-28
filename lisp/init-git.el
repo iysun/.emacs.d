@@ -7,13 +7,8 @@
 ;; 	'(center t)))
 ;; (require 'magit)
 
-;; Windows 上给 git 子进程定几个环境变量：magit 一次刷新会起很多次 git，
-;; 这几项能避免"卡在等输入"和无谓的锁竞争。
-(when (eq system-type 'windows-nt)
-  (setenv "GIT_TERMINAL_PROMPT" "0")   ; 需要凭据时直接失败，不在无终端处挂起
-  (setenv "GIT_ASK_YESNO" "false")     ; 同上，不弹交互确认
-  (setenv "GIT_PAGER" "cat")           ; 不起分页器
-  (setenv "GIT_OPTIONAL_LOCKS" "0"))   ; 只读操作不抢 index.lock，减少与后台 git 的竞争
+;; Windows 上给 git 子进程定的环境变量已挪到 lisp/init-windows.el（early-init.el
+;; 阶段就设好，比这里更早，覆盖面也更全——不止 magit 会起 git 子进程）。
 
 ;; Magit 配置
 (with-eval-after-load 'magit

@@ -39,6 +39,10 @@
 | `init-full.el` | 全量 profile：声明包列表 + `require` 各模块（与 `init.el` 同级，按路径 load） |
 | `init-minimal.el` | 精简 profile 全部内容（与 `init.el` 同级，按路径 load） |
 | `lisp/init-*.el` | 全量 profile 的功能模块（每个 `(provide 'init-xxx)`） |
+| `lisp/init-format.el` | apheleia 格式化（非 LSP 场景；`SPC f` 仍是 eglot-format） |
+| `lisp/init-navigation.el` | citre 兜底代码导航 + imenu-list 大纲侧栏（citre 需本机 Universal Ctags） |
+| `lisp/init-windows.el` | Windows 专项、无其它调用方的设置（文件属性/管道调优、控制台+剪贴板编码、git 环境变量…），非 Windows 平台空操作。由 `early-init.el` 在最早期用绝对路径 `load`（此时 `lisp/` 还没进 load-path）。新增纯 OS-only 代码都加进这一个文件，别再散落到别处；跨平台功能不放这里，见下条与「多平台代码怎么归位」 |
+| `lisp/init-ime.el` | 跨平台输入法切换（`my/switch-to-english-input-method`，Windows 用 im-select.exe / Linux·macOS 用 fcitx5-remote），全量/精简两套 profile 共用一份。同样由 `early-init.el` 绝对路径 `load` |
 | `lisp/init-mirrors.el` | **包源镜像的唯一定义处**（全量/精简/dump 三处都 require 它，换镜像只改这一个文件） |
 | `lisp/init-bars.el` | **mode-line + tab-line**（两条 bar 要在字号/内边距上保持一致，放一起改；须在 `init-ui` 之后加载，复用其字体选择结果） |
 | `lisp/lang-*.el` | 语言专属配置（如 `lang-go.el`，当前未启用） |
@@ -57,7 +61,12 @@
 
 当前启用的模块（见 `init-full.el` 末尾）：`init-base` `init-evil` `init-ui` `init-bars` `init-window`
 `init-completion` `init-dired` `init-git` `init-term` `init-project` `init-mc`
-`init-keymaps` `init-lsp`。`init-ai` / `init-evil-plugins` / `lang-go` 已写好但注释停用。
+`init-keymaps` `init-lsp` `init-format` `init-navigation`。`init-ai` / `init-evil-plugins` / `lang-go`
+已写好但注释停用。
+
+`init-format`（apheleia，非 LSP 场景的格式化，`SPC f` = eglot-format 仍只管 LSP buffer）与
+`init-navigation`（citre 兜底代码导航 + imenu-list 大纲侧栏，`F12`/`C-'`；citre 需要本机装
+Universal Ctags，没装就整个不加载）借鉴自 zdn/.emacs.d（见 git log 里对应提交）。
 
 ## 文档（docs/）
 
@@ -166,3 +175,14 @@ $env:SILICONFLOW_API_KEY = "sk-xxxx"   # 由用户在自己的 shell/系统环�
 - 包源用 USTC 镜像；**只在 `lisp/init-mirrors.el` 里改**（全量/精简/dump 都 require 它，不要再在别处写 `package-archives`）。
 - 路径别硬编码 `~/.emacs.d/`，一律用 `user-emacs-directory`。Windows 上 Git Bash 等会设 `HOME`，
   届时 `~/.emacs.d` 指向 `C:\Users\<user>\.emacs.d`，而本仓库在 `%APPDATA%\.emacs.d`，两者不是一个地方。
+- **多平台代码怎么归位**（目前只有 Windows 是真实平台，Linux/macOS 分支未经验证，别为它们新建
+  `init-linux.el`/`init-mac.el` 占位——等哪天真有对应机器要跑，再照那台机器的实际情况建、验证）：
+  - **某平台专属、没有别的模块会调用**（一次性设置全局变量/环境变量）→ `lisp/init-<os>.el`
+    （如 `init-windows.el`），整个文件 `(when (eq system-type '<os>) ...)` 包起来，由
+    `early-init.el` 绝对路径 `load`。
+  - **跨平台功能，只是实现因平台而异** → 留在功能所属的模块里，一个函数内部按 `system-type`
+    `cond`/`pcase` 分支，不要因为某个分支代码长就把整个功能搬去 OS 文件（一个能力的所有平台
+    分支应该在同一处看全）。
+  - 例外：**同一份跨平台功能要被全量 `lisp/init-*.el` 和精简 `init-minimal.el` 两条不相交的
+    加载路径共用**（如 `lisp/init-ime.el` 的输入法切换）→ 单开一个按能力命名（不是按 OS
+    命名）的文件，走 `early-init.el` 的绝对路径 `load`，两套 profile 都能吃到。

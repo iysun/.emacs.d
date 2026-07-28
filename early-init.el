@@ -48,12 +48,11 @@
 ;; Windows: avoid GC pauses caused by compacting font caches (Nerd Fonts etc.)
 (setq inhibit-compacting-font-caches t)
 
-;; Windows 专项：文件属性与子进程管道。对 LSP / magit 这种高频起子进程、
-;; 高频 stat 文件的场景影响最明显。
-(when (boundp 'w32-get-true-file-attributes)
-  (setq w32-get-true-file-attributes nil     ; 不去解析真实 uid/gid/链接数，Windows 上这步很贵
-        w32-pipe-read-delay 0                ; 子进程管道读取不再等 50ms → LSP/git 响应更跟手
-        w32-pipe-buffer-size (* 64 1024)))   ; 管道缓冲区调大，减少大响应的分批次数
+;; Windows 专项设置（lisp/init-windows.el，非 Windows 平台空操作）+ 跨平台输入法
+;; 切换（lisp/init-ime.el，全量/精简两套 profile 共用一份）。这里 `lisp/' 还没
+;; 进 load-path（那是 init.el 干的事），用绝对路径 `load'。
+(load (expand-file-name "lisp/init-windows" user-emacs-directory))
+(load (expand-file-name "lisp/init-ime" user-emacs-directory))
 
 ;; Inhibit resizing frame
 (setq frame-inhibit-implied-resize t)

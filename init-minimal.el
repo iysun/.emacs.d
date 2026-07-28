@@ -211,30 +211,8 @@
   (define-key evil-normal-state-map (kbd "C->") 'tab-line-switch-to-next-tab)
   )
 
-;; im-select.exe 的路径，可按需修改
-(defvar my/im-select-path "d:/im-select.exe"
-  "Path to im-select.exe on Windows.")
-
-;; 定义一个函数，用于切换输入法至英文
-(defun my/switch-to-english-input-method ()
-  "调用 im-select.exe 将系统输入法切换为英文"
-  (interactive)
-  ;; 'call-process' 会同步调用外部程序
-  (cond
-   ((eq system-type 'windows-nt)
-    (when (file-exists-p my/im-select-path)
-      (call-process my/im-select-path nil nil nil "1033")))
-   ((eq system-type 'gnu/linux)
-    (when (executable-find "fcitx5-remote")
-      (call-process "fcitx5-remote" nil nil nil "-c")))
-   ((eq system-type 'darwin)
-    (when (executable-find "fcitx5-remote")
-      (call-process "fcitx5-remote" nil nil nil "-c")))
-   (t
-    (message "unknown system"))))
-
-;; 将函数添加到 Evil 的 insert-state-exit-hook
-(add-hook 'evil-insert-state-exit-hook 'my/switch-to-english-input-method)
+;; 输入法切换（跨平台）已挪到 lisp/init-windows.el（`my/switch-to-english-input-method'
+;; + evil-insert-state-exit-hook 注册），early-init.el 阶段就加载好了，这里不用再定义。
 
 (provide 'init-minimal)
 ;;; init-minimal.el ends here

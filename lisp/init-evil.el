@@ -30,31 +30,8 @@
   (evil-commentary-mode)
   )
 
-;; 输入法切换（跨平台，均带 guard）：
-;;   Linux/macOS 用 fcitx5-remote；Windows 用 im-select.exe。
-;;   找不到对应程序时静默跳过，避免在没有该程序的平台上报错。
-(defvar my/im-select-path "d:/im-select.exe"
-  "Windows 上 im-select.exe 的路径，可按需修改。")
-
-(defun my/switch-to-english-input-method ()
-  "退出插入态时把输入法切到英文。"
-  (cond
-   ((eq system-type 'windows-nt)
-    (when (file-exists-p my/im-select-path)
-      (call-process my/im-select-path nil 0 nil "1033")))
-   ((memq system-type '(gnu/linux darwin))
-    (when (executable-find "fcitx5-remote")
-      (call-process "fcitx5-remote" nil 0 nil "-c")))))
-
-(add-hook 'evil-insert-state-exit-hook #'my/switch-to-english-input-method)
-
-;; C-SPC 激活输入法：仅在 Linux/macOS（有 fcitx5-remote）保留此行为；
-;; Windows 上不劫持 C-SPC，保留默认 set-mark-command。
-(when (and (memq system-type '(gnu/linux darwin))
-           (executable-find "fcitx5-remote"))
-  (global-set-key (kbd "C-SPC")
-                  (lambda () (interactive)
-                    (call-process "fcitx5-remote" nil 0 nil "-o"))))
+;; 输入法切换（跨平台）已挪到 lisp/init-windows.el（`my/switch-to-english-input-method'
+;; + C-SPC 绑定），early-init.el 阶段就加载好了，这里不用再定义。
 
 
 ;; evil-textobj-between

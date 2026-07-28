@@ -53,7 +53,9 @@
            corfu
            corfu-terminal
            cape
-           eat))
+           eat
+           apheleia
+           imenu-list))
   (eval `(use-package ,package :ensure t :defer t)))
 
 (when (executable-find "fd")
@@ -74,6 +76,8 @@
 
 (require 'init-keymaps)
 (require 'init-lsp)
+(require 'init-format)
+(require 'init-navigation)
 
 ;;(require 'init-ai)
 ;;(require 'init-evil-plugins)

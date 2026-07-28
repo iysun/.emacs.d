@@ -247,5 +247,55 @@
   )
 (add-hook 'after-init-hook 'use-emacs-theme)
 
+;; ---- fringe 图标 HiDPI 缩放 ----
+;; diff-hl/flymake 这类包默认给 fringe 位图只画 8px 宽，在高分屏上偏小/发虚。
+;; advice `define-fringe-bitmap'：凡是窄于目标宽度的位图，按位重采样放大到目标宽度
+;; （宽高同比缩放）。必须在这些包**定义**自己的位图之前就挂上，故用 `after-init-hook'——
+;; 此时 diff-hl/flymake 都还没因为打开文件而加载（两者都是首次开文件才 require）。
+;; 算法照搬 https://github.com/blahgeek/emacs-fringe-scale（经由 zdn/.emacs.d 的
+;; nn-fringe-scale 转手），逻辑不变，仅去掉 nn- 前缀。
+(defconst my/fringe-scale-width 16
+  "fringe 位图缩放的目标宽度（像素）。")
+
+(defun my/fringe-scale--scale-width (x orig-width new-width)
+  "把一行位图 X 从 ORIG-WIDTH 位宽按位重采样到 NEW-WIDTH 位宽。"
+  (let ((res 0) (i 0))
+    (while (< i new-width)
+      (let* ((j (floor (* orig-width (/ (float i) new-width))))
+             (bit (logand 1 (lsh x (- j)))))
+        (setq res (logior res (lsh bit i))))
+      (setq i (1+ i)))
+    res))
+
+(defun my/fringe-scale--scale-height (v orig-height new-height)
+  "把位图行向量 V 从 ORIG-HEIGHT 行重采样到 NEW-HEIGHT 行。"
+  (let ((res (make-vector new-height nil)) (i 0))
+    (while (< i new-height)
+      (let* ((j (floor (* orig-height (/ (float i) new-height))))
+             (val (elt v j)))
+        (aset res i val))
+      (setq i (1+ i)))
+    res))
+
+(defun my/fringe-scale-advice (orig-func &rest r)
+  "`define-fringe-bitmap' 的 :around advice：位图窄于目标宽度时先放大再定义。"
+  (let* ((bitmap (nth 0 r))
+         (bits (nth 1 r))
+         (height (or (nth 2 r) (length bits)))
+         (width (or (nth 3 r) 8))
+         (align (or (nth 4 r) 'center)))
+    (when (< width my/fringe-scale-width)
+      (let* ((new-width my/fringe-scale-width)
+             (new-height (floor (* height (/ (float new-width) width))))
+             (bits-w-scaled (mapcar (lambda (x) (my/fringe-scale--scale-width x width new-width)) bits))
+             (bits-h-scaled (my/fringe-scale--scale-height bits-w-scaled height new-height)))
+        (setq bits bits-h-scaled
+              height new-height
+              width new-width)))
+    (funcall orig-func bitmap bits height width align)))
+
+(add-hook 'after-init-hook
+          (lambda () (advice-add 'define-fringe-bitmap :around #'my/fringe-scale-advice)))
+
 (provide 'init-ui)
 

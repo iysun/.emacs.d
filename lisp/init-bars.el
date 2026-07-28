@@ -197,7 +197,7 @@
 
 (defun my-ui-ml-input-method ()
   "输入法指示。
-⚠ 本仓库的中英切换走的是外部 `im-select.exe'（见 init-evil.el），
+⚠ 本仓库的中英切换走的是外部 `im-select.exe'（见 lisp/init-ime.el），
 不经过 Emacs 的 input method，所以这里**基本恒为 A**。要让它真的反映
 Windows IME，得在 `my/switch-to-english-input-method' 那侧自己维护一个变量。
 先照抄 zdn 的写法保留位置。"

@@ -68,6 +68,25 @@
   (setq recentf-filename-handlers '(abbreviate-file-name))
   )
 
+;; kill 当前 buffer 后 Emacs 自动切到的下一个 buffer（`other-buffer' 的候选逻辑）
+;; 默认会翻到 *Messages*/*Help* 这类内部 buffer。把它们从候选里过滤掉。
+;; 注意：这条影响的是 `other-buffer'/`next-buffer' 这类走原生 buffer-predicate
+;; 的路径；`C-x b' 已经绑成 `consult-buffer'（见 init-keymaps.el），consult 有
+;; 自己独立的过滤逻辑，不读这个 frame 参数，故看不出变化，属预期。
+(defvar my/buffer-allow-names '("*compilation*" "*eshell*")
+  "即使以 * 开头，也允许出现在 `other-buffer' 候选里的 buffer 名。")
+
+(defun my/buffer-predicate (buf)
+  (or (not (string-prefix-p "*" (buffer-name buf)))
+      (member (buffer-name buf) my/buffer-allow-names)))
+
+(defun my/set-buffer-predicate (&optional frame)
+  (set-frame-parameter frame 'buffer-predicate #'my/buffer-predicate))
+
+(add-hook 'after-init-hook #'my/set-buffer-predicate)
+;; 新建 frame（如 `emacsclient -c'）默认不继承这个参数，需要单独设。
+(add-hook 'after-make-frame-functions #'my/set-buffer-predicate)
+
 (provide 'init-base)
 
 ;; (defun word-syntax- ()
