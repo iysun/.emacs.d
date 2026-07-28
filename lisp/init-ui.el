@@ -185,7 +185,8 @@
 ;; 4. 全局开启
 (add-hook 'prog-mode-hook 'whitespace-mode)
 
-(add-hook 'dired-mode-hook 'diredfl-mode)
+;; diredfl-mode 的 hook 已随 2026-07-28 dired 简化移除（参照 zdn 精简掉 diredfl 包，
+;; 见 lisp/init-dired.el）。
 
 ;; dashboard 首屏已禁用以提速启动（启动直接进 scratch/文件；inhibit-startup-screen 见 early-init.el）。
 ;; 若想恢复：取消下面 with-eval-after-load 与 (dashboard-setup-startup-hook) 的注释。

@@ -28,7 +28,7 @@
 
 | 项 | 开销 | 处置 |
 |----|------|------|
-| dired 四件套（quick-sort/git-info/rsync/subtree） | ~1.6s | 延迟：`init-dired.el` 整体包进 `(with-eval-after-load 'dired …)` |
+| ~~dired 四件套（quick-sort/git-info/rsync/subtree）~~ | ~1.6s | **2026-07-28 已移除**：参照 zdn/.emacs.d 改成纯内置 dired/dired-aux/dired-x 实现（`lisp/init-dired.el`），四个包全砍，这笔开销不再存在 |
 | `eglot` 裸 require | ~1.1s | 删除 eager require；靠 `*-ts-mode-hook` 上的 `eglot-ensure` 按需加载 |
 | dashboard 首屏 | ~0.3s + 渲染 | 禁用（`init-ui.el` 注释掉 `dashboard-setup-startup-hook`；`early-init.el` 开 `inhibit-startup-screen`） |
 | `exec-path-from-shell` 裸 require | 小 | 删除（`-initialize` 本就注释，空载） |

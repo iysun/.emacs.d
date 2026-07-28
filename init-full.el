@@ -41,11 +41,6 @@
            eldoc-mouse
            magit
            diff-hl
-           dired-quick-sort
-           dired-git-info
-           dired-rsync
-           diredfl
-           dired-subtree
            eshell-git-prompt
            eshell-syntax-highlighting
            orderless
