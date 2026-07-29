@@ -89,7 +89,7 @@ foreach ($n in "emacs","emacsclient","emacsclientw","etags","ctags") {
 }
 ```
 
-开始菜单快捷方式用 `scripts\make-shortcuts.ps1` 重建（指向 `runemacs.exe`）。
+开始菜单快捷方式用 `scripts\make-shortcuts.py` 重建（指向 `runemacs.exe`）。
 
 ## 换到 Emacs 31 之后连带变了什么
 

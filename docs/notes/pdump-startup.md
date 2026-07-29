@@ -5,9 +5,9 @@
 
 ## 启动方式
 ```powershell
-emacs --dump-file=<.emacs.d>\emacs.pdmp     # 或把快捷方式指向 emacs-dump.cmd
+emacs --dump-file=<.emacs.d>\emacs.pdmp     # 或把快捷方式指向 emacs-dump.py
 ```
-`emacs-dump.cmd`：存在 `emacs.pdmp` 就带 `--dump-file` 启动，否则回退普通启动。
+`emacs-dump.py`：存在 `emacs.pdmp` 就带 `--dump-file` 启动，否则回退普通启动。
 
 ## 原理
 自定义 dump 是标准 dump 的**超集**：从（标准 dump 起来的）emacs 里 `require` 重包，再
@@ -155,15 +155,15 @@ trampoline 的路径，于是 `ERROR_MOD_NOT_FOUND`。
 - 快捷方式应始终指向 `runemacs.exe`；msys2 那份在
   `<scoop>\apps\msys2\current\ucrt64\bin\runemacs.exe`。
 - `runemacs.exe` 会把参数原样转给 `emacs.exe`，所以**开始菜单快捷方式直接带 `--dump-file` 即可**，
-  不必绕 `emacs-dump.cmd`（那是 .cmd，会挂一个控制台窗口）。当前 `开始菜单\Programs` 下两个：
+  不必绕 `emacs-dump.py`（脚本双击同样会挂一个控制台窗口）。当前 `开始菜单\Programs` 下两个：
 
   | 名称 | 参数 |
   |------|------|
   | `Emacs` | `--dump-file="<repo>\emacs.pdmp"` |
   | `Emacs (不用 dump 映像)` | 无（映像过期/损坏时用它进去重跑 `make dump`） |
 
-  快捷方式没有 `emacs-dump.cmd` 那种「pdmp 缺失就回退」的逻辑，第二个入口就是手工兜底。
-  重建：`powershell -ExecutionPolicy Bypass -File scripts\make-shortcuts.ps1`（幂等，可重复跑）。
+  快捷方式没有 `emacs-dump.py` 那种「pdmp 缺失就回退」的逻辑，第二个入口就是手工兜底。
+  重建：`python scripts\make-shortcuts.py`（幂等，可重复跑；需 `pip install pywin32`）。
 
 ## 维护成本（pdmp 与 emacs 二进制强绑定）
 - **装/删包后** → `make dump` 重建。

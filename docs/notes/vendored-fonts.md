@@ -1,7 +1,7 @@
 # Vendor 字体：assets/fonts/ 里为什么放了这几个字体文件
 
 2026-07-28 起，`assets/fonts/` 收了 6 个字体文件，随仓库一起 `git clone`；配 Windows 专用的
-`scripts/install-fonts.ps1` 装进当前用户（不需要管理员）。
+`scripts/install-fonts.py` 装进当前用户（不需要管理员）。
 
 ## 为什么
 
@@ -46,13 +46,13 @@ Emacs 在 Windows 上走 GDI/HarfBuzz 字体后端，没有 fontconfig 那种"�
 机制——`find-font`/`font-family-list` 只认 Windows 自己知道的字体，文件本身放在哪都没用，
 必须让 Windows"知道"这个字体存在。
 
-`scripts/install-fonts.ps1` 做的事（Windows 10 1809+ 支持，全程不需要管理员，等价于把字体
+`scripts/install-fonts.py` 做的事（Windows 10 1809+ 支持，全程不需要管理员，等价于把字体
 文件拖进"设置 → 个性化 → 字体"）：
 
 1. 复制到 `%LOCALAPPDATA%\Microsoft\Windows\Fonts\`（当前用户级字体目录）。
 2. 在 `HKEY_CURRENT_USER\Software\Microsoft\Windows NT\CurrentVersion\Fonts` 下登记一条
    注册表项——这一步让字体在**下次登录/重启**时持久生效。
-3. 当场对本次会话调用一次 `AddFontResourceEx`（P/Invoke `gdi32.dll`）——只写注册表不够：
+3. 当场对本次会话调用一次 `AddFontResourceEx`（`ctypes` 调 `gdi32.dll`）——只写注册表不够：
    GDI 的会话级字体表不会因为注册表多了一条就自动重新扫描，得显式把字体资源加进当前会话，
    这样装完马上开一个新 Emacs 进程就能看到，不用重新登录。
 4. 广播一次 `WM_FONTCHANGE`，让 Explorer 等长驻进程有机会刷新。
@@ -66,7 +66,7 @@ Emacs 在 Windows 上走 GDI/HarfBuzz 字体后端，没有 fontconfig 那种"�
 `JetBrainsMonoNerdFontMono-Regular.ttf`——本机实测过：这个"去掉 NL"的短名字，跟官方
 nerd-fonts 安装器/官网下载包会用的 Ligatures 变体文件同名。如果两者都装在同一个每用户
 字体目录下，后装的会把先装的**文件内容覆盖掉**，但注册表项各自独立、名字对得上、内容却
-是另一个变体——`find-font` 认出来的字体就会驴唇不对马嘴。`install-fonts.ps1` 现在也加了
+是另一个变体——`find-font` 认出来的字体就会驴唇不对马嘴。`install-fonts.py` 现在也加了
 撞名保护：目标位置已有同名文件但内容（SHA256）对不上时，报错跳过、不覆盖。
 
 ### 字体实际的 family 名不一定是文件名或"看起来该叫什么"
@@ -88,7 +88,7 @@ $pfc.Families | ForEach-Object { $_.Name }
   构建/版本，留着没坏处，但真正会命中的是中文名）。
 - Source Han Sans SC 的 family 名是**`思源黑体`**（中文），不是 `Source Han Sans SC`。
 
-`lisp/init-ui.el` 的候选表和 `scripts/install-fonts.ps1` 的清单都是按这次实测结果写的，
+`lisp/init-ui.el` 的候选表和 `scripts/install-fonts.py` 的清单都是按这次实测结果写的，
 以后要是重新 vendor 别的版本/变体，记得重新跑一遍上面这段确认 family 名，不要靠猜。
 
 ## 重新 vendor（上游更新时）
@@ -97,13 +97,13 @@ $pfc.Families | ForEach-Object { $_.Name }
    `assets/fonts/` 下的同名文件；如果上游重新组织过目录结构，文件名可能变，参照
    README 表格重新核对。
 2. 用上面那段 PowerShell 重新探测 family 名，跟 `lisp/init-ui.el` 候选表 /
-   `scripts/install-fonts.ps1` 的 `$Manifest` 里写的对一下，不一致就同步改。
-3. 跑一次 `scripts/install-fonts.ps1 -Force` 强制重装，重启 Emacs 确认字体生效。
+   `scripts/install-fonts.py` 的 `MANIFEST` 里写的对一下，不一致就同步改。
+3. 跑一次 `scripts/install-fonts.py --force` 强制重装，重启 Emacs 确认字体生效。
 
 ## 调用
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\install-fonts.ps1
+python scripts\install-fonts.py
 ```
 
-幂等：装过的会跳过。想强制重装（比如更新了 `assets/fonts/` 里的文件）加 `-Force`。
+幂等：装过的会跳过。想强制重装（比如更新了 `assets/fonts/` 里的文件）加 `--force`。

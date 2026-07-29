@@ -1,7 +1,7 @@
 ;;; dump.el --- 构建自定义 portable dump 加速启动 -*- lexical-binding: t; -*-
 ;;
 ;; 用法：  emacs --batch -Q -l dump.el      → 生成 emacs.pdmp
-;; 启动：  emacs --dump-file=<.emacs.d>/emacs.pdmp   （或用 emacs-dump.cmd）
+;; 启动：  emacs --dump-file=<.emacs.d>/emacs.pdmp   （或用 emacs-dump.py）
 ;;
 ;; 原理：自定义 dump 是标准 dump 的超集——这里把启动期/常用重包 require 进来，再转储成映像。
 ;; 启动时 early-init/init 照常运行，config 里的 (require ...) 因已在映像中而瞬间返回。

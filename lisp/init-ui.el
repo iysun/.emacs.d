@@ -20,12 +20,12 @@
   ;; 真要固定字号，在 custom.el 里设 default 的 :height，别写死在这里。
   ;; 候选表第一项 "JetBrainsMonoNL NFM" 是 assets/fonts/ 里 vendor 的字体
   ;; （JetBrainsMono Nerd Font Mono，NoLigatures 变体，装法见
-  ;; scripts/install-fonts.ps1），优先于系统装的 JetBrainsMono/FiraCode 各变体——
-  ;; 跑过 install-fonts.ps1 的机器由此落在一个可控、可复现的字体上，不用管系统上
+  ;; scripts/install-fonts.py），优先于系统装的 JetBrainsMono/FiraCode 各变体——
+  ;; 跑过 install-fonts.py 的机器由此落在一个可控、可复现的字体上，不用管系统上
   ;; 恰好装了哪个版本。系统变体、以及没打图标补丁的 Cascadia Code 仍留在候选表
   ;; 垫底，供还没跑安装脚本的机器兜底。
   ;; 名字里的 "NL" 是这个变体在字体自身 name table 里的真实 family 名（不是
-  ;; "JetBrainsMono NFM"，实测过，见 install-fonts.ps1 头部注释），系统装的官方
+  ;; "JetBrainsMono NFM"，实测过，见 install-fonts.py 头部注释），系统装的官方
   ;; Ligatures 版才叫 "JetBrainsMono NFM"，两者不是一回事，候选表里都留着。
   (cl-loop for f in '("JetBrainsMonoNL NFM" "JetBrainsMono Nerd Font" "JetBrainsMono NFM"
                       "FiraCode Nerd Font" "FiraCode NFM" "Cascadia Code")
@@ -39,7 +39,7 @@
   ;; 候选表前两项 "更纱终端书呆黑体-简"/"思源黑体" 是 assets/fonts/ 里 vendor 的
   ;; 两个字体（Sarasa Term SC Nerd 的实际 family 名、Source Han Sans SC 的实际
   ;; family 名——都是中文名，不是候选表里 "Sarasa Term SC Nerd" 那个英文名，
-  ;; 实测过），优先于系统装的微软雅黑/DengXian，装法见 scripts/install-fonts.ps1；
+  ;; 实测过），优先于系统装的微软雅黑/DengXian，装法见 scripts/install-fonts.py；
   ;; "Sarasa Term SC Nerd" 是历史遗留的错误英文名，实测不会真的命中，留着无害。
   (cl-loop for f in '("更纱终端书呆黑体-简" "思源黑体" "微软雅黑" "Microsoft YaHei"
                       "Sarasa Term SC Nerd" "DengXian")
@@ -105,7 +105,7 @@
 
 ;; ---- vendor 的字体：装了没 ----
 ;; assets/fonts/ 里的字体文件本身进了仓库，但 Windows 上还得跑一遍
-;; scripts/install-fonts.ps1 才会真正装进当前用户、被 find-font 认到——字体候选表
+;; scripts/install-fonts.py 才会真正装进当前用户、被 find-font 认到——字体候选表
 ;; 本身"找不到就沉默跳过"的哲学不变（见上面几组 cl-loop），但"vendor 的字体明明
 ;; 在仓库里、却没跑安装脚本"是另一件事：忘跑了比沉默更值得提醒一下。
 ;; 照抄 init-full.el 里 `my/check-pdmp-freshness' 的思路——正常沉默，
@@ -120,7 +120,7 @@
 
 (defun my-ui--check-vendored-fonts ()
   "assets/fonts/ 里有字体文件、但 find-font 探测不到对应 family，说明
-scripts/install-fonts.ps1 大概率没跑过（或跑了但没重启 Emacs）——`*Warnings*'
+scripts/install-fonts.py 大概率没跑过（或跑了但没重启 Emacs）——`*Warnings*'
 里提示一下，别人换新机器 clone 完直接用，容易忘这一步。"
   (when (eq system-type 'windows-nt)
     (let ((missing
@@ -134,7 +134,7 @@ scripts/install-fonts.ps1 大概率没跑过（或跑了但没重启 Emacs）—
          'my-ui
          (format "assets/fonts/ 里有 vendor 的字体，但本机还没装：%s
 跑一次：
-  powershell -ExecutionPolicy Bypass -File scripts\\install-fonts.ps1
+  python scripts\\install-fonts.py
 装完重启 Emacs。"
                  (mapconcat #'cdr missing "、"))
          :warning)))))

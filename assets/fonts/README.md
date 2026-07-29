@@ -2,7 +2,7 @@
 
 配置依赖的字体不能只靠"机器上恰好装了"来保证：`lisp/init-ui.el` 里图标码位用的
 Nerd Font 补丁字体 Windows 不自带，新机器上会导致 mode-line/tab-line 图标渲染成
-豆腐块 □。这里把能合法重新分发的那部分字体文件直接收进仓库，配 `scripts/install-fonts.ps1`
+豆腐块 □。这里把能合法重新分发的那部分字体文件直接收进仓库，配 `scripts/install-fonts.py`
 一键装进当前用户（不需要管理员），换新机器不用再手动找字体装。
 
 详细说明（为什么选这几个字体、版权调研过程、如何重新 vendor）见
@@ -31,7 +31,7 @@ Nerd Font 补丁字体 Windows 不自带，新机器上会导致 mode-line/tab-l
 ## 装到本机
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\install-fonts.ps1
+python scripts\install-fonts.py
 ```
 
 装完重启 Emacs 生效。细节见脚本头部注释和 `docs/notes/vendored-fonts.md`。

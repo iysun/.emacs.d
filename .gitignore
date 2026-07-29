@@ -11,6 +11,7 @@
 /eln-cache
 /straight/
 **/*.elc
+**/__pycache__/
 
 # 自定义 portable dump（机器/emacs 版本相关，按需 `make dump` 重建）
 /emacs.pdmp

@@ -50,7 +50,7 @@
 | `extensions/mode-line/mode-line.el` | mode-line 实现本体，`(provide 'init-mode-line)`，由 `lisp/init-bars.el` `load` |
 | `extensions/tab-line/tab-line.el` | tab-line 实现本体，`(provide 'init-tab-line)`（特意不叫 `tab-line'，避免跟内置库撞名），由 `lisp/init-bars.el` `load`。标签按项目分组、不带图标（纯文字，跟 mode-line 一样简约优先），较复杂的实现（如按组操作、ace-jump 跳标签）放在这里，跟 `init-bars.el` 里两条 bar 共用的简单工具函数分开 |
 | `themes/` | 本仓库自维护的主题文件（`*-theme.el`），由 `custom-theme-load-path` 接入（`lisp/init-ui.el`），新增主题放进去即可被 `switch-emacs-theme` 自动发现，不用改代码。共 5 个：`nn-world`（借自 zdn/.emacs.d，GPLv3，默认主题）、`catppuccin`/`crafters`/`gits`/`matrix`（调色板移植自 [LionyxML/emacs-solo](https://github.com/LionyxML/emacs-solo)，GPL-3.0-or-later，face 结构复用 `nn-world-theme.el`，见各文件头注释）；不再依赖 `doom-themes` 包 |
-| `assets/fonts/` | vendor 进仓库的字体文件（OFL 等自由许可，随 git 一起到位），配 `scripts/install-fonts.ps1` 装进当前用户；`lisp/init-ui.el` 英文/中文/符号/emoji 四组字体候选表里各有一项对应这里的文件。见 [docs/notes/vendored-fonts.md](docs/notes/vendored-fonts.md) |
+| `assets/fonts/` | vendor 进仓库的字体文件（OFL 等自由许可，随 git 一起到位），配 `scripts/install-fonts.py` 装进当前用户；`lisp/init-ui.el` 英文/中文/符号/emoji 四组字体候选表里各有一项对应这里的文件。见 [docs/notes/vendored-fonts.md](docs/notes/vendored-fonts.md) |
 | `custom.el` | Customize 自动生成，**已 gitignore，勿手改** |
 | `elpa/` | 第三方包，**已 gitignore，勿编辑/勿提交** |
 | `var/` `etc/` | no-littering 收编的运行期文件（recentf/savehist/bookmark/project/tramp/eshell/transient…），**已 gitignore，勿手改** |
@@ -59,10 +59,9 @@
 | `README.md` | 简洁项目介绍 + 文档入口（规范/流程仍以本文件为准） |
 | `docs/startup-benchmark.md` | 多机启动速度基准记录 + 测法（脚本 `-a` 追加到此） |
 | `scripts/bench-startup.py` | 跨平台测速脚本：采集机器信息 + 三场景测真实 GUI 启动耗时，输出/追加基准块 |
-| `scripts/make-shortcuts.ps1` | Windows：在开始菜单建 Emacs 快捷方式（指向 `runemacs.exe`，带/不带 pdmp 两个入口） |
-| `scripts/install-fonts.ps1` | Windows：把 `assets/fonts/` 里 vendor 的字体装进当前用户（不需要管理员），装法/原理见文件头注释和 [docs/notes/vendored-fonts.md](docs/notes/vendored-fonts.md) |
-| `emacs-dump.cmd` | Windows：带 `--dump-file` 启动 Emacs（pdmp 缺失则回退普通启动） |
-| `emacs-dump.sh` | Linux/macOS：同上 |
+| `scripts/make-shortcuts.py` | Windows：在开始菜单建 Emacs 快捷方式（指向 `runemacs.exe`，带/不带 pdmp 两个入口）。需 `pip install pywin32`（建 `.lnk` 走 WScript.Shell COM，标准库无等价物） |
+| `scripts/install-fonts.py` | Windows：把 `assets/fonts/` 里 vendor 的字体装进当前用户（不需要管理员），装法/原理见文件头注释和 [docs/notes/vendored-fonts.md](docs/notes/vendored-fonts.md)。只用标准库（`ctypes` + `winreg`），免装依赖 |
+| `emacs-dump.py` | 跨平台：带 `--dump-file` 启动 Emacs（pdmp 缺失则回退普通启动），取代原来重复的 `emacs-dump.cmd`/`emacs-dump.sh` |
 | `emacs.pdmp` | 生成的 dump 映像，**已 gitignore，按需 `make dump` 重建** |
 
 当前启用的模块（见 `init-full.el` 末尾）：`init-base` `init-evil` `init-ui` `init-bars` `init-window`
@@ -93,7 +92,7 @@ Universal Ctags，没装就整个不加载）借鉴自 zdn/.emacs.d（见 git lo
 ```powershell
 make dump            # = /build，调用 dump.el 生成 emacs.pdmp
 ```
-启动用映像：把日常快捷方式指向仓库根的 **`emacs-dump.cmd`**（pdmp 缺失会回退普通启动），
+启动用映像：把日常快捷方式指向仓库根的 **`emacs-dump.py`**（pdmp 缺失会回退普通启动），
 或手动 `emacs --dump-file=<.emacs.d>\emacs.pdmp`。
 
 要点（细节见 [docs/notes/pdump-startup.md](docs/notes/pdump-startup.md)）：

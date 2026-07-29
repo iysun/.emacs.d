@@ -5,7 +5,7 @@
 ;; Profile 选择：
 ;;   全量（默认）  emacs
 ;;   精简          emacs --minimal     或设环境变量 EMACS_MINIMAL=1
-;;   dump 映像     emacs-dump.cmd      或 emacs --dump-file=<.emacs.d>/emacs.pdmp
+;;   dump 映像     emacs-dump.py       或 emacs --dump-file=<.emacs.d>/emacs.pdmp
 
 (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
 
