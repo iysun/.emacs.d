@@ -17,19 +17,22 @@
 
 (defun my/tab-line-buffer-group-by-project (&optional buffer)
   "Group buffers by project root via project.el.
-返回值尾部带一个空格：`tab-line-separator' 现在是空串（标签之间紧挨着，见下面
-setup 那段），但分组名（如 \".emacs.d\"）和第一个标签之间还是需要一点视觉间隔，
-不然会跟标签糊在一起分不清。这个尾随空格直接是分组名字符串的一部分，会跟着
-`tab-line-tab-group' 的背景色一起渲染（原理同标签自己的 `my/tab-line-tab-padding'：
-文本里的字符必然跟着所在标签共享同一个容器 face，颜色不会错）。
+返回值首尾各带一个空格：`tab-line-separator' 现在是空串（标签之间紧挨着，见下面
+setup 那段），但分组名（如 \".emacs.d\"）跟左边的 bar 边缘、右边第一个标签之间
+都还需要一点视觉间隔，不然会跟边缘/标签糊在一起分不清——只加尾部空格时左边缘
+贴得死死的，看起来像少了左 padding。这两个空格直接是分组名字符串的一部分，会
+跟着 `tab-line-tab-group' 的背景色一起渲染（原理同标签自己的
+`my/tab-line-tab-padding'：文本里的字符必然跟着所在标签共享同一个容器 face，
+颜色不会错）。
 ⚠ 这个返回值同时也是分组的\"身份\"标识——`my/tab-line--group-buffers' 等函数用
-`equal' 比较它来判断两个 buffer 是否同组，尾随空格对所有 buffer 一视同仁地加，
+`equal' 比较它来判断两个 buffer 是否同组，首尾空格对所有 buffer 一视同仁地加，
 比较结果不受影响，不用担心带来分组错乱。"
   (with-current-buffer (or buffer (current-buffer))
     (let* ((dir (or (buffer-file-name) nil))
            (proj (project-current nil dir))
            (root (when proj (project-root proj))))
-      (concat (if (and root dir)
+      (concat " "
+              (if (and root dir)
                   (file-name-nondirectory (directory-file-name root))
                 "Other")
               " "))))
