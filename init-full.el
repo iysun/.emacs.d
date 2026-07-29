@@ -46,8 +46,7 @@
            corfu
            corfu-terminal
            cape
-           apheleia
-           imenu-list))
+           apheleia))
   (eval `(use-package ,package :ensure t :defer t)))
 
 (when (executable-find "fd")

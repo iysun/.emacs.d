@@ -31,7 +31,7 @@
 
 ;; 在 evil 加载后用原生 keymap API 绑定（global-set-key / define-key / evil-define-key）
 (with-eval-after-load 'evil
-  (evil-define-key 'normal 'global (kbd "SPC f") 'eglot-format)
+  (evil-define-key 'normal 'global (kbd "SPC f") 'my/format-buffer)
 
   ;; 全局键（原 general-def 无 :keymaps）
   (global-set-key (kbd "C-;") 'embark-act)

@@ -39,8 +39,8 @@
 | `init-full.el` | 全量 profile：声明包列表 + `require` 各模块（与 `init.el` 同级，按路径 load） |
 | `init-minimal.el` | 精简 profile 全部内容（与 `init.el` 同级，按路径 load） |
 | `lisp/init-*.el` | 全量 profile 的功能模块（每个 `(provide 'init-xxx)`） |
-| `lisp/init-format.el` | apheleia 格式化（非 LSP 场景；`SPC f` 仍是 eglot-format） |
-| `lisp/init-navigation.el` | citre 兜底代码导航 + imenu-list 大纲侧栏（citre 需本机 Universal Ctags） |
+| `lisp/init-format.el` | apheleia 格式化（非 LSP 场景，手动触发）+ `my/format-buffer`：`SPC f` 统一入口，eglot 托管的 buffer 走 eglot-format，否则走 apheleia-format-buffer |
+| `lisp/init-navigation.el` | citre 兜底代码导航（citre 需本机 Universal Ctags） |
 | `lisp/init-windows.el` | Windows 专项、无其它调用方的设置（文件属性/管道调优、控制台+剪贴板编码、git 环境变量…），非 Windows 平台空操作。由 `early-init.el` 在最早期用绝对路径 `load`（此时 `lisp/` 还没进 load-path）。新增纯 OS-only 代码都加进这一个文件，别再散落到别处；跨平台功能不放这里，见下条与「多平台代码怎么归位」 |
 | `lisp/init-ime.el` | 跨平台输入法切换（`my/switch-to-english-input-method`，Windows 用 im-select.exe / Linux·macOS 用 fcitx5-remote），全量/精简两套 profile 共用一份。同样由 `early-init.el` 绝对路径 `load` |
 | `lisp/init-mirrors.el` | **包源镜像的唯一定义处**（全量/精简/dump 三处都 require 它，换镜像只改这一个文件） |
@@ -69,8 +69,9 @@
 `init-keymaps` `init-lsp` `init-format` `init-navigation`。`init-ai` / `init-evil-plugins` / `lang-go`
 已写好但注释停用。
 
-`init-format`（apheleia，非 LSP 场景的格式化，`SPC f` = eglot-format 仍只管 LSP buffer）与
-`init-navigation`（citre 兜底代码导航 + imenu-list 大纲侧栏，`F12`/`C-'`；citre 需要本机装
+`init-format`（apheleia，非 LSP 场景的格式化；`SPC f` = `my/format-buffer` 统一入口，按 buffer
+是否有 eglot 托管自动分流到 eglot-format 或 apheleia-format-buffer）与
+`init-navigation`（citre 兜底代码导航，`F12`；citre 需要本机装
 Universal Ctags，没装就整个不加载）借鉴自 zdn/.emacs.d（见 git log 里对应提交）。
 
 ## 文档（docs/）
