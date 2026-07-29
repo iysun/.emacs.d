@@ -42,9 +42,8 @@
 (add-hook 'after-init-hook (lambda () (eshell-git-prompt-use-theme 'multiline2)))
 ;; eshell-syntax-highlighting-global-mode
 (add-hook 'eshell-mode-hook 'eshell-syntax-highlighting-global-mode)
-;; 内置 completion-preview-mode（Emacs 30+），替代 capf-autosuggest
-(add-hook 'eshell-mode-hook 'completion-preview-mode)
-(add-hook 'comint-mode-hook 'completion-preview-mode)
+;; 内置 completion-preview-mode（Emacs 30+，替代 capf-autosuggest）在 eshell/comint 里
+;; 是否启用由 init-completion.el 的补全风格切换（my/completion--set-preview-hooks）统一管理。
 ;; eshell 模式钩子
 (add-hook 'eshell-mode-hook
           (lambda ()

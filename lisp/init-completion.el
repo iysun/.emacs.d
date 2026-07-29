@@ -89,9 +89,8 @@
 ;;(package-install 'corfu))
 
 ;; (require 'corfu)
-;; 设置 corfu 变量
+;; 设置 corfu 变量（corfu-auto 由下面的补全风格切换按需设置，不在这里写死）
 (progn
-  (setq corfu-auto nil)
   (setq corfu-auto-prefix 2)
   (setq corfu-preview-current nil)
   (setq corfu-auto-delay 0.5)
@@ -100,9 +99,7 @@
   (custom-set-faces
    '(corfu-border ((t (:inherit region :background unspecified)))))
   )
-;; 启用 corfu 模式
-(add-hook 'after-init-hook 'global-corfu-mode)
-(add-hook 'global-corfu-mode-hook 'corfu-popupinfo-mode)
+;; corfu / corfu-popupinfo / corfu-terminal 的启停交给下面的补全风格切换统一管理
 
 ;; corfu 配置
 (with-eval-after-load 'corfu
@@ -114,13 +111,27 @@
                              (unless (or (derived-mode-p 'eshell-mode 'comint-mode)
                                          (minibufferp))
                                #'corfu-send))))
+
+  ;; corfu-map 里的 C-n/C-p 靠 `<remap> <next-line>'/`<remap> <previous-line>' 生效，
+  ;; 但 evil insert 状态的 C-n/C-p 直接绑死在 evil-complete-next/-previous（vim 关键字补全）上，
+  ;; 命令层级压根不经过 next-line/previous-line，remap 永远不会触发；而 evil 的
+  ;; emulation-mode-map-alists 优先级又高于 corfu 挂在 minor-mode-overriding-map-alist
+  ;; 上的 corfu-map，所以哪怕给 corfu-map 直接绑 C-n/C-p 也一样会被 evil 截胡。
+  ;; 于是直接在 evil-insert-state-map 上按上下文分流：corfu 弹窗活着时转发给
+  ;; corfu-next/-previous，否则维持 evil 原生的 C-n/C-p。
+  (evil-define-key 'insert 'global (kbd "C-n")
+    `(menu-item "" evil-complete-next :filter
+                ,(lambda (cmd)
+                   (if (and corfu-mode completion-in-region-mode)
+                       #'corfu-next
+                     cmd))))
+  (evil-define-key 'insert 'global (kbd "C-p")
+    `(menu-item "" evil-complete-previous :filter
+                ,(lambda (cmd)
+                   (if (and corfu-mode completion-in-region-mode)
+                       #'corfu-previous
+                     cmd))))
   )
-
-;; corfu-terminal
-(unless (display-graphic-p)
-  ;; (require 'corfu-terminal)
-  (add-hook 'global-corfu-mode-hook 'corfu-terminal-mode))
-
 
 ;; Emacs 原生配置
 ;; TAB cycle if there are only few candidates
@@ -149,11 +160,9 @@
 ;; eglot 29+ 自身的缓存机制已足够，无需 buster。
 
 ;; 行内补全预览（Emacs 30+ 内置）：打字时在光标后 inline 显示候选词（灰字），
-;; 不弹窗、不发 LSP 请求，与 corfu 互补——corfu 负责弹出完整候选列表。
-(add-hook 'prog-mode-hook  #'completion-preview-mode)
-(add-hook 'text-mode-hook  #'completion-preview-mode)
-(with-eval-after-load 'comint
-  (add-hook 'comint-mode-hook #'completion-preview-mode))
+;; 不弹窗、不发 LSP 请求，与 corfu 互补。是否在 prog/text/eshell/comint 四类
+;; buffer 里挂载由下面的补全风格切换（my/completion--set-preview-hooks）控制，
+;; 这里只配置它自身的行为参数。
 (with-eval-after-load 'completion-preview
   (setq completion-preview-minimum-symbol-length 1)
   ;; evil insert 模式下退格/删除后也刷新行内预览
@@ -163,5 +172,80 @@
     (push cmd completion-preview-commands))
   ;; M-n/M-p 与 diff-hl 的 evil insert 绑定冲突，不覆盖；用 TAB 确认，C-M-i 看完整列表
   )
+
+;; ------------------------------------------------------------------
+;; 补全风格切换：corfu 自动弹出 / corfu 手动触发+行内预览 / 仅行内预览
+;; 用法仿照 switch-emacs-theme（见 init-ui.el）：交互选择、立即生效、
+;; customize-save-variable 存进 custom.el，下次启动 use-completion-style 自动恢复。
+;; ------------------------------------------------------------------
+
+(defconst my/completion-styles '(auto manual preview-only)
+  "可选补全风格：
+auto         corfu 自动弹出（打字即弹），关闭行内预览；
+manual       corfu 仅手动触发（C-M-i / my/lsp-complete），开启行内预览；
+preview-only 完全关闭 corfu 弹窗，只保留行内预览。")
+
+(defun my/completion--preview-hook-list ()
+  '(prog-mode-hook text-mode-hook eshell-mode-hook comint-mode-hook))
+
+(defun my/completion--set-preview-hooks (enable)
+  "把 completion-preview-mode 挂/摘到 prog/text/eshell/comint 四个 hook 上。"
+  (dolist (hook (my/completion--preview-hook-list))
+    (if enable
+        (add-hook hook #'completion-preview-mode)
+      (remove-hook hook #'completion-preview-mode))))
+
+(defun my/completion--sync-preview-buffers (enable)
+  "把已打开、属于上述四类 major-mode 的 buffer 里的 completion-preview-mode 同步到 ENABLE。"
+  (dolist (buf (buffer-list))
+    (with-current-buffer buf
+      (when (derived-mode-p 'prog-mode 'text-mode 'eshell-mode 'comint-mode)
+        (completion-preview-mode (if enable 1 -1))))))
+
+(defun my/completion--set-corfu (enable)
+  "联动 global-corfu-mode 及其 popupinfo/terminal 全局子模式。三者都是 :global t，
+用显式 1/-1 而非 hook 里的隐式 toggle，避免反复切换风格后状态漂移。"
+  (global-corfu-mode (if enable 1 -1))
+  (corfu-popupinfo-mode (if enable 1 -1))
+  (unless (display-graphic-p)
+    (corfu-terminal-mode (if enable 1 -1))))
+
+(defun my/apply-completion-style (style)
+  "按 STYLE（auto/manual/preview-only）应用补全行为，对已打开的 buffer 立即生效。"
+  (pcase style
+    ('auto
+     (setq corfu-auto t)
+     (my/completion--set-corfu t)
+     (my/completion--set-preview-hooks nil)
+     (my/completion--sync-preview-buffers nil))
+    ('manual
+     (setq corfu-auto nil)
+     (my/completion--set-corfu t)
+     (my/completion--set-preview-hooks t)
+     (my/completion--sync-preview-buffers t))
+    ('preview-only
+     (my/completion--set-corfu nil)
+     (my/completion--set-preview-hooks t)
+     (my/completion--sync-preview-buffers t))
+    (_ (error "未知补全风格: %s" style))))
+
+(defun switch-completion-style (style)
+  "交互切换补全风格并持久化到 custom.el（仿 switch-emacs-theme）。"
+  (interactive
+   (list
+    (intern (completing-read
+             "select completion style: "
+             (mapcar #'symbol-name my/completion-styles)
+             nil t))))
+  (my/apply-completion-style style)
+  (customize-save-variable 'custom-completion-style style))
+
+(defun use-completion-style ()
+  (my/apply-completion-style
+   (if (and (boundp 'custom-completion-style)
+            (memq custom-completion-style my/completion-styles))
+       custom-completion-style
+     'manual)))
+(add-hook 'after-init-hook 'use-completion-style)
 
 (provide 'init-completion)
