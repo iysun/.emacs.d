@@ -37,7 +37,6 @@
            embark-consult
            marginalia
            consult-eglot
-           eldoc-mouse
            magit
            diff-hl
            eshell-git-prompt
@@ -47,7 +46,6 @@
            corfu
            corfu-terminal
            cape
-           eat
            apheleia
            imenu-list))
   (eval `(use-package ,package :ensure t :defer t)))

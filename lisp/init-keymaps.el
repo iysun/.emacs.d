@@ -6,7 +6,6 @@
 (defvar eshell-mode-map)
 (defvar capf-autosuggest-active-mode-map)
 (defvar dired-mode-map)
-(defvar eat-mode-map)
 (defvar minuet-active-mode-map)
 
 (defun custom/downcase-back()
@@ -119,17 +118,8 @@
     (evil-define-key state dired-mode-map (kbd "C-a") 'dired-create-empty-file)
     (evil-define-key state dired-mode-map (kbd "C-d") 'dired-create-directory))
 
-  (with-eval-after-load 'eat
-    (define-key eat-mode-map (kbd "M-g w") 'ace-window)
-    (define-key eat-mode-map (kbd "C-w C-w") 'other-window)
-    (define-key eat-mode-map (kbd "C-w c") 'delete-window)
-    (define-key eat-mode-map (kbd "C--") 'popper-toggle)
-    (define-key eat-mode-map (kbd "M--") 'popper-cycle))
-
   (add-hook 'prog-mode-hook #'init-keymaps--bind-diff-hl-local)
   (add-hook 'text-mode-hook #'init-keymaps--bind-diff-hl-local)
-
-  (evil-define-key 'normal 'global (kbd "gh") 'eldoc-mouse-pop-doc-at-cursor)
 
   (with-eval-after-load 'minuet
     (evil-define-key 'insert minuet-active-mode-map (kbd "<tab>") 'minuet-accept-suggestion)

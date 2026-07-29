@@ -1,18 +1,5 @@
 ;; init-term.el 	-*- lexical-binding: t -*-
-;; Better terminal emulator
-(with-eval-after-load 'eat
-  ;; eat 配置
-  (eat-eshell-mode 1)
-  (setq eat-semi-char-non-bound-keys '([C--] [M--]))
-  (setq eat-term-terminfo-type "xterm-256color")
-  (setq eat-term-scrollback-lines 10000)
-  ;; 输入处理
-  (setq eat-enable-input-processing nil)
-  (setq eat-enable-auto-line-mode t)
-  ;; eat 钩子设置
-  (add-hook 'eshell-load-hook 'eat-eshell-mode)
-  ;; (add-hook 'eshell-load-hook 'eat-eshell-visual-command-mode)
-  )
+;; eshell 配置
 
 ;; eshell 键绑定
 ;;(define-key eshell-mode-map (kbd "C-l") 'eshell-clear)

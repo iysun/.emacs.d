@@ -83,7 +83,6 @@
   (add-to-list 'eglot-server-programs '((python-ts-mode python-mode) "pyright-langserver" "--stdio"))
   (add-to-list 'eglot-server-programs '((typescript-ts-mode tsx-ts-mode js-ts-mode) "typescript-language-server" "--stdio"))
   (require 'consult-eglot)
-  (require 'eldoc-mouse)
 
   (defun my/lsp-complete ()
     "手动触发含 LSP 的完整补全（C-M-i）。

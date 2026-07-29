@@ -24,7 +24,7 @@ description: 生成自定义 portable dump（emacs.pdmp）加速启动；预加�
    - **`dumping overlays is not yet implemented`**：某包加载时建了 overlay。`dump.el` 已在转储前
      `remove-overlays` 兜底；若仍报，定位是哪个包建的 overlay，必要时把它从 `dump.el` 的预加载集移除。
    - **转储期其它报错**：通常是某包加载了不可转储的状态。把嫌疑包（优先 `dump.el` 里「加分组」的
-     magit / eat 等）从预加载集删掉，重跑，直到成功产出 `emacs.pdmp`。
+     magit 等）从预加载集删掉，重跑，直到成功产出 `emacs.pdmp`。
 
 3. **校验映像可用 + 配置完整**（关键——`emacs-init-time` 极小常意味着 init 中途崩了，不是真快）：
    ```powershell

@@ -39,7 +39,6 @@
           "^\\*.*eshell.*\\*$" eshell-mode ;eshell as a popup
           "^\\*.*shell.*\\*$"  shell-mode  ;shell as a popup
           "^\\*.*term.*\\*$"   term-mode   ;term as a popup
-          "^\\*.*eat.*\\*$"   eat-mode   ;term as a popup
           "^\\*.*vterm.*\\*$"  vterm-mode  ;vterm as a popup
           "^\\*Buffer List.*\\*$"
           "\\*Ibuffer.*\\*" ibuffer-mode ;ibuffer-mode
