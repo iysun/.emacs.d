@@ -91,7 +91,19 @@
 ;; (require 'corfu)
 ;; 设置 corfu 变量（corfu-auto 由下面的补全风格切换按需设置，不在这里写死）
 (progn
-  (setq corfu-auto-prefix 2)
+  ;; 自动弹窗的最小前缀长度（corfu-auto.el 的上游默认就是 3）。
+  ;; 判定在 `corfu--capf-wrapper' 里，挡在 `corfu--compute' → all-completions 之前，
+  ;; 所以它拦得住 LSP 请求本身、而不只是拦渲染。用 2 的话，`fm'/`st'/`er' 这种
+  ;; 两字母前缀配上 gopls 的 `:completeUnimported t'（见 init-lsp.el）会让 gopls
+  ;; 扫全 module 依赖图返回上千条。3 能收窄一个数量级。
+  ;; 注意：capf 自报的 `:company-prefix-length' 优先级更高，而 `cape-wrap-super'
+  ;; 恰好会带这个 key，所以 eglot buffer 里实际比较的是 cape 算出的 plen。
+  (setq corfu-auto-prefix 3)
+  ;; 触发字符：出现时忽略上面的前缀长度，立即弹窗（corfu-auto.el:111）。
+  ;; `foo.' 之后的成员补全候选集小且准，正好避开 completeUnimported 的最坏路径；
+  ;; 普通标识符仍要敲满 3 个字符。⚠ 触发字符走的是**同步**路径（不进 timer、
+  ;; 也不做 tick 校验），敲 `.' 时会当场阻塞一次 LSP 往返。
+  (setq corfu-auto-trigger ".")
   (setq corfu-preview-current nil)
   (setq corfu-auto-delay 0.2)
   (setq corfu-popupinfo-delay '(0.4 . 0.2))
@@ -160,11 +172,39 @@
 ;; eglot 29+ 自身的缓存机制已足够，无需 buster。
 
 ;; 行内补全预览（Emacs 30+ 内置）：打字时在光标后 inline 显示候选词（灰字），
-;; 不弹窗、不发 LSP 请求，与 corfu 互补。是否在 prog/text/eshell/comint 四类
-;; buffer 里挂载由下面的补全风格切换（my/completion--set-preview-hooks）控制，
+;; 不弹窗，与 corfu 互补。是否在 prog/text/eshell/comint 四类 buffer 里挂载
+;; 由下面的补全风格切换（my/completion--set-preview-hooks）控制，
 ;; 这里只配置它自身的行为参数。
+;;
+;; ⚠ 「不发 LSP 请求」是**错的**，除非显式隔离——见下面的 advice。
+;; `completion-preview--update' 直接 run-hook-wrapped 全局的
+;; `completion-at-point-functions'，没有独立的 capf 列表可配。而 init-lsp.el 里
+;; eglot-managed-mode-hook 把 `cape-capf-super'（含 eglot）塞在了该列表最前面，
+;; 于是每次预览都会走到 eglot 的 table。更糟的是 `cape-wrap-super' 的 table
+;; 在 try-completion 分支里也调 `cape--super-all'（即 all-completions），
+;; 所以哪怕只求一个前缀预览也会触发完整的 `:textDocument/completion' 同步请求；
+;; 而 `eglot--request' 开头无条件 `eglot--signal-textDocument/didChange',
+;; 连 `eglot-send-changes-idle-time' 的节流都一并绕过。
+;; 叠加 gopls 的 `:completeUnimported t'，1~2 个字符的前缀就能让 gopls 扫全 module
+;; 索引返回上千条，再全量过滤 + 排序 —— 这就是 manual 档下打字卡顿的来源。
+;; （`while-no-input' / `:cancel-on-input t' 救不了：能取消的只是等待，
+;;   响应解析和排序的开销已经付掉了。）
+(defvar my/completion-preview-capfs
+  (list #'cape-dabbrev #'cape-keyword #'cape-file)
+  "行内预览专用的 capf 列表：只用本地廉价源，绝不含 LSP。
+LSP 候选走手动触发（C-M-i / `my/lsp-complete'）或 auto 档的 corfu。")
+
+(defun my/completion-preview--local-capfs (orig &rest args)
+  "让 `completion-preview--update' 只看 `my/completion-preview-capfs'。"
+  (let ((completion-at-point-functions my/completion-preview-capfs))
+    (apply orig args)))
+
 (with-eval-after-load 'completion-preview
-  (setq completion-preview-minimum-symbol-length 1)
+  (advice-add 'completion-preview--update :around
+              #'my/completion-preview--local-capfs)
+  ;; 默认 3。调到 1 会让预览在只敲一个字符时就触发，候选集最大、最贵。
+  ;; 隔离掉 LSP 之后 2 是安全的（cape-dabbrev 只扫当前 buffer）。
+  (setq completion-preview-minimum-symbol-length 2)
   ;; 默认 nil = 每敲一个字就同步跑一遍完整 completion-at-point-functions 链
   ;; （cape-dabbrev 扫全 buffer + orderless 过滤），零防抖。corfu-auto-delay /
   ;; eglot-send-changes-idle-time 都特意调过，这个反而漏了——profiler 里
