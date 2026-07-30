@@ -85,22 +85,30 @@
   (require 'consult-eglot)
 
   (defun my/lsp-complete ()
-    "手动触发含 LSP 的完整补全（C-M-i）。
-用 cape-capf-super 合并 eglot + 本地 capf，corfu 弹窗显示所有来源的候选。"
+    "手动触发补全（C-M-i）。
+eglot-managed-mode-hook 已经把 completion-at-point-functions 换成了
+`cape-capf-super' 合并出的单个 capf（eglot + 本地 capf 一起给候选），
+自动弹出的 corfu 用的也是同一个，这里直接调 `completion-at-point' 即可，
+留这个命令只是为了在 corfu-auto 关闭的补全风格下也有手动触发入口。"
     (interactive)
-    (let ((completion-at-point-functions
-           (list (cape-capf-super
-                  #'eglot-completion-at-point
-                  #'cape-dabbrev
-                  #'cape-keyword
-                  #'cape-file))))
-      (call-interactively #'completion-at-point)))
+    (call-interactively #'completion-at-point))
 
   (add-hook 'eglot-managed-mode-hook
             (lambda ()
+              ;; 原先用 `remq' 把 eglot-completion-at-point 从默认列表里摘掉，
+              ;; 只在 C-M-i 手动触发时才合并 LSP 候选——因为 completion-at-point-functions
+              ;; 逐个尝试、第一个返回非 nil 就停，eglot 的 capf 一旦排在前面会
+              ;; 挡住 cape-dabbrev/cape-file 这些本地源。现在改成用 `cape-capf-super'
+              ;; 把 eglot 和本地 capf 合并成一个 capf 放在列表最前面，让自动弹出
+              ;; 的 corfu 也能同时看到 LSP + 本地候选，不用每次都按 C-M-i。
               (setq-local completion-at-point-functions
-                          (remq 'eglot-completion-at-point
-                                completion-at-point-functions))
+                          (cons (cape-capf-super
+                                 #'eglot-completion-at-point
+                                 #'cape-dabbrev
+                                 #'cape-keyword
+                                 #'cape-file)
+                                (remq 'eglot-completion-at-point
+                                      completion-at-point-functions)))
               (local-set-key (kbd "C-M-i") #'my/lsp-complete))))
 
 ;; jsonrpc 每条 LSP 消息都会调 `jsonrpc--log-event' 构造日志对象。上面已把事件缓冲区

@@ -93,7 +93,7 @@
 (progn
   (setq corfu-auto-prefix 2)
   (setq corfu-preview-current nil)
-  (setq corfu-auto-delay 0.5)
+  (setq corfu-auto-delay 0.2)
   (setq corfu-popupinfo-delay '(0.4 . 0.2))
   ;; 设置 corfu 字体
   (custom-set-faces

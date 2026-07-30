@@ -31,6 +31,36 @@
   (setenv "GIT_TERMINAL_PROMPT" "0")   ; 需要凭据时直接失败，不在无终端处挂起
   (setenv "GIT_ASK_YESNO" "false")     ; 同上，不弹交互确认
   (setenv "GIT_PAGER" "cat")           ; 不起分页器
-  (setenv "GIT_OPTIONAL_LOCKS" "0"))   ; 只读操作不抢 index.lock，减少与后台 git 的竞争
+  (setenv "GIT_OPTIONAL_LOCKS" "0")    ; 只读操作不抢 index.lock，减少与后台 git 的竞争
+
+  ;; project.el 在没有 .git 的目录（VC 后端识别不到）会退化用外部 `find-program'
+  ;; 遍历目录列文件（`project--files-in-directory'）。`find-program' 默认值只是
+  ;; 字符串 "find"，Windows 上 PATH 里 system32 常年排在 Git 的 usr/bin 前面，
+  ;; 于是解析到 system32\find.exe——那是文本搜索工具，参数语法跟 GNU find 完全
+  ;; 不是一回事，直接报 "File listing failed: FIND: 参数格式不正确"。
+  ;; 这条调用常在后台 timer 里触发（比如 eglot 建 didChangeWatchedFiles 时枚举
+  ;; 项目文件），报错本身不会弹出来打断你，但下游依赖这次列举结果的流程会
+  ;; 静默半途而废——表现为 eglot 显示"已连接"，诊断/补全却什么都不返回。
+  ;; 与 AGENTS.md/Makefile 里 `make clean` 踩的是同一个 system32\find.exe 坑，
+  ;; 这里固定指向真正的 GNU find，不依赖 PATH 顺序。
+  ;; ⚠ 本来想法是从 `(executable-find "git")` 反推 `usr/bin`，实测在这台机器上
+  ;; 不成立：PATH 里排最前的 `git` 是 `~/.git-ai/bin/git.exe`（AI git 包装器），
+  ;; 旁边没有 `usr/bin`；而且 Git for Windows 真正的 `usr/bin`（GNU find 所在地）
+  ;; 本身也不在 Windows PATH 里——那是 Git Bash 自己启动时才临时注入的一段，
+  ;; GUI 里跑的 Emacs 进程根本看不到，`executable-find` 无从下手。
+  ;; 改成锚定 Emacs 自己的 `invocation-directory'：本机 Emacs 由 msys2 构建
+  ;; （典型路径 .../msys2/current/ucrt64/bin/），逐级往上找
+  ;; `<祖先目录>/usr/bin/find.exe' 必然能找到 msys2 自带的 GNU find——这是
+  ;; Emacs 二进制自己的位置，不受 PATH 顺序、git 装在哪、有没有包装器影响。
+  (let* ((dir invocation-directory)
+         find-exe)
+    (while (and dir (not find-exe))
+      (let ((candidate (expand-file-name "usr/bin/find.exe" dir))
+            (parent (file-name-directory (directory-file-name dir))))
+        (if (file-exists-p candidate)
+            (setq find-exe candidate)
+          (setq dir (unless (equal parent dir) parent)))))
+    (when find-exe
+      (setq find-program find-exe))))
 
 (provide 'init-windows)
