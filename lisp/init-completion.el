@@ -205,11 +205,20 @@ LSP 候选走手动触发（C-M-i / `my/lsp-complete'）或 auto 档的 corfu。
   ;; 默认 3。调到 1 会让预览在只敲一个字符时就触发，候选集最大、最贵。
   ;; 隔离掉 LSP 之后 2 是安全的（cape-dabbrev 只扫当前 buffer）。
   (setq completion-preview-minimum-symbol-length 2)
-  ;; 默认 nil = 每敲一个字就同步跑一遍完整 completion-at-point-functions 链
-  ;; （cape-dabbrev 扫全 buffer + orderless 过滤），零防抖。corfu-auto-delay /
-  ;; eglot-send-changes-idle-time 都特意调过，这个反而漏了——profiler 里
-  ;; completion-preview--post-command 占大头就是因为这条完全没有节流。
-  (setq completion-preview-idle-delay 0.2)
+  ;; 默认 nil = 每敲一个字就在 post-command 里同步跑一遍 completion-at-point-functions，
+  ;; 零防抖；当初 profiler 里 completion-preview--post-command 占大头就是因为这个，
+  ;; 于是先加到了 0.2。但 0.2 是**在预览源还含 LSP 时**定的保守值，现在源已被上面的
+  ;; advice 锁死成 cape-dabbrev/keyword/file 三个纯本地源，实测一次更新只要 1~3ms
+  ;; （11KB 配置文件 0.9~3.3ms；335KB 的 eat.el 也只有 2~3.4ms，30 次调用零 GC），
+  ;; 0.2 的等待反而成了预览"慢半拍"的唯一来源，故降到 0.05。
+  ;;
+  ;; 为什么不干脆设 nil：0.05 已经看不出延迟（人眼阈值 ~100ms），却仍能把连打时的
+  ;; 每次按键合并成一次计算，顺带消掉逐字刷新的闪烁；nil 则是每个按键都真跑一遍。
+  ;;
+  ;; ⚠ 调这个值不会把 LSP 放回预览路径：`completion-preview--show' 里 idle-delay
+  ;; 只决定"立刻算"还是"挂 idle timer"，两条路最终都落到被 advice 包住的
+  ;; `completion-preview--update'（capf 链就是在它里面 run-hook-wrapped 的）。
+  (setq completion-preview-idle-delay 0.05)
   ;; evil insert 模式下退格/删除后也刷新行内预览
   (dolist (cmd '(evil-delete-backward-char
                  evil-delete-backward-char-and-join
