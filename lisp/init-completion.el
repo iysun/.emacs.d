@@ -165,6 +165,11 @@
 ;; 这里只配置它自身的行为参数。
 (with-eval-after-load 'completion-preview
   (setq completion-preview-minimum-symbol-length 1)
+  ;; 默认 nil = 每敲一个字就同步跑一遍完整 completion-at-point-functions 链
+  ;; （cape-dabbrev 扫全 buffer + orderless 过滤），零防抖。corfu-auto-delay /
+  ;; eglot-send-changes-idle-time 都特意调过，这个反而漏了——profiler 里
+  ;; completion-preview--post-command 占大头就是因为这条完全没有节流。
+  (setq completion-preview-idle-delay 0.2)
   ;; evil insert 模式下退格/删除后也刷新行内预览
   (dolist (cmd '(evil-delete-backward-char
                  evil-delete-backward-char-and-join

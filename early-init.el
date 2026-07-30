@@ -4,9 +4,11 @@
 (setq gc-cons-threshold most-positive-fixnum)
 (setq gc-cons-percentage 0.6) ; 可选：当内存使用达到此百分比时也触发GC
 
+;; 启动完成后 gc-cons-threshold 交给 gcmh 动态管理（见 lisp/init-base.el），
+;; 这里不再手动收紧到固定值：固定 20MB 在 eglot/jsonrpc/tree-sitter 频繁产生
+;; 垃圾的场景下偏低，profiler 里能看到明显的 Automatic GC 占比、敲字卡顿。
 (add-hook 'emacs-startup-hook
           (lambda ()
-            (setq gc-cons-threshold (* 20 1024 1024)) ; 例如设置为 20MB
             (setq gc-cons-percentage 0.1)))
 
 ;; native-comp：本机 Emacs 由 msys2/mingw64 提供，是带 native-comp 的 AOT 构建

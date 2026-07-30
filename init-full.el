@@ -46,7 +46,8 @@
            corfu
            corfu-terminal
            cape
-           apheleia))
+           apheleia
+           gcmh))
   (eval `(use-package ,package :ensure t :defer t)))
 
 (when (executable-find "fd")

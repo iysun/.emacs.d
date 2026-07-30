@@ -3,23 +3,36 @@
 ;; `cl-remove-if-not' / `cl-loop' 来自 cl-lib；顶层 require 保证编译期宏可用。
 (require 'cl-lib)
 
+;; gcmh：平时把 gc-cons-threshold 设很大（几乎不GC），只在真正空闲时才触发一次
+;; 真正的收集。替代 early-init.el 里原来固定 20MB 的静态阈值——20MB 在
+;; eglot/jsonrpc/tree-sitter 频繁产生垃圾的场景下偏低，profiler 里能看到明显的
+;; Automatic GC 占比、敲字卡一下。
+(require 'gcmh)
+(setq gcmh-high-cons-threshold (* 128 1024 1024)) ; 128MB
+(gcmh-mode 1)
+
 ;; setup
 
 ;; 启动不自动最大化（如需恢复，取消下面这行注释）
 ;; (add-hook 'after-init-hook 'toggle-frame-maximized)
 (progn
   (global-auto-revert-mode t)
-  (setq make-backup-files nil)                 
+  (setq make-backup-files nil)
   (setq use-short-answers t)
   (setq select-enable-clipboard nil)
-  
+
   ;;; And I have tried
   (setq-default indent-tabs-mode nil)
 
   ;; 自定义项目标识
   (setq project-vc-extra-root-markers '(".project"))
-  
+
   (global-hl-line-mode t)
+
+  ;; jit-lock 默认跟 redisplay 同步做语法高亮（tree-sitter 的 font-lock 查询也走
+  ;; 这条路径），每敲一个字都要等高亮重算完才刷新画面。设个小延迟让它退化成
+  ;; "敲字停顿 0.1s 后才补高亮"，肉眼看不出高亮变慢，但敲字本身不再被它卡住。
+  (setq jit-lock-defer-time 0.1)
   )
 
 
