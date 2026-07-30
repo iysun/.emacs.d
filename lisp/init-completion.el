@@ -194,9 +194,46 @@
   "行内预览专用的 capf 列表：只用本地廉价源，绝不含 LSP。
 LSP 候选走手动触发（C-M-i / `my/lsp-complete'）或 auto 档的 corfu。")
 
+;; ---- eshell 里的例外：参数位要走 pcomplete ----
+;; 上面那份 capf 列表对 eshell 是错的：eshell 唯一有用的补全源是它自己的
+;; `pcomplete-completions-at-point'（buffer-local），被这里换掉之后，`cat init-f'
+;; 这种补文件名的场景预览完全没候选；只有 `echo hel' 这类靠 cape-dabbrev 从 buffer
+;; 里的历史命令行蒙出来的还能出。
+;;
+;; 但也不能无脑把 pcomplete 加回来——它在**命令位**（还在敲命令名、后面没空格）要
+;; 枚举整个 `exec-path' 找可执行文件，实测 `gi' 125ms 首次 / 81.5ms 每次、`ec'
+;; 71.6ms，而参数位（补文件名）只要 ~1ms。所以按位置分流：参数位交给 pcomplete，
+;; 命令位不调它——命令名靠 cape-dabbrev 从本 buffer 已有的历史命令里补，1.5ms 够用。
+(defun my/completion-preview--eshell-in-args-p ()
+  "point 是否已经离开命令名那一段（命令名与 point 之间出现过空白）。
+起点用 `field-beginning'：提示符文本带 `field' = \\='prompt（`eshell-emit-prompt' 加的），
+输入区是另一个 field，所以这里取到的就是本次输入的开头，不会把提示符里的空格算进去。"
+  (let ((beg (field-beginning (point) t)))
+    (string-match-p "[ \t]" (buffer-substring-no-properties beg (point)))))
+
+(defun my/completion-preview--eshell-pcomplete ()
+  "只在参数位生效的 pcomplete capf，供行内预览用（理由见上面的注释）。
+⚠ 必须补上 `:exclusive no'：`completion-preview--capf-wrapper' 在一个 capf 给不出
+候选时会返回 \\='(nil) 来**阻断**后面的 capf（只有声明了 `:exclusive no' 的才放行），
+而 pcomplete 没声明。不补的话，参数位上但 pcomplete 无候选的输入（如 `echo hel'）
+会被它挡住，落不到 cape-dabbrev，历史提示就没了。plist 里先出现的键优先，所以万一
+pcomplete 以后自己带了 `:exclusive'，这里追加的这份会被自动忽略，不会改变它的意图。"
+  (when (and (fboundp 'pcomplete-completions-at-point)
+             (my/completion-preview--eshell-in-args-p))
+    (when-let* ((res (pcomplete-completions-at-point)))
+      (append res '(:exclusive no)))))
+
+(defun my/completion-preview--capfs ()
+  "预览该用的 capf 列表。eshell 里在三件套前面加一条「只在参数位生效的 pcomplete」。
+comint（shell-mode / 各种 REPL）不加：那边的命令补全同样要扫 PATH，坑一样，
+而且它没有 eshell 那种统一的 pcomplete 入口，留待真的需要时再单独处理。"
+  (if (derived-mode-p 'eshell-mode)
+      (cons #'my/completion-preview--eshell-pcomplete my/completion-preview-capfs)
+    my/completion-preview-capfs))
+
 (defun my/completion-preview--local-capfs (orig &rest args)
-  "让 `completion-preview--update' 只看 `my/completion-preview-capfs'。"
-  (let ((completion-at-point-functions my/completion-preview-capfs))
+  "让 `completion-preview--update' 只看 `my/completion-preview--capfs' 给出的列表。"
+  (let ((completion-at-point-functions (my/completion-preview--capfs)))
     (apply orig args)))
 
 (with-eval-after-load 'completion-preview
