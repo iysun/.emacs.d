@@ -224,12 +224,29 @@ pcomplete 以后自己带了 `:exclusive'，这里追加的这份会被自动忽
       (append res '(:exclusive no)))))
 
 (defun my/completion-preview--capfs ()
-  "预览该用的 capf 列表。eshell 里在三件套前面加一条「只在参数位生效的 pcomplete」。
-comint（shell-mode / 各种 REPL）不加：那边的命令补全同样要扫 PATH，坑一样，
-而且它没有 eshell 那种统一的 pcomplete 入口，留待真的需要时再单独处理。"
-  (if (derived-mode-p 'eshell-mode)
-      (cons #'my/completion-preview--eshell-pcomplete my/completion-preview-capfs)
-    my/completion-preview-capfs))
+  "预览该用的 capf 列表。
+eshell/comint 里最前面放 `cape-history'——补的是 shell 历史（eshell 走
+`eshell-history-ring'，即 var/eshell/history 那份持久化历史；comint 走
+`comint-input-ring'），从输入行开头整行匹配，这才是 fish 那种\"敲前几个字母就把上次
+的整条命令灰着显示出来\"的行为，也正是当年 capf-autosuggest 干的事。
+`cape-dabbrev' 顶替不了它：dabbrev 扫的是**当前 buffer 的文本**，只能补到本次会话里
+还留在屏幕上的词，重开一个 eshell 就什么都没有。
+
+`cape-history' 自带 `:exclusive no'（没候选时放行后面的 capf）和
+`:display-sort-function' / `:cycle-sort-function' = `identity'，
+`completion-preview--try-table' 会读这两个 metadata，所以候选保持**最近优先**而不是
+被默认的\"按长度+字母序\"重排——历史补全必须最近优先才对。
+
+eshell 里第二条是「只在参数位生效的 pcomplete」：历史没命中时才轮到它补文件名。
+comint 不加 pcomplete：那边的命令补全同样要扫 PATH，坑一样，且没有 eshell 这种统一
+入口，留待真需要时再单独处理。"
+  (cond
+   ((derived-mode-p 'eshell-mode)
+    (append (list #'cape-history #'my/completion-preview--eshell-pcomplete)
+            my/completion-preview-capfs))
+   ((derived-mode-p 'comint-mode)
+    (cons #'cape-history my/completion-preview-capfs))
+   (t my/completion-preview-capfs)))
 
 (defun my/completion-preview--local-capfs (orig &rest args)
   "让 `completion-preview--update' 只看 `my/completion-preview--capfs' 给出的列表。"
