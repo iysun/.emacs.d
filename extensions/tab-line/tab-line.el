@@ -60,6 +60,67 @@ popper 未加载/`popper-mode' 未开启时 `popper-popup-p' 不存在，做特�
                     (my/tab-line--popup-buffer-p buf))
           (push buf result))))))
 
+;; ---- popper 弹窗窗口里不画 tab-line ----
+;; 上面的过滤只管「弹窗 buffer 不出现在**别人**的标签列表里」；弹窗**自己**那个窗口顶上
+;; 仍会被 `global-tab-line-mode' 画一条 tab-line（内容是它所属分组的标签），一个只有
+;; `popper-window-height' 行高的弹窗顶着这么一条，纯属占地方。
+;;
+;; tab-line 没有 window-local 开关，只有 buffer-local 的 `tab-line-format'（由
+;; `tab-line-mode' 维护）。popper 处理 mode-line 走的正是同一条路：`popper--update-popups'
+;; （挂在 `window-configuration-change-hook' 上）在弹窗集合变化后给 `popper-open-popup-alist'
+;; 里的 buffer 局部改写 `mode-line-format'，`popper-raise-popup' 与 `popper--restore-mode-lines'
+;; （popper-mode 关闭时调用）负责还原。这里就搭在同样这三个时机上，只是把「改 mode-line」
+;; 换成「开关局部 `tab-line-mode'」——跟着 popper 自己的状态机走，时机最准。
+;;
+;; 性能：`popper--update-popups' 调用很频繁，但这里新增的只是遍历 `popper-open-popup-alist'
+;; （通常 0~2 个元素）做一次布尔判断，且 `(when tab-line-mode ...)' 保证重复触发是 no-op。
+;; 改 `tab-line-format' 不改变 window configuration，不会在这个钩子里自激——popper 自己在同一
+;; 个钩子里改 `mode-line-format' 已经验证过这一点。
+
+(defun my/tab-line--hide-tab-line (buf)
+  "关掉 BUF 局部的 `tab-line-mode'。"
+  (when (buffer-live-p buf)
+    (with-current-buffer buf
+      (when tab-line-mode (tab-line-mode -1)))))
+
+(defun my/tab-line--show-tab-line (buf)
+  "把 tab-line 还给 BUF。
+走 `tab-line-mode--turn-on' 而不是直接 `(tab-line-mode 1)'：前者是 `global-tab-line-mode'
+自己用的开启入口，会复查 minibuffer / `tab-line-exclude-modes' / `tab-line-exclude-buffers'
+/ `tab-line-exclude' 这几条排除规则，不会在本来就不该有 tab-line 的 buffer（如
+`completion-list-mode'）里凭空开出一条来。"
+  (when (buffer-live-p buf)
+    (with-current-buffer buf
+      (when (and global-tab-line-mode
+                 (not tab-line-mode)
+                 (fboundp 'tab-line-mode--turn-on))
+        (tab-line-mode--turn-on)))))
+
+(defun my/tab-line--hide-in-popups (&rest _)
+  "把当前所有打开着的 popper 弹窗的 tab-line 关掉。
+`popper-open-popup-alist' 的元素形如 (window . buffer)，按定义全是弹窗，不必再判状态。"
+  (dolist (win-buf popper-open-popup-alist)
+    (my/tab-line--hide-tab-line (cdr win-buf))))
+
+(defun my/tab-line--restore-on-raise (&optional buffer &rest _)
+  "`popper-raise-popup' 之后把 tab-line 还给被提升的 BUFFER（参数语义与它一致）。"
+  (my/tab-line--show-tab-line (get-buffer (or buffer (current-buffer)))))
+
+(defun my/tab-line--restore-in-alist (win-buf-alist &rest _)
+  "popper-mode 关闭时，把 tab-line 还给 WIN-BUF-ALIST 里的所有 buffer。
+⚠ 这里不能靠 `popper-popup-status' 判断该不该还——popper 关闭时只还原 mode-line、清空
+两张 alist，buffer 里的 `popper-popup-status' 仍留着 \\='popup 这个旧值。"
+  (dolist (win-buf win-buf-alist)
+    (my/tab-line--show-tab-line (cdr win-buf))))
+
+;; `init-bars'（load 本文件）排在 `init-window'（`(popper-mode +1)' 靠 autoload 拉起 popper）
+;; 之前，见 init-full.el，故必须 `with-eval-after-load'。
+;; ⚠ 三个挂载点里有两个是 popper 的私有函数（双短横），升级 popper 时顺手确认还在。
+(with-eval-after-load 'popper
+  (advice-add 'popper--update-popups      :after #'my/tab-line--hide-in-popups)
+  (advice-add 'popper-raise-popup         :after #'my/tab-line--restore-on-raise)
+  (advice-add 'popper--restore-mode-lines :after #'my/tab-line--restore-in-alist))
+
 ;; ---- 标签文本：左右 padding + buffer 名 + 修改标记（不带图标，简约优先）----
 (defconst my/tab-line-tab-padding " "
   "每个标签左右各留的字面空格 padding。用文本字符撑，而不是 face 的 `:box'
