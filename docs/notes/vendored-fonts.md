@@ -107,3 +107,31 @@ python scripts\install-fonts.py
 ```
 
 幂等：装过的会跳过。想强制重装（比如更新了 `assets/fonts/` 里的文件）加 `--force`。
+
+## 本机的坑：重启后 Emacs 又看不到字体了（文件/注册表都还在）
+
+排查过：文件在 `%LOCALAPPDATA%\Microsoft\Windows\Fonts\` 里、`HKCU\...\CurrentVersion\Fonts`
+注册表项也在，跨重启都没丢——但新登录的会话里 Emacs 还是找不到，得重跑一次脚本才行。
+
+推测原因：Emacs 在 Windows 上走经典 GDI/Uniscribe 字体后端，不是 DirectWrite。微软"注册表登记过、
+下次登录自动生效"这个承诺很可能是在 DirectWrite 层实现的（按需查注册表），GDI 的会话级字体表
+不会因为注册表多了一条就自动重新扫描——`install-fonts.py` 头部注释其实已经点出这一点，只是
+没意识到"下次登录"本身也不例外。真正让 Emacs 认得到字体的，是脚本里那句显式的
+`AddFontResourceEx`，这一步不会随会话自动重放。
+
+**本机的解决办法（不在仓库里，`git clone` 到新机器不会带过去，换机器要重新设一遍）**：建了个
+任务计划程序任务 `EmacsDotD-InstallFonts`，触发条件"登录时"（`AtLogOn`），跑
+`pythonw.exe -c "…运行 install-fonts.py…"`（重定向 stdout/stderr 到 `nul`，避免 pythonw 下
+`print()` 因为没有控制台而报错）。文件/注册表早就有了，脚本一进"已装，跳过复制"分支就直接
+调 `AddFontResourceEx`，几十毫秒跑完，和 Emacs 启动完全没关系，不影响 `emacs-init-time`。
+
+刻意没有放进 `lisp/init-windows.el`（Emacs 启动路径）——试过一版在启动时做文件存在性检查、
+缺了才补装，实测便宜（多数情况不起子进程），但还是被否了：这个仓库对启动路径极度敏感
+（见 `docs/startup-benchmark.md`、pdump 那一整套），任何东西碰启动路径都要先问，不能自己
+觉得"够便宜"就加。
+
+```powershell
+Get-ScheduledTaskInfo -TaskName "EmacsDotD-InstallFonts"   # 查看上次运行结果
+Start-ScheduledTask -TaskName "EmacsDotD-InstallFonts"     # 手动触发一次
+Unregister-ScheduledTask -TaskName "EmacsDotD-InstallFonts" -Confirm:$false   # 删掉
+```
