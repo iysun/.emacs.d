@@ -18,9 +18,14 @@
 ;;     不好识别、用不上）。
 ;;   - 去掉 `mode-line-modes'（major mode 名 + 全部 minor-mode-alist），只留其中
 ;;     flymake 的诊断计数——用内建 `flymake-mode-line-counters' 直接取
-;;     "[错误数 警告数]" 那一小块，不用整簇 major/minor mode 名堆过来
-;;     （这个变量本身就是条件性的：没有 flymake 后端在跑时自动不显示，
-;;     不需要额外包 `bound-and-true-p' 判断）。
+;;     "[错误数 警告数]" 那一小块，不用整簇 major/minor mode 名堆过来。
+;;     ⚠ 这个变量**不是**没有后端在跑就自动隐藏那么简单：它内部调用
+;;     `flymake-running-backends' → `flymake--collect'，后者一上来就
+;;     `(unless flymake--state (user-error "Flymake is not initialized"))'。
+;;     也就是说只有 flymake-mode **已经打开**的 buffer 上求值它，没后端在跑时
+;;     才会安静返回 nil；flymake-mode 根本没开的 buffer（多数非编程 buffer）
+;;     上求值会直接抛 user-error，报一屏 "Error during redisplay"。必须自己包
+;;     `bound-and-true-p' 判断。
 ;;   - `mode-line-misc-info' 保留——eglot 等包会自己把状态推到这里
 ;;     （比如 "[eglot:xxx]"），不用我们自己再写一个 eglot 段。
 ;;
@@ -132,7 +137,7 @@ mode-line 挤爆。"
     "  "
     (:eval (my-ui-ml-vc))
     "  "
-    flymake-mode-line-counters
+    (:eval (and (bound-and-true-p flymake-mode) flymake-mode-line-counters))
     "  "
     mode-line-misc-info
     "  "))

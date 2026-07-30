@@ -134,4 +134,24 @@ eglot-managed-mode-hook 已经把 completion-at-point-functions 换成了
   (advice-add 'jsonrpc--json-encode :filter-args
               (lambda (args) (list (my/jsonrpc-sanitize-markers (car args))))))
 
+;; Workaround: `eglot--find-buffer-visiting' 用 `equal' 逐字符比较 `buffer-file-name'
+;; 来找诊断该报给哪个 buffer（见 eglot--flymake-handle-push），大小写敏感。
+;; gopls 在 Windows 上返回的 publishDiagnostics URI 盘符是系统规范化后的大写
+;; （如 file:///D:/...），而 Emacs buffer-file-name 保留你打开文件时实际用的大小写
+;; （通常是小写 d:/...）。两边大小写一对不上，`eglot--find-buffer-visiting' 就找不到
+;; 已经打开的 buffer——整条 gopls → eglot 链路看起来完全正常（*eglot events* 里能看到
+;; publishDiagnostics 正常送达），诊断却被静默塞进 `flymake-list-only-diagnostics'，
+;; 从不出现在实际打开的 buffer 里，flymake 计数器和波浪线全程无反应。
+;; 上游 bug，用 :around advice 兜底：精确匹配失败时，Windows 下再做一次大小写不敏感的重试。
+(with-eval-after-load 'eglot
+  (define-advice eglot--find-buffer-visiting (:around (orig server abspath) my/case-insensitive-fallback)
+    (or (funcall orig server abspath)
+        (when (eq system-type 'windows-nt)
+          (cl-loop for b in (eglot--managed-buffers server)
+                   when (with-current-buffer b
+                          (and buffer-file-name
+                               (eq t (compare-strings abspath nil nil
+                                                       buffer-file-name nil nil t))))
+                   return b)))))
+
 (provide 'init-lsp)
