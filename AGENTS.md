@@ -78,8 +78,10 @@ xref backend（eglot→tags→global 三级兜底）注册进 buffer-local
 `xref-backend-functions`，`init-lsp.el` 的 `eglot-managed-mode-hook` 把它排到
 eglot 裸 backend 前面，所以这几个标准键本身就有 tags/global 兜底，不必再学一套
 citre 专属跳转键。citre 只留一个不可替代的命令：`SPC p`（`citre-peek`，原地预览
-定义、不跳转）。`M-,`/`M-.` 因此从 `init-keymaps.el` 的 diff-hl 本地绑定里让出来，
-diff-hl 的 revert/stage 暂时没有专属键位，走 `M-x` 或 magit。
+定义、不跳转）。`M-,`/`M-.` 原来被 diff-hl 的本地绑定占用（revert/stage-hunk），
+diff-hl 已整体移除（Windows 上 flydiff 的 idle timer 高频起 git 子进程，
+`CreateProcess` 开销叠加导致打字卡顿，且偶发 "Can't find the beginning of
+the hunk" 的 sentinel 报错，见 git log），未提交改动继续靠 `magit-status` 查看。
 
 ## 文档（docs/）
 

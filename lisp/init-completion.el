@@ -289,7 +289,6 @@ comint 不加 pcomplete：那边的命令补全同样要扫 PATH，坑一样，�
                  evil-delete-backward-char-and-join
                  evil-delete-char))
     (push cmd completion-preview-commands))
-  ;; M-n/M-p 与 diff-hl 的 evil insert 绑定冲突，不覆盖；用 TAB 确认，C-M-i 看完整列表
   )
 
 ;; ------------------------------------------------------------------

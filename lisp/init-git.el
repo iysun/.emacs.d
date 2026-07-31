@@ -1,10 +1,4 @@
 ;;; -*- lexical-binding: t; -*-
-;; (defun my-diff-hl-fringe-bmp-function (_type _pos)
-;; "Fringe bitmap function for use as `diff-hl-fringe-bmp-function'."
-;;     (define-fringe-bitmap 'my-diff-hl-bmp
-;; 	(vector ((if (eq system-type 'gnu/linux) #b11111100 #b11100000)))
-;; 	1 8
-;; 	'(center t)))
 ;; (require 'magit)
 
 ;; Windows 上给 git 子进程定的环境变量已挪到 lisp/init-windows.el（early-init.el
@@ -23,40 +17,14 @@
         magit-log-section-commit-count 5      ; status 里近期提交只列 5 条（默认 10）
         magit-refresh-verbose nil))
 
-;; (require 'diff-hl)
-
-;; Highlight uncommitted changes using VC
-;; ;; :bind (:map diff-hl-command-map
-;; ;;        ("SPC" . diff-hl-mark-hunk))
-
-(with-eval-after-load 'diff-hl
-  ;; 自定义设置
-  (setq diff-hl-draw-borders nil)
-  (setq diff-hl-update-async t)
-  (setq diff-hl-global-modes '(not image-mode pdf-view-mode))
-  
-  ;; 区分 staged 和 unstaged
-  (setq diff-hl-show-staged-changes nil)
-  (setq diff-hl-reference-revision nil)
-  ;; Set fringe style
-  (setq-default fringes-outside-margins t)
-  
-  ;; (setq diff-hl-fringe-bmp-function 'my-diff-hl-fringe-bmp-function)
-  
-  ;; Highlight on-the-fly
-  (diff-hl-flydiff-mode 1)
-  
-  ;; Fall back to the display margin since the fringe is unavailable in tty
-  (unless (display-graphic-p) (diff-hl-margin-mode 1))
-  )
-;; 钩子设置
-;; diff-hl 加载 + 全局开启实测 ~0.4s，且只在文件缓冲区有意义。从 after-init 挪到
-;; 首次打开文件时一次性启用（届时正好要看 git 改动标记），不再占启动时间。
-(defun my/enable-diff-hl-once ()
-  (global-diff-hl-mode 1)
-  (global-diff-hl-show-hunk-mouse-mode 1)
-  (remove-hook 'find-file-hook 'my/enable-diff-hl-once))
-(add-hook 'find-file-hook 'my/enable-diff-hl-once)
+;; diff-hl 已移除：diff-hl-flydiff-mode 靠全局 0.3s idle timer 给每个改过的
+;; buffer 起 git diff 子进程算 hunk，Windows 上 CreateProcess 本来就比 POSIX
+;; fork+exec 贵得多（本机 eshell-git-prompt 实测过单次 git 子进程两三百毫秒起步），
+;; 叠加起来是敲代码卡顿的一个来源；另外 async 子进程输出偶尔混进 git 的 CRLF
+;; 警告，会让 diff-hl 内部的 `diff-beginning-of-hunk' 解析失败，报
+;; "error in process sentinel: Can't find the beginning of the hunk"。
+;; 改动历史见 git log；未改动状态跟踪继续靠 magit（`magit-status` 里能看
+;; 完整的 unstaged/staged diff）。
 
 ;; 打开文件时若检测到冲突标记就自动开 smerge-mode（省去手动 M-x）。
 ;; 只扫文件开头到第一个匹配，代价可忽略。
@@ -66,8 +34,5 @@
     (when (re-search-forward "^<<<<<<< " nil t)
       (smerge-mode 1))))
 (add-hook 'find-file-hook #'my/auto-smerge-mode)
-(add-hook 'dired-mode-hook 'diff-hl-dired-mode)
-(add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)  ; Magit 刷新前更新 diff-hl
-(add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
 
 (provide 'init-git)

@@ -38,7 +38,6 @@
            marginalia
            consult-eglot
            magit
-           diff-hl
            ;; eshell-git-prompt 已移除：它的 multiline2 主题每画一次提示符要起 4 个
            ;; git 进程（本机实测 945ms/条命令）。提示符改为 lisp/init-term.el 里自写，
            ;; 分支名读 .git/HEAD、脏净标记异步算，见那里的说明。

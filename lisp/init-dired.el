@@ -17,7 +17,7 @@
     (not (eq revert-buffer-function #'dired-virtual-revert)))
 
   ;; git-ignore 高亮：把被 git 忽略的文件用 dired-ignored 脸色标出来（视觉提示，
-  ;; 不是 dired-git-info 那种逐文件 commit 信息，改靠 diff-hl-dired-mode + magit）。
+  ;; 不是 dired-git-info 那种逐文件 commit 信息，改靠 magit-status 看完整改动）。
   (defun my/dired-vc-ignore-list ()
     (when-let* ((backend (and (vc-root-dir) (vc-responsible-backend default-directory)))
                 (ignores (vc-call-backend backend 'ignore-completion-table default-directory)))
