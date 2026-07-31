@@ -24,6 +24,9 @@
   ;; citre 唯一保留的专属命令：原地预览定义，不跳转、不用 xref（xref 前端做不到）。
   ;; jump/jump-to-reference 已经跟 gd/M-? 等价，删掉了，见 init-navigation.el。
   (evil-define-key 'normal 'global (kbd "SPC p") 'citre-peek)
+  ;; 看文档，不跳转、不动光标（实现见 init-base.el）。跟 gd/M-.（跳定义）、M-?（找引用）、
+  ;; SPC p（原地看源码）互补。`gh' 是 eldoc-mouse 时代的旧键位，包移除后一直空着。
+  (evil-define-key 'normal 'global (kbd "gh") 'my/doc-at-point)
 
   ;; 全局键（原 general-def 无 :keymaps）
   (global-set-key (kbd "C-;") 'embark-act)

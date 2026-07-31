@@ -36,7 +36,28 @@
   )
 
 
-;; eldoc 延迟见 `init-lsp.el'（那里才是它的动机：减少 LSP hover 请求）。
+;; eldoc 延迟（`eldoc-idle-delay'）见 `init-lsp.el'（那里才是它的动机：减少 LSP hover 请求）。
+;; 这里只管「显示」：自动的 eldoc 仍然只在 echo area 出一行，要看完整文档靠 `gh' 手动触发。
+(setq eldoc-echo-area-prefer-doc-buffer t)   ; 文档窗口开着时不再往 echo area 重复一遍
+
+(defun my/doc-at-point ()
+  "看光标处符号的文档。第一次按弹出 eldoc 文档窗口，窗口已开时再按一次跳进去（便于翻页/复制）。
+
+弹窗直接调内置的 `eldoc'（= `eldoc-print-current-symbol-info'）：它交互调用时走
+`eldoc--invoke-strategy' 的 interactive 分支，**绕过 `eldoc-idle-delay' 立刻请求一次**，
+并把 interactive 标志一路透传给 `eldoc-display-in-buffer'，由后者在**异步结果回来之后**
+才弹窗——eglot 的 textDocument/hover 是异步的，这一点很关键。
+⚠ 别图省事直接绑 `eldoc-doc-buffer'：那个只读「上一次」算出来的结果，刚跳到新符号上按
+就会显示上一个符号的陈旧内容，而且从没算过时直接 `user-error'。
+另：`eldoc' 不要求 `eldoc-mode' 开着，只要 buffer 里 `eldoc-documentation-functions' 非空。"
+  (interactive)
+  ;; `eldoc--doc-buffer' 是 eldoc 的内部变量（没有公开等价物），但比按 `*eldoc' 猜名字准：
+  ;; 那个 buffer 显示时会被改名成 `*eldoc for <符号名>*'，名字随光标位置变。
+  (let ((win (and (buffer-live-p eldoc--doc-buffer)
+                  (get-buffer-window eldoc--doc-buffer))))
+    (if (and win (not (eq win (selected-window))))
+        (select-window win)
+      (call-interactively #'eldoc))))
 
 ;; 记录 M-x 历史
 (add-hook 'after-init-hook 'savehist-mode)

@@ -82,6 +82,11 @@ citre 专属跳转键。citre 只留一个不可替代的命令：`SPC p`（`cit
 diff-hl 已整体移除（Windows 上 flydiff 的 idle timer 高频起 git 子进程，
 `CreateProcess` 开销叠加导致打字卡顿，且偶发 "Can't find the beginning of
 the hunk" 的 sentinel 报错，见 git log），未提交改动继续靠 `magit-status` 查看。
+看文档另有一个键：`gh` = `my/doc-at-point`（`lisp/init-base.el`），弹出 eldoc 文档窗口
+（受 popper 管，`C--` 关），再按一次跳进窗口翻页。它绑的是内置 `eldoc` 命令而**不是**
+`eldoc-doc-buffer`——后者只读上一次算好的结果，刚移到新符号上按会显示陈旧内容；前者交互
+调用会绕过 `eldoc-idle-delay` 立即请求，并等 eglot 的异步 hover 回来后才弹窗。不引入
+`eldoc-box`/`eldoc-mouse` 之类的浮窗包（这两个都已移除，见 git log）。
 
 ## 文档（docs/）
 

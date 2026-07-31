@@ -40,6 +40,10 @@
           "^\\*.*shell.*\\*$"  shell-mode  ;shell as a popup
           "^\\*.*term.*\\*$"   term-mode   ;term as a popup
           "^\\*.*vterm.*\\*$"  vterm-mode  ;vterm as a popup
+          ;; eldoc 文档窗口（`gh' = my/doc-at-point 弹出）。⚠ 必须写成前缀匹配：
+          ;; 这个 buffer 显示时会被 `eldoc--format-doc-buffer' 改名成 `*eldoc for xxx*'，
+          ;; 名字随光标下的符号变，写死 "^\\*eldoc\\*$" 一条都匹配不上。
+          "^\\*eldoc"
           "^\\*Buffer List.*\\*$"
           "\\*Ibuffer.*\\*" ibuffer-mode ;ibuffer-mode
           help-mode
