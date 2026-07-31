@@ -36,14 +36,17 @@
 (autoload 'eshell-delchar-or-maybe-eof "em-rebind")
 
 ;; ================= 提示符 =================
-;; 自写，替代 `eshell-git-prompt' 的 multiline2 主题——外观照抄它，只把两处贵的调用换掉。
+;; 自写，两行结构：第一行目录+git分支/脏净，第二行 >>。曾经外观照抄
+;; `eshell-git-prompt' 的 multiline2 主题（user@host、分段框线、时间都在），
+;; 嫌太花后砍掉了这些装饰，只留下当初为了性能换掉的两处底层实现。
 ;;
-;; 为什么不用原包：`eshell-git-prompt-multiline2' 每画一次提示符要**起 4 个 git 进程**
-;; （`eshell-git-prompt--branch-name' 在它函数体里被调了三遍，每遍都真的 spawn 一次，
-;; 再加一次 `git status --porcelain'）。本机 `benchmark-run' 实测：整条提示符 945ms、
-;; 单次 `git symbolic-ref' 225ms、`git status --porcelain' 255ms——Windows 上创建进程
-;; 本来就贵，于是每敲一条命令回车后固定卡约 1 秒；连非仓库目录也要 422ms（分支名那两处
-;; 仍会调）。这是 eshell「卡」的主因。
+;; 为什么不直接用 `eshell-git-prompt-multiline2'：它每画一次提示符要**起 4 个
+;; git 进程**（`eshell-git-prompt--branch-name' 在它函数体里被调了三遍，每遍都
+;; 真的 spawn 一次，再加一次 `git status --porcelain'）。本机 `benchmark-run'
+;; 实测：整条提示符 945ms、单次 `git symbolic-ref' 225ms、`git status
+;; --porcelain' 255ms——Windows 上创建进程本来就贵，于是每敲一条命令回车后固定
+;; 卡约 1 秒；连非仓库目录也要 422ms（分支名那两处仍会调）。这是 eshell「卡」
+;; 的主因。
 ;;
 ;; 两处替代：
 ;;   - 分支名：直接读 .git/HEAD 这个纯文本文件（一行 "ref: refs/heads/xxx" 或裸 sha），
@@ -53,11 +56,7 @@
 ;;     两个字符替换掉。所以最坏情况是 ✗/✔ 晚几百毫秒出现，而不是让你等它。
 
 (defface my/eshell-prompt-secondary '((t :foreground "#51afef" :weight ultra-bold))
-  "提示符的框线与分隔符。" :group 'eshell-prompt)
-(defface my/eshell-prompt-user '((t :foreground "magenta" :weight ultra-bold))
-  "提示符里的用户名。" :group 'eshell-prompt)
-(defface my/eshell-prompt-host '((t :foreground "green" :weight ultra-bold))
-  "提示符里的主机名。" :group 'eshell-prompt)
+  "提示符的 ┌─/└─ 前缀与括号。" :group 'eshell-prompt)
 (defface my/eshell-prompt-dir '((t :foreground "white" :weight ultra-bold))
   "提示符里的当前目录名。" :group 'eshell-prompt)
 (defface my/eshell-prompt-git '((t :foreground "red" :weight ultra-bold))
@@ -65,17 +64,13 @@
 (defface my/eshell-prompt-clean
   '((((class color) (background light)) :foreground "forest green")
     (((class color) (background dark))  :foreground "green"))
-  "分支图标与「工作区干净」标记 ✔。" :group 'eshell-prompt)
+  "「工作区干净」标记 ✔。" :group 'eshell-prompt)
 (defface my/eshell-prompt-dirty
   '((((class color) (background light)) :foreground "dark orange")
     (((class color) (background dark))  :foreground "red"))
   "「工作区有改动」标记 ✗。" :group 'eshell-prompt)
 (defface my/eshell-prompt-fail '((t :foreground "red" :weight ultra-bold))
   "上条命令失败时的 >> 提示符。" :group 'eshell-prompt)
-(defface my/eshell-prompt-time
-  '((((class color) (background light)) :foreground "slate blue" :weight ultra-bold)
-    (((class color) (background dark))  :foreground "gold" :weight ultra-bold))
-  "提示符里的时间。" :group 'eshell-prompt)
 
 (defvar my/eshell-prompt--dirty-cache (make-hash-table :test #'equal)
   "仓库根目录 → \\='dirty / \\='clean。异步 `git status' 的结果缓存，画提示符时只读它。")
@@ -181,34 +176,28 @@ field / read-only / front-sticky 等属性原样搬过去（丢了会破坏 C-a 
       (= eshell-last-command-status 0)))
 
 (defun my/eshell-prompt ()
-  "eshell 提示符：外观同 eshell-git-prompt 的 multiline2，但渲染路径上不起 git 进程。"
-  (let* ((sep (propertize ")──(" 'face 'my/eshell-prompt-secondary))
-         (repo (my/eshell-prompt--repo))
+  "eshell 提示符：两行，第一行目录+git分支/脏净，第二行 >>。不起 git 进程。"
+  (let* ((repo (my/eshell-prompt--repo))
          (root (car repo))
          (branch (and repo (my/eshell-prompt--branch (cdr repo)))))
     (when root (my/eshell-prompt--refresh-status root))
     (concat
-     (propertize "\n┌─(" 'face 'my/eshell-prompt-secondary)
-     (propertize (user-login-name) 'face 'my/eshell-prompt-user)
-     (propertize "@" 'face 'my/eshell-prompt-secondary)
-     (propertize (system-name) 'face 'my/eshell-prompt-host)
-     sep
+     (propertize "\n┌─ " 'face 'my/eshell-prompt-secondary)
      (propertize (my/eshell-prompt--short-dir) 'face 'my/eshell-prompt-dir)
      (if branch
-         (concat sep
-                 (propertize "⎇ " 'face 'my/eshell-prompt-clean)
-                 (propertize branch 'face 'my/eshell-prompt-git)
-                 (propertize (my/eshell-prompt--slot-string
-                              (gethash root my/eshell-prompt--dirty-cache))
-                             my/eshell-prompt--slot-prop t))
+         (concat
+          (propertize " (" 'face 'my/eshell-prompt-secondary)
+          (propertize branch 'face 'my/eshell-prompt-git)
+          (propertize (my/eshell-prompt--slot-string
+                       (gethash root my/eshell-prompt--dirty-cache))
+                      my/eshell-prompt--slot-prop t)
+          (propertize ")" 'face 'my/eshell-prompt-secondary))
        "")
-     sep
-     (propertize (format-time-string "%I:%M:%S %p") 'face 'my/eshell-prompt-time)
-     (propertize ")\n└─" 'face 'my/eshell-prompt-secondary)
+     (propertize "\n└─" 'face 'my/eshell-prompt-secondary)
      (propertize ">>" 'face (if (my/eshell-prompt--success-p)
                                 'my/eshell-prompt-secondary
                               'my/eshell-prompt-fail))
-     (propertize " " 'face 'my/eshell-prompt-time))))
+     (propertize " " 'face 'my/eshell-prompt-secondary))))
 
 (setq eshell-prompt-function #'my/eshell-prompt)
 ;; `eshell-prompt-regexp' 在 30.1 起已标记 obsolete（提示符边界改用 field 属性），
