@@ -31,6 +31,11 @@
 (add-hook 'vertico-mode-hook  'vertico-multiform-mode)
 
 
+;; which-key 是 Emacs 内置包（lisp/which-key.el，带 autoload，不用装/不用 require）。
+;; 前缀键按下后过一小段空闲时间自动弹出后续按键提示，跟下面 embark 那个
+;; 「主动按 C-h 才展示」的机制互不冲突，两个都留着。
+(add-hook 'after-init-hook 'which-key-mode)
+
 ;; (require 'embark)
 ;; 组合键 C-h 可以展示后续的有效按键
 (setq prefix-help-command 'embark-prefix-help-command)
