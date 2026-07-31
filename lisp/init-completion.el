@@ -195,9 +195,15 @@
 ;; （`while-no-input' / `:cancel-on-input t' 救不了：能取消的只是等待，
 ;;   响应解析和排序的开销已经付掉了。）
 (defvar my/completion-preview-capfs
-  (list #'cape-dabbrev #'cape-keyword #'cape-file)
-  "行内预览专用的 capf 列表：只用本地廉价源，绝不含 LSP。
-LSP 候选走手动触发（C-M-i / `my/lsp-complete'）或 auto 档的 corfu。")
+  (list #'citre-completion-at-point #'cape-dabbrev #'cape-keyword #'cape-file)
+  "行内预览专用的 capf 列表：只用本地廉价源，绝不含 LSP（eglot）。
+citre 放最前面——它靠查 tags 文件，比 dabbrev 精确（带 kind/signature 标注），
+但 `citre-completion-at-point' 的 collection 没声明 `:exclusive'，一旦有
+匹配就会独占，必须排在 dabbrev/keyword/file 前面，否则永远轮不到它：
+dabbrev 几乎对任何已在 buffer 里出现过的前缀都能凑出候选，排前面会先把
+后面的 capf 全部挡住。citre-mode 没开、或当前 buffer 没有 tags 数据库时
+它直接返回 nil，自动落到下面几个源。LSP 候选仍然走手动触发
+（C-M-i / `my/lsp-complete'）或 auto 档的 corfu。")
 
 ;; ---- eshell 里的例外：参数位要走 pcomplete ----
 ;; 上面那份 capf 列表对 eshell 是错的：eshell 唯一有用的补全源是它自己的
