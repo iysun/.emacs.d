@@ -71,8 +71,15 @@
 
 `init-format`（apheleia，非 LSP 场景的格式化；`SPC f` = `my/format-buffer` 统一入口，按 buffer
 是否有 eglot 托管自动分流到 eglot-format 或 apheleia-format-buffer）与
-`init-navigation`（citre 兜底代码导航，`F12`；citre 需要本机装
+`init-navigation`（citre 补 eglot/xref 覆盖不到的场景；citre 需要本机装
 Universal Ctags，没装就整个不加载）借鉴自 zdn/.emacs.d（见 git log 里对应提交）。
+跳转键位统一到标准 xref 入口（`gd`/`M-.`/`M-,`/`M-?`）：citre-mode 会把自己的
+xref backend（eglot→tags→global 三级兜底）注册进 buffer-local
+`xref-backend-functions`，`init-lsp.el` 的 `eglot-managed-mode-hook` 把它排到
+eglot 裸 backend 前面，所以这几个标准键本身就有 tags/global 兜底，不必再学一套
+citre 专属跳转键。citre 只留一个不可替代的命令：`SPC p`（`citre-peek`，原地预览
+定义、不跳转）。`M-,`/`M-.` 因此从 `init-keymaps.el` 的 diff-hl 本地绑定里让出来，
+diff-hl 的 revert/stage 暂时没有专属键位，走 `M-x` 或 magit。
 
 ## 文档（docs/）
 

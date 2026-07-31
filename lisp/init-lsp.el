@@ -109,7 +109,23 @@ eglot-managed-mode-hook 已经把 completion-at-point-functions 换成了
                                  #'cape-file)
                                 (remq 'eglot-completion-at-point
                                       completion-at-point-functions)))
-              (local-set-key (kbd "C-M-i") #'my/lsp-complete))))
+              (local-set-key (kbd "C-M-i") #'my/lsp-complete)
+              ;; ⚠ 把 citre 的 xref backend 抢回 eglot 前面：eglot--managed-mode 启用时
+              ;; 会往 buffer-local `xref-backend-functions' 头插 `eglot-xref-backend'
+              ;; （见 eglot.el），而 citre-mode 更早（prog-mode-hook 阶段）就已经头插了
+              ;; `citre-xref-backend'——`add-hook' 不 append 时后来者居上，于是 eglot
+              ;; 排到 citre 前面，`xref-find-backend'（gd/M-./M-?/C-M-. 都走它）永远先
+              ;; 问 eglot，答不出直接放弃，不会退到 citre 的 tags/global 兜底。
+              ;; `citre-xref-backend' 内部本来就会先试 eglot（citre-find-definition-backends
+              ;; 默认 `(eglot tags global)'），所以把它排回最前面，LSP 语义结果不受影响，
+              ;; 只是多了 LSP 答不出时的 tags/global 兜底。只有 citre-mode 确实开着
+              ;; （buffer-local 列表里能找到 `citre-xref-backend'）才重排，避免在没装
+              ;; readtags 时对着不存在的 backend 瞎折腾。
+              (when (memq 'citre-xref-backend xref-backend-functions)
+                (setq-local xref-backend-functions
+                            (cons 'citre-xref-backend
+                                  (remq 'citre-xref-backend
+                                        xref-backend-functions)))))))
 
 ;; jsonrpc 每条 LSP 消息都会调 `jsonrpc--log-event' 构造日志对象。上面已把事件缓冲区
 ;; 设为 0（不保留内容），但**构造开销仍在**——直接 fset 成 ignore 才能整条掐掉。

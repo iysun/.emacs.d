@@ -19,19 +19,25 @@
   (capitalize-word -1))
 
 (defun init-keymaps--bind-diff-hl-local ()
-  ;; 全组统一用 M- 前缀。原先 show-hunk 绑在 `C-c h v'，会把 local map 里的 `C-c h'
+  ;; 统一用 M- 前缀。原先 show-hunk 绑在 `C-c h v'，会把 local map 里的 `C-c h'
   ;; 变成前缀键，压过全局 `C-c h' = consult-history——而 prog/text-mode 恰好覆盖
   ;; 日常绝大多数缓冲区，等于 consult-history 按不出来。
+  ;; ⚠ `M-,'/`M-.' 原来分别绑给 diff-hl-revert-hunk/diff-hl-stage-dwim，现在让给了
+  ;; Emacs 全局默认的 xref-go-back/xref-find-definitions（跟 gd/M-? 统一走同一条
+  ;; xref backend 链，见 init-lsp.el 的 eglot-managed-mode-hook）。revert/stage
+  ;; 暂时没有专属键位，用 `M-x diff-hl-revert-hunk' / `M-x diff-hl-stage-dwim' 或
+  ;; magit 调用。
   (dolist (state '(normal insert visual))
     (evil-define-key state 'local (kbd "M-p") 'diff-hl-previous-hunk)
     (evil-define-key state 'local (kbd "M-n") 'diff-hl-next-hunk)
-    (evil-define-key state 'local (kbd "M-,") 'diff-hl-revert-hunk)
-    (evil-define-key state 'local (kbd "M-.") 'diff-hl-stage-dwim)
     (evil-define-key state 'local (kbd "M-h") 'diff-hl-show-hunk)))
 
 ;; 在 evil 加载后用原生 keymap API 绑定（global-set-key / define-key / evil-define-key）
 (with-eval-after-load 'evil
   (evil-define-key 'normal 'global (kbd "SPC f") 'my/format-buffer)
+  ;; citre 唯一保留的专属命令：原地预览定义，不跳转、不用 xref（xref 前端做不到）。
+  ;; jump/jump-to-reference 已经跟 gd/M-? 等价，删掉了，见 init-navigation.el。
+  (evil-define-key 'normal 'global (kbd "SPC p") 'citre-peek)
 
   ;; 全局键（原 general-def 无 :keymaps）
   (global-set-key (kbd "C-;") 'embark-act)
