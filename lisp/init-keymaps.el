@@ -58,8 +58,11 @@
   (global-set-key (kbd "C-c m") 'consult-man)
   (global-set-key (kbd "C-c i") 'consult-info)
   (global-set-key (kbd "C-c e") 'eshell)
-  (global-set-key (kbd "C-c u") 'winner-undo)
-  (global-set-key (kbd "C-c r") 'winner-redo)
+  (global-set-key (kbd "C-c w") 'hydra-window-size/body)
+  ;; winner-undo/redo 绑到 hydra-winner 的包装函数：首次按键行为不变（直接执行），
+  ;; 之后可用裸键 u/r 连续切换布局，定义见 init-window.el。
+  (global-set-key (kbd "C-c u") 'hydra-winner/winner-undo)
+  (global-set-key (kbd "C-c r") 'hydra-winner/winner-redo)
 
   (global-set-key (kbd "M-y") 'consult-yank-pop)
   (global-set-key (kbd "C-:") 'shell-command)
@@ -117,6 +120,12 @@
     (evil-define-key 'insert minuet-active-mode-map (kbd "<tab>") 'minuet-accept-suggestion)
     (evil-define-key 'insert minuet-active-mode-map (kbd "M-p") 'minuet-previous-suggestion)
     (evil-define-key 'insert minuet-active-mode-map (kbd "M-n") 'minuet-next-suggestion))
+
+  ;; smerge 冲突处理 hydra 入口键：复用已有的 C-c ^ 前缀，再按一次 ^ 进入可连续
+  ;; 操作的版本（n/p 跳转冲突，m/o/b/a 保留版本，R 高亮差异）。绑在 smerge-mode-map
+  ;; 上，只在 smerge-mode 开启的 buffer 里生效，不影响全局；定义见 init-git.el。
+  (with-eval-after-load 'smerge-mode
+    (define-key smerge-mode-map (kbd "C-c ^ ^") 'hydra-smerge/body))
 
   (evil-define-key 'visual 'global (kbd "Y") 'clipboard-kill-ring-save)
 

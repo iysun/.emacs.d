@@ -27,6 +27,12 @@
   ("l" enlarge-window-horizontally "向右加宽")
   ("q" nil "退出"))
 
+(defhydra hydra-winner (:color red)
+  "窗口布局撤销/重做"
+  ("u" winner-undo "回退布局")
+  ("r" winner-redo "前进布局")
+  ("q" nil "退出"))
+
 
 ;; (require 'popper)
 (with-eval-after-load 'popper

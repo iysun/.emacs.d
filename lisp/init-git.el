@@ -35,4 +35,20 @@
       (smerge-mode 1))))
 (add-hook 'find-file-hook #'my/auto-smerge-mode)
 
+;; defhydra 来自 hydra 包；显式 require，确保宏在此处可用（否则 fresh 机器
+;; 上 hydra 未被自动加载时会报 void-function defhydra）。
+(require 'hydra)
+
+(defhydra hydra-smerge (:color red)
+  "处理冲突"
+  ("n" smerge-next "下一处冲突")
+  ("p" smerge-prev "上一处冲突")
+  ("m" smerge-keep-upper "保留我方")
+  ("o" smerge-keep-lower "保留对方")
+  ("b" smerge-keep-base "保留基线")
+  ("a" smerge-keep-all "全部保留")
+  ("R" smerge-refine "高亮差异")
+  ("q" nil "退出"))
+;; 入口键见 init-keymaps.el（C-c ^ ^ 绑到 hydra-smerge/body，只在 smerge-mode-map 里生效）。
+
 (provide 'init-git)
