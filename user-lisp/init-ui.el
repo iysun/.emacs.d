@@ -338,8 +338,8 @@ scripts/install-fonts.py 大概率没跑过（或跑了但没重启 Emacs）—�
   (let ((res 0) (i 0))
     (while (< i new-width)
       (let* ((j (floor (* orig-width (/ (float i) new-width))))
-             (bit (logand 1 (lsh x (- j)))))
-        (setq res (logior res (lsh bit i))))
+             (bit (logand 1 (ash x (- j)))))
+        (setq res (logior res (ash bit i))))
       (setq i (1+ i)))
     res))
 

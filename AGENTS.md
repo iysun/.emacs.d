@@ -30,7 +30,7 @@
 
 | 路径 | 作用 |
 |------|------|
-| `early-init.el` | GC 延迟、native-comp、包系统早期开关、首装签名校验兜底；用绝对路径 `load` `user-lisp/init-windows` 与 `user-lisp/init-ime` |
+| `early-init.el` | GC 延迟、native-comp、**提前激活包**（`package-enable-at-startup t`，供 user-lisp 自动编译）、收窄编译告警、首装签名校验兜底；用绝对路径 `load` `user-lisp/init-windows` 与 `user-lisp/init-ime` |
 | `init.el` | 顶层启动：声明包列表（`use-package … :ensure t :defer t`）+ `require` 各模块 |
 | `user-lisp/` | 功能模块目录，由 Emacs 31 user-lisp 机制自动加入 load-path 并字节编译/生成 autoload |
 | `user-lisp/init-*.el` | 各功能模块（每个 `(provide 'init-xxx)`） |
@@ -80,10 +80,19 @@ Emacs 31 的 user-lisp 机制在启动时会：
 若怀疑某个 `.elc` 陈旧/损坏（交互会话 `load-prefer-newer` 为 nil 会优先用它），删掉对应
 `.elc`（或 `M-x prepare-user-lisp` 带前缀强制重建），下次启动会按需重编。
 
+> ⚠ 两个**必须在 `early-init.el` 里设好、别改回去**的开关：
+> - **`package-enable-at-startup` 要开着**：user-lisp 的自动字节编译发生在 init **之前**，
+>   若那时包还没激活（evil/gcmh/hydra… 不在 load-path），编译会失败并把错误刷进
+>   `*Compile-Log*`（模块退回加载源码、功能不受影响，但每次启动都重试报错）。
+> - **收窄 `byte-compile-warnings`**（`(not free-vars unresolved obsolete interactive-only lexical)`）：
+>   本配置大量"先 `setq` 包变量、用时才加载"，编译必然产生成片此类良性告警；真正的
+>   语法 / 宏错误仍会暴露（运行时也会立刻报）。
+
 ## 字节编译与 .elc（重要）
 
 因为 user-lisp 机制会自动字节编译，`.elc` 成为实际加载物（交互会话 `load-prefer-newer` 为 nil，
-优先 `.elc`），下面这条从"注意"升级为**硬性要求**：
+优先 `.elc`）。前提是编译时包已激活——见上「构建 / 编译」的 `package-enable-at-startup` 说明。
+下面这条是**硬性要求**：
 
 - **文件顶层（含 `with-eval-after-load` 体内）用到某个包的宏时，必须在文件顶层 `(require '那个包)`。**
   否则字节编译器把宏当函数编译进 `.elc`，运行时报 `Invalid function: <宏名>`。

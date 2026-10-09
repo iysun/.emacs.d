@@ -48,8 +48,7 @@
 ;; Embark 使用 posframe 打开
 (progn 
   (defun posframe-display-buffer (buffer)
-    (let ((default-fgc (face-attribute 'default :foreground))
-          (default-bgc (face-attribute 'default :background))
+    (let ((default-bgc (face-attribute 'default :background))
           (hl (face-attribute 'highlight :background)))
       (when buffer (posframe-show
                     buffer

@@ -9,6 +9,7 @@
 ;;(define-key eshell-mode-map (kbd "C-r") 'consult-history)
 
 ;; eshell 自定义函数
+(defvar eshell-buffer-maximum-lines)   ; eshell 定义；提前声明为 special，避免编译期"未使用"告警
 (defun eshell-clear ()
   (interactive)
   (let ((eshell-buffer-maximum-lines 0))
