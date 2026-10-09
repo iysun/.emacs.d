@@ -161,10 +161,11 @@ face（由 `tab-line-tab-name-format-default' 统一 propertize/套用），颜�
 (defun my/tab-line--group-tab-p (tab)
   (and (listp tab) (alist-get 'group-tab tab)))
 
-(defconst my/tab-line-right-margin 1
+(defconst my/tab-line-right-margin 0
   "分组名右对齐时，其右边缘到 tab-line 右端的**额外**留白列数。
-分组名本身自带 1 列尾部空格（见 `my/tab-line-buffer-group-by-project'），
-所以可见间距 ≈ 本值 + 1；调大它就往左让开更多。")
+分组名字符串自带 1 列尾部空格（见 `my/tab-line-buffer-group-by-project'，且现在
+会跟着 `tab-line-tab-group' face 一起渲染），所以 0 表示「分组名右边缘贴右端」；
+想让它离右端更远就调大本值（如 1、2）。")
 
 (defun my/tab-line--right-group (group-tab tabs)
   "把 GROUP-TAB 渲染成右对齐字符串（前置一段可伸缩空白顶到右边缘）。
