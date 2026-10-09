@@ -161,12 +161,19 @@ face（由 `tab-line-tab-name-format-default' 统一 propertize/套用），颜�
 (defun my/tab-line--group-tab-p (tab)
   (and (listp tab) (alist-get 'group-tab tab)))
 
+(defconst my/tab-line-right-margin 1
+  "分组名右对齐时，其右边缘到 tab-line 右端的**额外**留白列数。
+分组名本身自带 1 列尾部空格（见 `my/tab-line-buffer-group-by-project'），
+所以可见间距 ≈ 本值 + 1；调大它就往左让开更多。")
+
 (defun my/tab-line--right-group (group-tab tabs)
   "把 GROUP-TAB 渲染成右对齐字符串（前置一段可伸缩空白顶到右边缘）。
 TABS 传全量标签列表，保证 `tab-line-tab-face-functions' 里依赖位置的函数行为一致。"
   (let ((label (funcall tab-line-tab-name-format-function group-tab tabs)))
     (concat (propertize " " 'display
-                        `(space :align-to (- right ,(string-width label))))
+                        `(space :align-to
+                                (- right ,(+ (string-width label)
+                                             my/tab-line-right-margin))))
             label)))
 
 (defun my/tab-line-format ()
@@ -275,6 +282,11 @@ buffer tab 的场景已经超出人工数字母找 tab 的实用范围，不值�
   ;; 各自不同深浅，见 init-bars.el）和标签自带的 `my/tab-line-tab-padding' 表达，
   ;; 不再额外插入分隔空白。
   (setq tab-line-separator "")
+  ;; 让分组名真正拿到 `tab-line-tab-group' face：内置 `tab-line-tab-face-functions'
+  ;; 默认只有 `(tab-line-tab-face-modified tab-line-tab-face-special)'，**不含**
+  ;; `tab-line-tab-face-group'，所以 init-bars.el 里给 `tab-line-tab-group' 设的
+  ;; 背景/内边距不会生效。这里补上，分组名才有自己独立的样式。
+  (add-to-list 'tab-line-tab-face-functions #'tab-line-tab-face-group)
   (advice-add 'tab-line-tabs-buffer-list :filter-return #'my/tab-line-filter))
 
 (add-hook 'first-change-hook #'my/tab-line-refresh)
