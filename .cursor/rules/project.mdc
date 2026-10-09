@@ -8,7 +8,7 @@ alwaysApply: true
 **单一事实源 [AGENTS.md](../../AGENTS.md)** —— 项目规范、目录结构、维护约定都在这里，先读它。
 
 要点速记：
-- 模块放 `user-lisp/`（含 `mode-line`/`tab-line`/`eshell-prompt` 子目录）。Emacs 31 的 user-lisp 机制在启动时自动把它们加入 load-path 并按需字节编译/生成 autoload，`init.el` 直接 `require` 即可，不再手动改 load-path。
+- 模块放 `user-lisp/`（含 `evil-plugins`/`gcmh`/`mode-line`/`tab-line`/`eshell-prompt` 子目录）。Emacs 31 的 user-lisp 机制在启动时自动把它们加入 load-path 并按需字节编译/生成 autoload，`init.el` 直接 `require` 即可，不再手动改 load-path。`evil-surround`/`evil-commentary`/`evil-visualstar`/`gcmh` 已内联进这些子目录，不再走 elpa。
 - 顶层 `init.el` 声明包列表（`use-package … :ensure t :defer t`）再 `require` 各模块；`early-init.el` 做早期设置。
 - 字节编译现由 user-lisp 机制自动进行：**顶层用到某个包的宏时，该文件顶层要先 `(require '那个包)`**，否则会生成坏 `.elc`（加载时报 `Invalid function: …`，见 docs/notes/byte-compile-broken-elc.md）。
 - 验证用 `/run`（批处理加载）。生成的 `.elc` / `.user-lisp-autoloads.el` 由 user-lisp 机制自动产生、已 gitignore，勿提交。

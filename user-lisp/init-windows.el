@@ -6,7 +6,7 @@
 ;; 非 Windows 平台整个文件是空操作。
 ;;
 ;; 跨平台功能（哪怕其中一个分支主要是给 Windows 写的，比如输入法切换）不属于
-;; 这里，应放在功能所属的模块、或按能力命名的共享文件——见 user-lisp/init-ime.el
+;; 这里，应放在功能所属的模块、或按能力命名的共享文件——见 user-lisp/evil-plugins/ime.el
 ;; 及 AGENTS.md「多平台代码怎么归位」一节。
 ;;
 ;; 由 `early-init.el' 在最早期用绝对路径 `load'（那时 user-lisp 的 load-path 还没

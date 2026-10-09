@@ -1,7 +1,7 @@
 ;; init-ui.el   -*- lexical-binding: t -*-
 
 ;; `cl-loop' 是宏，字节编译期必须先加载 cl-lib，否则被当函数编译成坏 .elc
-;; （同 init-evil.el 顶层 require evil 的道理）。
+;; （同 evil-plugins/evil-config.el 顶层 require evil 的道理）。
 (require 'cl-lib)
 
 (defvar my-ui-default-font-family nil

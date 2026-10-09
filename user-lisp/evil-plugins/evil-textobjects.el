@@ -1,5 +1,5 @@
-;; init-evil-plugins.el  -*- lexical-binding: t -*-
-;; 顶层用了 `evil-define-text-object'（宏），编译期需先加载 evil（见 init-evil.el 同款修复）。
+;; evil-textobjects.el  -*- lexical-binding: t -*-
+;; 顶层用了 `evil-define-text-object'（宏），编译期需先加载 evil（见 evil-config.el 同款修复）。
 (require 'evil)
 
 ;; evil-textobj-between
@@ -79,4 +79,4 @@
 (define-key evil-outer-text-objects-map (kbd "lw") 'evil-a-little-word)
 (define-key evil-inner-text-objects-map (kbd "lw") 'evil-inner-little-word)
 
-(provide 'init-evil-plugins)
+(provide 'evil-textobjects)

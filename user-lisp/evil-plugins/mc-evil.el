@@ -1,4 +1,4 @@
-;; init-mc.el   -*- lexical-binding: t -*-
+;; mc-evil.el   -*- lexical-binding: t -*-
 (defvar my/is-multiple-cursors-mode nil)
 
 ;; 自动在 multiple-cursors 模式下禁用 evil，退出后重新启用
@@ -57,4 +57,4 @@
 
 ;; 键位见 init-keymaps.el（C-M-n / C-M-p / C-M-m 等）。
 
-(provide 'init-mc)
+(provide 'mc-evil)

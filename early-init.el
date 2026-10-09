@@ -68,10 +68,10 @@
 (setq inhibit-compacting-font-caches t)
 
 ;; Windows 专项设置（user-lisp/init-windows.el，非 Windows 平台空操作）+ 跨平台
-;; 输入法切换（user-lisp/init-ime.el）。这两个要在最早期加载，而 user-lisp 的
+;; 输入法切换（user-lisp/evil-plugins/ime.el）。这两个要在最早期加载，而 user-lisp 的
 ;; load-path 由 `prepare-user-lisp' 在更晚的启动阶段才建立，故这里仍用绝对路径 `load'。
 (load (expand-file-name "user-lisp/init-windows" user-emacs-directory))
-(load (expand-file-name "user-lisp/init-ime" user-emacs-directory))
+(load (expand-file-name "user-lisp/evil-plugins/ime" user-emacs-directory))
 
 ;; Inhibit resizing frame
 (setq frame-inhibit-implied-resize t)

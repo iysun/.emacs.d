@@ -3,7 +3,7 @@
 ;; apheleia：非 LSP 场景的格式化能力，手动触发。两者引擎不同——eglot-format
 ;; 靠 LSP 协议向 server 要格式化结果，apheleia 靠跑外部 CLI formatter 再 diff
 ;; 打 patch 回 buffer，apheleia 的 formatter 只能是外部命令规格，接不了 eglot
-;; 协议调用，故两个引擎没法合并成一个；`SPC f`（见 init-keymaps.el 的
+;; 协议调用，故两个引擎没法合并成一个；`SPC f`（见 evil-plugins/evil-keymaps.el 的
 ;; my/format-buffer）改为统一入口，按 buffer 是否有 eglot 托管自动分流。
 ;; 不开 apheleia-mode/apheleia-global-mode，不在存盘时自动跑——
 ;; apheleia-format-buffer 是独立命令，不依赖该 mode 也能按 apheleia-mode-alist /

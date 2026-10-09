@@ -15,7 +15,7 @@ Emacs 31 的 user-lisp 机制在 `--batch` 下不会自动生效（`init-file-us
 ```powershell
 emacs --batch `
   --init-directory "$PWD" `
-  --eval '(dolist (d (list "user-lisp" "user-lisp/mode-line" "user-lisp/tab-line" "user-lisp/eshell-prompt")) (add-to-list (quote load-path) (expand-file-name d user-emacs-directory)))' `
+  --eval '(dolist (d (list "user-lisp" "user-lisp/evil-plugins" "user-lisp/gcmh" "user-lisp/mode-line" "user-lisp/tab-line" "user-lisp/eshell-prompt")) (add-to-list (quote load-path) (expand-file-name d user-emacs-directory)))' `
   -l "$PWD\early-init.el" -l "$PWD\init.el" `
   --eval '(message "== CONFIG LOADED OK ==")' 2>&1 | Select-Object -Last 12
 Write-Output "EXIT=$LASTEXITCODE"

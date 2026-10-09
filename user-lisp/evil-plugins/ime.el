@@ -1,11 +1,11 @@
-;; init-ime.el 	-*- lexical-binding: t -*-
+;; ime.el 	-*- lexical-binding: t -*-
 ;;
 ;; 输入法切换：退出 evil 插入态时切回英文，本质是 evil 集成的一部分，只是
 ;; 实现因平台而异（Windows 用 im-select.exe，Linux/macOS 用 fcitx5-remote），
 ;; 用 `cond' 在一个函数里把所有平台分支放在一起，不按 OS 拆文件。
 ;;
-;; 之所以单独开一个文件而不是直接写进 user-lisp/init-evil.el：输入法切换要由
-;; `early-init.el' 在最早期加载，而 `init-evil.el' 那时还没被 require，过去两边
+;; 之所以单独开一个文件而不是直接写进 evil-plugins/evil-config.el：输入法切换要由
+;; `early-init.el' 在最早期加载，而 `evil-config.el' 那时还没被 require，过去两边
 ;; 各自重复定义过一份。这里单独成文件、由 `early-init.el' 用绝对路径 `load'，只定义一份。
 ;;
 ;; 注：user-lisp 的 load-path 由 `prepare-user-lisp' 在更晚的启动阶段才建立，
@@ -38,4 +38,4 @@
                   (lambda () (interactive)
                     (call-process "fcitx5-remote" nil 0 nil "-o"))))
 
-(provide 'init-ime)
+(provide 'ime)

@@ -7,7 +7,7 @@
 ;; eglot-managed-mode-hook 把它排到 eglot 裸 backend 前面，所以 gd/M-./M-? 这些
 ;; 标准 xref 入口本身就有 tags/global 兜底，不用 citre 自己另开一套跳转键。
 ;; citre 现在只保留一个不可替代的命令：`SPC p'（citre-peek，原地预览定义、不跳转，
-;; 见 init-keymaps.el），xref 前端没有等价物。
+;; 见 init-keymaps.el 的 `C-x b'），xref 前端没有等价物。
 
 ;; citre 需要外部 Universal Ctags（ctags/readtags）。本机没装就连包都不装，
 ;; 同 init.el 里 fd-dired 的条件式写法。

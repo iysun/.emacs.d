@@ -31,9 +31,6 @@
 
 (dolist (package
          '(evil
-           evil-surround
-           evil-visualstar
-           evil-commentary
            posframe
            multiple-cursors
            ace-window
@@ -56,9 +53,10 @@
            corfu
            corfu-terminal
            cape
-           apheleia
-           gcmh))
+           apheleia))
   (eval `(use-package ,package :ensure t :defer t)))
+;; evil-surround / evil-visualstar / evil-commentary / gcmh 已内联进仓库
+;; （user-lisp/evil-plugins/、user-lisp/gcmh/），不再从 elpa 装/激活。
 
 (when (executable-find "fd")
   ;; 不要 eager `(require 'fd-dired)`：它顶层 require find-dired/ibuffer/ibuf-ext，
@@ -67,11 +65,11 @@
   (use-package fd-dired :ensure t :defer t))
 
 (require 'init-base)
-;; evil 延迟到 after-init 加载，使其不计入 `emacs-init-time'。init-evil.el 内部做
-;; (require 'evil)+(evil-mode 1)；init-keymaps/init-completion 顶层已改为
-;; eval-when-compile，故 init 期不会把 evil 拉起来。depth -99 保证它早于 after-init
-;; 的其它工作（字体 -95、use-completion-style 等）。
-(add-hook 'after-init-hook (lambda () (require 'init-evil)) -99)
+;; evil 延迟到 after-init 加载，使其不计入 `emacs-init-time'。
+;; evil-plugins/evil-config.el 内部做 (require 'evil)+(evil-mode 1)；
+;; evil-keymaps/init-completion 顶层已改为 eval-when-compile，故 init 期不会把 evil
+;; 拉起来。depth -99 保证它早于 after-init 的其它工作（字体 -95、use-completion-style 等）。
+(add-hook 'after-init-hook (lambda () (require 'evil-config)) -99)
 (require 'init-ui)
 (require 'init-bars)                    ; mode-line + tab-line（须在 init-ui 之后：复用其字体选择结果）
 (require 'init-window)
@@ -80,15 +78,16 @@
 (require 'init-git)
 (require 'init-term)
 (require 'init-project)
-(require 'init-mc)
+(require 'mc-evil)
 
-(require 'init-keymaps)
+(require 'evil-keymaps)                 ; evil 专属键位（with-eval-after-load 'evil）
+(require 'init-keymaps)                 ; 非 evil 全局键
 (require 'init-lsp)
 (require 'init-format)
 (require 'init-navigation)
 
 ;;(require 'init-ai)
-;;(require 'init-evil-plugins)
+;;(require 'evil-textobjects)
 ;;
 ;;(require 'lang-go)
 

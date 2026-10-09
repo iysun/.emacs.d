@@ -1,14 +1,7 @@
-;; init.el 	-*- lexical-binding: t -*-
-
-;; `evil-define-key' 是宏，编译期必须先加载 evil，否则被当函数编译成坏 .elc
-;; （加载时报 "Invalid function: evil-define-key"）。`eval-when-compile' 只为编译期
-;; 取宏；运行时 evil 已延迟到 after-init 加载，本文件的绑定都在
-;; `with-eval-after-load 'evil' 里，会在 evil 加载时生效。
-(eval-when-compile (require 'evil))
-(defvar eshell-mode-map)
-(defvar capf-autosuggest-active-mode-map)
-(defvar dired-mode-map)
-(defvar minuet-active-mode-map)
+;; init-keymaps.el 	-*- lexical-binding: t -*-
+;;
+;; 非 evil 的全局键位（embark / multiple-cursors / consult / project / popper /
+;; tab-line / bookmark …）。evil 专属键位见 user-lisp/evil-plugins/evil-keymaps.el。
 
 (defun custom/downcase-back()
   (interactive)
@@ -20,133 +13,91 @@
   (interactive)
   (capitalize-word -1))
 
-;; 在 evil 加载后用原生 keymap API 绑定（global-set-key / define-key / evil-define-key）
-(with-eval-after-load 'evil
-  (evil-define-key 'normal 'global (kbd "SPC f") 'my/format-buffer)
-  ;; citre 唯一保留的专属命令：原地预览定义，不跳转、不用 xref（xref 前端做不到）。
-  ;; jump/jump-to-reference 已经跟 gd/M-? 等价，删掉了，见 init-navigation.el。
-  (evil-define-key 'normal 'global (kbd "SPC p") 'citre-peek)
-  ;; 看文档，不跳转、不动光标（实现见 init-base.el）。跟 gd/M-.（跳定义）、M-?（找引用）、
-  ;; SPC p（原地看源码）互补。`gh' 是 eldoc-mouse 时代的旧键位，包移除后一直空着。
-  (evil-define-key 'normal 'global (kbd "gh") 'my/doc-at-point)
+;; ---- 全局键 ----
+(global-set-key (kbd "C-;") 'embark-act)
+(global-set-key (kbd "C-h b") 'embark-bindings)
 
-  ;; 全局键（原 general-def 无 :keymaps）
-  (global-set-key (kbd "C-;") 'embark-act)
-  (global-set-key (kbd "C-h b") 'embark-bindings)
+(global-set-key (kbd "M-k") 'mc/mark-previous-like-this)
+(global-set-key (kbd "M-j") 'mc/mark-next-like-this)
+(global-set-key (kbd "M-<down>") 'mc/mark-next-like-this-word)
 
-  (global-set-key (kbd "M-k") 'mc/mark-previous-like-this)
-  (global-set-key (kbd "M-j") 'mc/mark-next-like-this)
-  (global-set-key (kbd "M-<down>") 'mc/mark-next-like-this-word)
+(global-set-key (kbd "C-x C-r") 'project-switch-project)
+(global-set-key (kbd "C-x C-b") 'ibuffer)
+(global-set-key (kbd "C-x M-:") 'consult-complex-command)
+(global-set-key (kbd "C-x b") 'consult-buffer)
+(global-set-key (kbd "C-x 4 b") 'consult-buffer-other-window)
+(global-set-key (kbd "C-x 5 b") 'consult-buffer-other-frame)
+(global-set-key (kbd "C-x t b") 'consult-buffer-other-tab)
+(global-set-key (kbd "C-x p b") 'consult-project-buffer)
+;; 按组关 buffer，原生 tab-line 版——实现见 init-bars.el 的
+;; my/tab-line-kill-group-buffers / my/tab-line-kill-other-group-buffers。
+(global-set-key (kbd "C-x C-k") 'my/tab-line-kill-group-buffers)
+(global-set-key (kbd "C-x C-o") 'my/tab-line-kill-other-group-buffers)
+(global-set-key (kbd "M-#") 'consult-register-load)
+(global-set-key (kbd "M-'") 'consult-register-store)
+(global-set-key (kbd "C-M-#") 'consult-register)
+(global-set-key (kbd "C-c M-x") 'consult-mode-command)
+(global-set-key (kbd "C-c h") 'consult-history)
+(global-set-key (kbd "C-c k") 'consult-kmacro)
+(global-set-key (kbd "C-c c") 'compile)
+(global-set-key (kbd "C-c m") 'consult-man)
+(global-set-key (kbd "C-c i") 'consult-info)
+(global-set-key (kbd "C-c e") 'eshell)
+(global-set-key (kbd "C-c w") 'hydra-window-size/body)
+;; winner-undo/redo 绑到 hydra-winner 的包装函数：首次按键行为不变（直接执行），
+;; 之后可用裸键 u/r 连续切换布局，定义见 init-window.el。
+(global-set-key (kbd "C-c u") 'hydra-winner/winner-undo)
+(global-set-key (kbd "C-c r") 'hydra-winner/winner-redo)
 
-  (global-set-key (kbd "C-x C-r") 'project-switch-project)
-  (global-set-key (kbd "C-x C-b") 'ibuffer)
-  (global-set-key (kbd "C-x M-:") 'consult-complex-command)
-  (global-set-key (kbd "C-x b") 'consult-buffer)
-  (global-set-key (kbd "C-x 4 b") 'consult-buffer-other-window)
-  (global-set-key (kbd "C-x 5 b") 'consult-buffer-other-frame)
-  (global-set-key (kbd "C-x t b") 'consult-buffer-other-tab)
-  (global-set-key (kbd "C-x p b") 'consult-project-buffer)
-  ;; 按组关 buffer，原生 tab-line 版——实现见 init-bars.el 的
-  ;; my/tab-line-kill-group-buffers / my/tab-line-kill-other-group-buffers。
-  (global-set-key (kbd "C-x C-k") 'my/tab-line-kill-group-buffers)
-  (global-set-key (kbd "C-x C-o") 'my/tab-line-kill-other-group-buffers)
-  (global-set-key (kbd "M-#") 'consult-register-load)
-  (global-set-key (kbd "M-'") 'consult-register-store)
-  (global-set-key (kbd "C-M-#") 'consult-register)
-  (global-set-key (kbd "C-c M-x") 'consult-mode-command)
-  (global-set-key (kbd "C-c h") 'consult-history)
-  (global-set-key (kbd "C-c k") 'consult-kmacro)
-  (global-set-key (kbd "C-c c") 'compile)
-  (global-set-key (kbd "C-c m") 'consult-man)
-  (global-set-key (kbd "C-c i") 'consult-info)
-  (global-set-key (kbd "C-c e") 'eshell)
-  (global-set-key (kbd "C-c w") 'hydra-window-size/body)
-  ;; winner-undo/redo 绑到 hydra-winner 的包装函数：首次按键行为不变（直接执行），
-  ;; 之后可用裸键 u/r 连续切换布局，定义见 init-window.el。
-  (global-set-key (kbd "C-c u") 'hydra-winner/winner-undo)
-  (global-set-key (kbd "C-c r") 'hydra-winner/winner-redo)
+(global-set-key (kbd "M-y") 'consult-yank-pop)
+(global-set-key (kbd "C-:") 'shell-command)
 
-  (global-set-key (kbd "M-y") 'consult-yank-pop)
-  (global-set-key (kbd "C-:") 'shell-command)
+(global-set-key (kbd "M-g b") 'consult-bookmark)
+(global-set-key (kbd "M-g e") 'consult-compile-error)
+(global-set-key (kbd "M-g f") 'consult-flymake)
+(global-set-key (kbd "M-g g") 'consult-goto-line)
+(global-set-key (kbd "M-g o") 'consult-outline)
+(global-set-key (kbd "M-g m") 'consult-mark)
+(global-set-key (kbd "M-g k") 'consult-global-mark)
+(global-set-key (kbd "M-g i") 'consult-imenu)
+(global-set-key (kbd "M-g I") 'consult-imenu-multi)
+(global-set-key (kbd "M-g w") 'ace-window)
+;; ace-jump 式按字母跳标签，原生 tab-line 版（C-u C-u 关闭该 tab；
+;; 原版 C-u 单前缀「交换 tab 顺序」无法移植，见 my/tab-line-ace-jump 文档字符串）。
+(global-set-key (kbd "M-g t") 'my/tab-line-ace-jump)
+(global-set-key (kbd "M-g p") 'consult-project-buffer)
 
-  (global-set-key (kbd "M-g b") 'consult-bookmark)
-  (global-set-key (kbd "M-g e") 'consult-compile-error)
-  (global-set-key (kbd "M-g f") 'consult-flymake)
-  (global-set-key (kbd "M-g g") 'consult-goto-line)
-  (global-set-key (kbd "M-g o") 'consult-outline)
-  (global-set-key (kbd "M-g m") 'consult-mark)
-  (global-set-key (kbd "M-g k") 'consult-global-mark)
-  (global-set-key (kbd "M-g i") 'consult-imenu)
-  (global-set-key (kbd "M-g I") 'consult-imenu-multi)
-  (global-set-key (kbd "M-g w") 'ace-window)
-  ;; ace-jump 式按字母跳标签，原生 tab-line 版（C-u C-u 关闭该 tab；
-  ;; 原版 C-u 单前缀「交换 tab 顺序」无法移植，见 my/tab-line-ace-jump 文档字符串）。
-  (global-set-key (kbd "M-g t") 'my/tab-line-ace-jump)
-  (global-set-key (kbd "M-g p") 'consult-project-buffer)
+(global-set-key (kbd "M-s f") 'consult-fd)
+(global-set-key (kbd "M-s c") 'consult-locate)
+(global-set-key (kbd "M-s g") 'consult-grep)
+(global-set-key (kbd "M-s G") 'consult-git-grep)
+(global-set-key (kbd "M-s r") 'consult-ripgrep)
+(global-set-key (kbd "M-s l") 'consult-line)
+(global-set-key (kbd "M-s L") 'consult-line-multi)
+(global-set-key (kbd "M-s k") 'consult-keep-lines)
+(global-set-key (kbd "M-s u") 'consult-focus-lines)
+(global-set-key (kbd "M-s e") 'consult-isearch-history)
 
-  (global-set-key (kbd "M-s f") 'consult-fd)
-  (global-set-key (kbd "M-s c") 'consult-locate)
-  (global-set-key (kbd "M-s g") 'consult-grep)
-  (global-set-key (kbd "M-s G") 'consult-git-grep)
-  (global-set-key (kbd "M-s r") 'consult-ripgrep)
-  (global-set-key (kbd "M-s l") 'consult-line)
-  (global-set-key (kbd "M-s L") 'consult-line-multi)
-  (global-set-key (kbd "M-s k") 'consult-keep-lines)
-  (global-set-key (kbd "M-s u") 'consult-focus-lines)
-  (global-set-key (kbd "M-s e") 'consult-isearch-history)
+(global-set-key (kbd "C->") 'tab-line-switch-to-next-tab)
+(global-set-key (kbd "C-<") 'tab-line-switch-to-prev-tab)
 
-  (global-set-key (kbd "C->") 'tab-line-switch-to-next-tab)
-  (global-set-key (kbd "C-<") 'tab-line-switch-to-prev-tab)
+(global-set-key (kbd "C-M-k") 'bookmark-delete)
+(global-set-key (kbd "C--") 'popper-toggle)
+(global-set-key (kbd "C-=") 'popper-cycle)
 
-  (global-set-key (kbd "C-M-k") 'bookmark-delete)
-  (global-set-key (kbd "C--") 'popper-toggle)
-  (global-set-key (kbd "C-=") 'popper-cycle)
+;; multiple-cursors（mc/）键位。用 global-set-key 而非 evil-define-key：触发后
+;; my/disable-evil-for-mc 会切到 emacs-state，全局绑定在 normal 与 emacs 两态都生效，
+;; 这样在已有多光标时还能继续加/跳光标。（evil-mc 未安装，原绑定是 void。）
+(global-set-key (kbd "C-M-n") 'mc/mark-next-like-this)
+(global-set-key (kbd "C-M-p") 'mc/mark-previous-like-this)
+(global-set-key (kbd "C-M-m") 'mc/skip-to-next-like-this)
+(global-set-key (kbd "C-M-a") 'mc/mark-all-like-this)
+(global-set-key (kbd "C-M-l") 'mc/edit-lines)
 
-  ;; eshell-mode-map 每次进入 eshell-mode 都会被重建，eshell 的 first-time 钩子会重设键位。
-  ;; 为确保 insert 态 RET = 执行命令（而非只换行），这些绑定放在 eshell-mode-hook（晚于
-  ;; first-time 钩子）里、且 depth 靠后，才能稳定覆盖。
-  (defun my/eshell-evil-insert-keys ()
-    (evil-define-key 'insert eshell-mode-map (kbd "RET") 'eshell-send-input)        ; 回车=执行命令
-    (evil-define-key 'insert eshell-mode-map (kbd "<return>") 'eshell-send-input)
-    (evil-define-key 'insert eshell-mode-map (kbd "C-p") 'eshell-previous-matching-input-from-input)
-    (evil-define-key 'insert eshell-mode-map (kbd "C-n") 'eshell-next-matching-input-from-input)
-    (evil-define-key 'insert eshell-mode-map (kbd "C-r") 'consult-history)
-    (evil-normalize-keymaps))
-  (add-hook 'eshell-mode-hook #'my/eshell-evil-insert-keys 90)
-
-  (dolist (state '(normal insert visual))
-    (evil-define-key state dired-mode-map (kbd "C-a") 'dired-create-empty-file)
-    (evil-define-key state dired-mode-map (kbd "C-d") 'dired-create-directory))
-
-  (with-eval-after-load 'minuet
-    (evil-define-key 'insert minuet-active-mode-map (kbd "<tab>") 'minuet-accept-suggestion)
-    (evil-define-key 'insert minuet-active-mode-map (kbd "M-p") 'minuet-previous-suggestion)
-    (evil-define-key 'insert minuet-active-mode-map (kbd "M-n") 'minuet-next-suggestion))
-
-  ;; smerge 冲突处理 hydra 入口键：复用已有的 C-c ^ 前缀，再按一次 ^ 进入可连续
-  ;; 操作的版本（n/p 跳转冲突，m/o/b/a 保留版本，R 高亮差异）。绑在 smerge-mode-map
-  ;; 上，只在 smerge-mode 开启的 buffer 里生效，不影响全局；定义见 init-git.el。
-  (with-eval-after-load 'smerge-mode
-    (define-key smerge-mode-map (kbd "C-c ^ ^") 'hydra-smerge/body))
-
-  (evil-define-key 'visual 'global (kbd "Y") 'clipboard-kill-ring-save)
-
-  ;; multiple-cursors（mc/）键位。用 global-set-key 而非 evil-define-key：触发后
-  ;; my/disable-evil-for-mc 会切到 emacs-state，全局绑定在 normal 与 emacs 两态都生效，
-  ;; 这样在已有多光标时还能继续加/跳光标。（evil-mc 未安装，原绑定是 void。）
-  (global-set-key (kbd "C-M-n") 'mc/mark-next-like-this)
-  (global-set-key (kbd "C-M-p") 'mc/mark-previous-like-this)
-  (global-set-key (kbd "C-M-m") 'mc/skip-to-next-like-this)
-  (global-set-key (kbd "C-M-a") 'mc/mark-all-like-this)
-  (global-set-key (kbd "C-M-l") 'mc/edit-lines)
-
-  (evil-define-key 'insert 'global (kbd "C-v") 'clipboard-yank)
-  (evil-define-key 'insert 'global (kbd "C-a") 'beginning-of-line)
-  (evil-define-key 'insert 'global (kbd "C-e") 'end-of-line)
-  (evil-define-key 'insert 'global (kbd "C-k") 'kill-line)
-  (evil-define-key 'insert 'global (kbd "C-d") 'delete-char)
-  (evil-define-key 'insert 'global (kbd "M-u") 'custom/upcase-back)
-  (evil-define-key 'insert 'global (kbd "M-l") 'custom/downcase-back)
-  (evil-define-key 'insert 'global (kbd "M-c") 'custom/capitalize-back))
+;; smerge 冲突处理 hydra 入口键：复用已有的 C-c ^ 前缀，再按一次 ^ 进入可连续
+;; 操作的版本（n/p 跳转冲突，m/o/b/a 保留版本，R 高亮差异）。绑在 smerge-mode-map
+;; 上，只在 smerge-mode 开启的 buffer 里生效，不影响全局；定义见 init-git.el。
+(with-eval-after-load 'smerge-mode
+  (define-key smerge-mode-map (kbd "C-c ^ ^") 'hydra-smerge/body))
 
 (provide 'init-keymaps)

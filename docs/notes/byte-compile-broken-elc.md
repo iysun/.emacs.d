@@ -36,7 +36,9 @@ Symbol's value as variable is void: evil-a-between
 
 已知需要：
 
-- `init-evil.el`、`init-keymaps.el`、`init-completion.el`、`init-evil-plugins.el` → `(require 'evil)`
+- `init-evil.el`、`init-keymaps.el` → 现已内联/重组，见下
+  - `evil-plugins/evil-config.el`、`evil-plugins/evil-textobjects.el` → `(require 'evil)`（在 evil 加载后被载入）
+  - `evil-plugins/evil-keymaps.el`、`init-completion.el` → `(eval-when-compile (require 'evil))`
   - `init-evil.el` 的 `(require 'evil)` 必须放在 `evil-want-*` 那组 `setq` **之后**
     （`evil-want-*` 要在 evil 加载前设好）。
 - `init-ai.el`、`lang-go.el` → `(require 'use-package)`

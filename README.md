@@ -6,9 +6,12 @@
 ## 结构
 
 - 顶层 **`init.el`**：声明包列表（`use-package … :ensure t :defer t`）+ `require` 各模块。
-- **`user-lisp/`**：功能模块（含 `mode-line`/`tab-line`/`eshell-prompt` 子目录），由 Emacs 31 的
-  **user-lisp 机制**在启动时自动加入 load-path、按需字节编译、生成 autoload；`init.el` 直接
-  `require` 即可。
+- **`user-lisp/`**：功能模块（含 `evil-plugins`/`gcmh`/`mode-line`/`tab-line`/`eshell-prompt` 子目录），
+  由 Emacs 31 的 **user-lisp 机制**在启动时自动加入 load-path、按需字节编译、生成 autoload；
+  `init.el` 直接 `require` 即可。
+- **`user-lisp/evil-plugins/`**：evil 插件合集——`evil-surround`/`evil-commentary`/`evil-visualstar`
+  已**内联**（不再从 elpa 安装），连同 `evil-config`/`evil-keymaps`/`mc-evil`/`ime` 等自维护模块；
+  `user-lisp/gcmh/` 同理内联了 `gcmh`。
 
 ```sh
 emacs                 # 启动

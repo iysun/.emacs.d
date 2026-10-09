@@ -1,4 +1,4 @@
-;; init-evil.el 	-*- lexical-binding: t -*-
+;; evil-config.el 	-*- lexical-binding: t -*-
 ;; 启用 Evil 全局配置
 
 ;; evil-want-* 必须在 evil 加载【前】设置。
@@ -30,7 +30,7 @@
   (evil-commentary-mode)
   )
 
-;; 输入法切换（跨平台）已挪到 user-lisp/init-windows.el（`my/switch-to-english-input-method'
+;; 输入法切换（跨平台）已挪到 user-lisp/evil-plugins/ime.el（`my/switch-to-english-input-method'
 ;; + C-SPC 绑定），early-init.el 阶段就加载好了，这里不用再定义。
 
 
@@ -111,4 +111,4 @@
 (define-key evil-outer-text-objects-map (kbd "gw") 'evil-a-little-word)
 (define-key evil-inner-text-objects-map (kbd "gw") 'evil-inner-little-word)
 
-(provide 'init-evil)
+(provide 'evil-config)
