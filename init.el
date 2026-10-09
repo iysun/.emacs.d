@@ -13,7 +13,9 @@
 
 (require 'package)
 (require 'init-mirrors)                 ; package-archives 的唯一定义处
-(package-initialize)
+;; 包已由 early-init 显式初始化；这里仅在未初始化时兜底（例如 --batch 直接 -l init.el）。
+(unless (bound-and-true-p package--initialized)
+  (package-initialize))
 
 (require 'use-package)
 

@@ -19,13 +19,14 @@
 (setq native-comp-jit-compilation t)
 (setq native-comp-async-report-warnings-errors 'silent)
 
-;; 让 Emacs 在加载 init 之前自动激活已安装的包（package-activate-all）。
-;; **必须开启**：Emacs 31 的 user-lisp 机制会在 init 之前对 user-lisp/ 自动字节编译，
-;; 那时若包还没激活（evil / gcmh / hydra… 不在 load-path），编译会失败并把错误刷进
-;; *Compile-Log*（模块退回加载 .el 源码，功能不受影响，但每次启动都重试、每次都报错）。
-;; init.el 仍会 (require 'init-mirrors) 设好镜像，并 (package-initialize) 兜底
-;; （batch 加载时不会走上面这条自动激活）。
-(setq package-enable-at-startup t)
+;; 自己初始化包，而不是让 Emacs 自动激活：放这里只做一次，且必须早于 user-lisp 的
+;; 自动字节编译——否则编译时 evil / gcmh 等未激活，会失败并把错误刷进 *Compile-Log*。
+;; 关掉 Emacs 的自动激活（`package-enable-at-startup'），否则会与下面显式那次重复：
+;; `package-initialize' 每次都做 load-all-descriptors + read-archive-contents +
+;; package-activate-all + build-compatibility-table，纯浪费。
+(setq package-enable-at-startup nil)
+(require 'package)
+(package-initialize)
 
 ;; user-lisp 会自动字节编译 user-lisp/ 下所有文件。本配置大量「先 setq 包变量、
 ;; 包用的时候才加载」以及调用 autoload 函数，编译期必然产生成片
@@ -33,6 +34,13 @@
 ;; 正常现象，不是错误。收窄编译告警类别，避免 *Compile-Log* 每次启动刷屏；
 ;; 真正的语法错误、宏用错（Invalid function）等仍会暴露（运行时也会立刻报）。
 (setq byte-compile-warnings '(not free-vars unresolved obsolete interactive-only lexical))
+
+;; init 期间不重绘、不回显，首帧出来更快；`window-setup-hook' 时恢复（zdn 同款做法）。
+(setq inhibit-redisplay t)
+(setq inhibit-message t)
+(add-hook 'window-setup-hook
+          (lambda () (setq inhibit-redisplay nil inhibit-message nil))
+          100)
 
 ;; 新机器首次装包时本地还没有 GnuPG keyring，GNU ELPA 的签名校验会因
 ;; "No public key" 失败，导致 compat / eglot 等已签名包无法安装，并连累

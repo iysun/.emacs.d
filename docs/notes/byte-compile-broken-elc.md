@@ -6,9 +6,10 @@ Emacs 31 的 user-lisp 机制在启动时对 `user-lisp/` 下**新增/改动过�
 交互会话 `load-prefer-newer` 为 nil → 实际加载的是 `.elc`。因此「字节编译产物必须正确」
 从"可选项"变成**硬约束**。
 
-> 前提：编译时包必须已激活。`early-init.el` 里 `package-enable-at-startup` 必须为 **t**
-> ——user-lisp 的自动编译发生在 init（`package-initialize`）**之前**，若包未激活，
-> 编译会报 `Cannot open load file: evil/gcmh…` 并把错误刷进 `*Compile-Log*`。
+> 前提：编译时包必须已激活。`early-init.el` 里用 `(setq package-enable-at-startup nil)` +
+> `(package-initialize)` 在 user-lisp 自动编译**之前**完成包初始化——user-lisp 的自动编译
+> 发生在 init（`package-initialize` 兜底那次）**之前**，若包未激活，编译会报
+> `Cannot open load file: evil/gcmh…` 并把错误刷进 `*Compile-Log*`。
 
 ## 现象
 

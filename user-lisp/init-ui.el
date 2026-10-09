@@ -13,7 +13,9 @@
 ;; 对同一字体的不同注册名（Windows 上 "JetBrainsMono Nerd Font" vs "JetBrainsMono NFM"）
 ;; 容易漏判；`find-font' 走真正的字体匹配。
 ;; 只在图形界面下做——tty 里 set-fontset-font 无意义且可能报错。
-(when (display-graphic-p)
+(defun my-ui--setup-fonts ()
+  "选择并应用默认/中文/符号/emoji 字体。延迟到 `after-init-hook'，让首帧先出来。"
+  (when (display-graphic-p)
   ;; 默认（英文/等宽）。**不写死字号**——`:height 150' 这种绝对磅值是 zdn 那台机器的
   ;; 合适值，换一台 DPI/缩放不同的机器就会明显偏大或偏小。这里跟随系统/frame 默认，
   ;; 由 mode-line 那边用**相对比例**去贴合，缩放才跨机器一致。
@@ -59,6 +61,12 @@
            for spec = (font-spec :family f)
            when (find-font spec)
            return (set-fontset-font t 'emoji spec nil 'prepend)))
+  ;; 字体确定后同步给 nerd-icons（若它已加载；未加载则交给下面的 with-eval-after-load）。
+  (when (and my-ui-default-font-family
+             (member my-ui-default-font-family my-ui--nerd-patched-font-families))
+    (setq nerd-icons-font-family my-ui-default-font-family)))
+
+(add-hook 'after-init-hook #'my-ui--setup-fonts -95)
 
 ;; 若想微调中文相对英文的大小（或解决中英行高不齐），用 rescale：>1 放大中文，<1 缩小。
 ;; (setq face-font-rescale-alist '(("微软雅黑" . 1.1)))

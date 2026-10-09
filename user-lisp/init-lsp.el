@@ -18,14 +18,20 @@
 ;; 用 `treesit-language-available-p' 逐个验过。装了新 grammar 后记得往这里加。
 ;; 当前缺 grammar 而被排除的：c / c-or-c++（缺 c）、typescript、tsx、bash、csharp、cmake。
 ;; `setopt' 会自动 require treesit，无需手动 require。
-(setopt treesit-enabled-modes
-        '(go-ts-mode go-mod-ts-mode go-work-ts-mode
-          python-ts-mode js-ts-mode json-ts-mode
-          c++-ts-mode
-          css-ts-mode mhtml-ts-mode php-ts-mode
-          java-ts-mode lua-ts-mode ruby-ts-mode rust-ts-mode
-          yaml-ts-mode toml-ts-mode dockerfile-ts-mode
-          elixir-ts-mode heex-ts-mode))
+;; 延迟到启动后设置：treesit 是内置但未预载，`setopt' 会加载它并生成一批 remap，
+;; 这一步占 init 的可观时间。放到 `emacs-startup-hook'（首帧/用户输入之前）既让 init
+;; 更快，又保证打开代码文件前 remap 已生效。
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (setopt treesit-enabled-modes
+                    '(go-ts-mode go-mod-ts-mode go-work-ts-mode
+                      python-ts-mode js-ts-mode json-ts-mode
+                      c++-ts-mode
+                      css-ts-mode mhtml-ts-mode php-ts-mode
+                      java-ts-mode lua-ts-mode ruby-ts-mode rust-ts-mode
+                      yaml-ts-mode toml-ts-mode dockerfile-ts-mode
+                      elixir-ts-mode heex-ts-mode)))
+          -90)
 
 ;; 补充 Emacs 31 尚未内置 grammar 源的语言（TypeScript/Rust/TOML/YAML/Dockerfile 已内置）。
 ;; 缺 grammar 时执行 M-x treesit-install-language-grammar 即可按此列表拉取。
