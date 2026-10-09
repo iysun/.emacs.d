@@ -4,6 +4,7 @@
 ;; 过滤 eglot buffer），替代 centaur-tabs，零第三方、零启动开销。两条 bar（mode-line +
 ;; tab-line）字号/内边距统一逻辑留在 `init-bars.el' 里，这个文件只管 tab-line 本身。
 ;; 标签不带图标（跟 mode-line 一样走纯文字，简约优先），故不依赖 nerd-icons。
+;; 布局：tabs 左对齐，分组名右对齐（见下方 `my/tab-line-format'）。
 ;;
 ;; ⚠ 本文件 `provide' 的符号是 `init-tab-line'，**不是** `tab-line'——内置库
 ;; `tab-line.el' 自己 `(provide 'tab-line)'，本文件如果也用这个名字会在同一个
@@ -150,6 +151,41 @@ face（由 `tab-line-tab-name-format-default' 统一 propertize/套用），颜�
   "改动/保存后刷新 tab-line，让 ● 修改标记及时更新
 （tab-line 的默认缓存键不含 `buffer-modified-p'，不主动刷会滞后）。"
   (force-mode-line-update t))
+
+;; ---- 布局：tab 左对齐，分组名右对齐 ----
+;; 内置 `tab-line-tabs-buffer-groups' 把分组名当作 tabs 列表里的**第一个**元素（靠
+;; `group-tab' 标记），渲染出来是「[分组名][tab][tab]…」；这里把渲染入口换掉：
+;; 左半只画 buffer tabs，右半把分组名用 `:align-to' 顶到最右，视觉上左右平衡。
+;; 分组名仍复用 `tab-line-tab-name-format-function' 渲染，所以 `tab-line-tab-group'
+;; face、hover 高亮、点击（切到分组总览 `tab-line-groups'）都保持原样。
+(defun my/tab-line--group-tab-p (tab)
+  (and (listp tab) (alist-get 'group-tab tab)))
+
+(defun my/tab-line--right-group (group-tab tabs)
+  "把 GROUP-TAB 渲染成右对齐字符串（前置一段可伸缩空白顶到右边缘）。
+TABS 传全量标签列表，保证 `tab-line-tab-face-functions' 里依赖位置的函数行为一致。"
+  (let ((label (funcall tab-line-tab-name-format-function group-tab tabs)))
+    (concat (propertize " " 'display
+                        `(space :align-to (- right ,(string-width label))))
+            label)))
+
+(defun my/tab-line-format ()
+  "自定义 tab-line：tabs 保持在左，分组名右对齐。"
+  (let* ((tabs (funcall tab-line-tabs-function))
+         (group-tab (seq-find #'my/tab-line--group-tab-p tabs)))
+    (if group-tab
+        (append (tab-line-format-template
+                 (seq-remove (lambda (tab) (eq tab group-tab)) tabs))
+                (list (my/tab-line--right-group group-tab tabs)))
+      ;; 没有分组头（如 `tab-line-groups' 总览模式）就走默认渲染。
+      (tab-line-format-template tabs))))
+
+(defun my/tab-line--install-format ()
+  "把当前 buffer 的 `tab-line-format' 指向自定义渲染。"
+  (when tab-line-mode
+    (setq-local tab-line-format '((:eval (my/tab-line-format))))))
+(add-hook 'tab-line-mode-hook #'my/tab-line--install-format)
+
 
 ;; ---- 按组操作：关分组内 buffer / ace-jump 跳标签（找回 centaur-tabs 的控制）----
 (defun my/tab-line--group-buffers (&optional group)
