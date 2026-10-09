@@ -18,8 +18,6 @@ emacs                 # 启动
 
 | 命令 | 作用 |
 |------|------|
-| `make compile` | 手动全量字节编译（语法/宏检查、CI） |
-| `make clean` | 清掉生成的 `.elc` 与 user-lisp autoload 缓存 |
 | `python scripts/bench-startup.py` | 测本机启动速度（详见基准文档） |
 
 ## 文档

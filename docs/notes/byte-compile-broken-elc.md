@@ -38,10 +38,9 @@ Symbol's value as variable is void: evil-a-between
 
 ## 排查方法
 
-- `make compile`（手动全量字节编译）或 `/run` 都会暴露编译期问题；
+- 启动时的自动字节编译、或 `/run`（批处理加载）都会暴露编译期问题；
 - 再启动真实 GUI 看 `*Messages*` / `*Warnings*`。
 
 ## 清理
 
-生成的 `.elc` 已 gitignore；要清掉用 `make clean`（内部走 `emacs --batch`，三平台一致；
-不用 `find`/`rm`——GNU find 在 Windows 会命中 system32\find.exe 而静默失效）。
+生成的 `.elc` 已 gitignore；怀疑陈旧时直接删掉对应 `.elc`（或 `user-lisp/.user-lisp-autoloads.el`），下次启动会按需重编。

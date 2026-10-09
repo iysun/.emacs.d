@@ -39,4 +39,4 @@ Write-Output "EXIT=$LASTEXITCODE"
 ## 注意
 
 - 不要装/删包在 `elpa/`；不要改 `custom.el`。
-- `.elc` 由 Emacs 自动生成且已 gitignore，勿手动提交；要清掉用 `make clean`。
+- `.elc` / `.user-lisp-autoloads.el` 由 user-lisp 机制自动产生且已 gitignore，勿手动提交；怀疑陈旧时删掉对应 `.elc`，下次启动按需重编。

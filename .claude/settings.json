@@ -1,9 +1,6 @@
 {
   "permissions": {
     "allow": [
-      "Bash(make compile)",
-      "Bash(make clean)",
-      "Bash(make:*)",
       "Bash(emacs --batch:*)",
       "Bash(emacs -Q:*)",
       "Bash(git status:*)",

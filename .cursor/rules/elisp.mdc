@@ -7,7 +7,7 @@ globs: ["**/*.el"]
 
 - 功能模块放 `user-lisp/`，文件名 `init-xxx.el`，文件末 `(provide 'init-xxx)`，并在 `init.el` 里 `(require 'init-xxx)`。
 - 文件头加 `-*- lexical-binding: t -*-`。
-- **验证**：`/run` 批处理加载；语法/编译检查用 `make compile`，之后 `make clean`。
+- **验证**：`/run` 批处理加载；再启动真实 GUI 看 `*Messages*` / `*Warnings*`。
 - 顶层（或 `with-eval-after-load` 体内）用到某个包的**宏**时，在该文件**顶层** `(require '那个包)`，否则字节编译器会把宏当函数编译成坏 `.elc`（加载时报 `Invalid function: …`）。见 docs/notes/byte-compile-broken-elc.md。
 - `assignment to free variable` 警告常可忽略（多为运行时由包设置的变量），重点是 void-function / `Invalid function`。
 - 不要编辑 `elpa/`；`custom.el` 由 Customize 自动生成，勿手改。

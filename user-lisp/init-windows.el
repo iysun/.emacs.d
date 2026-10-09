@@ -41,7 +41,7 @@
   ;; 这条调用常在后台 timer 里触发（比如 eglot 建 didChangeWatchedFiles 时枚举
   ;; 项目文件），报错本身不会弹出来打断你，但下游依赖这次列举结果的流程会
   ;; 静默半途而废——表现为 eglot 显示"已连接"，诊断/补全却什么都不返回。
-  ;; 与 AGENTS.md/Makefile 里 `make clean` 踩的是同一个 system32\find.exe 坑，
+  ;; 这是 Windows 上 `find` 被解析到 system32\find.exe 的经典坑；
   ;; 这里固定指向真正的 GNU find，不依赖 PATH 顺序。
   ;; ⚠ 本来想法是从 `(executable-find "git")` 反推 `usr/bin`，实测在这台机器上
   ;; 不成立：PATH 里排最前的 `git` 是 `~/.git-ai/bin/git.exe`（AI git 包装器），

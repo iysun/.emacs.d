@@ -7,7 +7,7 @@
 > 升级 = 回源码树 `git pull` 重编重装，**不是** `pacman -Syu`（那只升 msys2 的库）。
 > ⚠ 别改用 pacman 装的 `mingw-w64-ucrt-x86_64-emacs`：MSYS2 自家的 `001-ucrt.patch` 破坏了
 > stdout，那份的 `--batch` 没有任何控制台输出，本仓库靠读 batch 输出的流程
-> （`/run` `make compile`）会全部变成睁眼瞎。装法、坑、分步 install 见
+> （`/run`）会全部变成睁眼瞎。装法、坑、分步 install 见
 > [docs/notes/emacs-install-msys2.md](docs/notes/emacs-install-msys2.md)。
 
 ## 这个项目是什么
@@ -76,12 +76,9 @@ Emacs 31 的 user-lisp 机制在启动时会：
    首次或改文件后有一次编译开销；
 3. 生成 `user-lisp/.user-lisp-autoloads.el` 并加载。
 
-这些产物都已 gitignore。管理命令：
-
-```powershell
-make compile   # 手动全量字节编译（语法/宏检查、CI）
-make clean     # 清掉生成的 .elc 与 user-lisp autoload 缓存（下次启动按需重建）
-```
+这些产物都已 gitignore。**没有独立的构建步骤**——直接启动 `emacs` 即可。
+若怀疑某个 `.elc` 陈旧/损坏（交互会话 `load-prefer-newer` 为 nil 会优先用它），删掉对应
+`.elc`（或 `M-x prepare-user-lisp` 带前缀强制重建），下次启动会按需重编。
 
 ## 字节编译与 .elc（重要）
 
@@ -126,7 +123,7 @@ $env:SILICONFLOW_API_KEY = "sk-xxxx"   # 由用户在自己的 shell/系统环�
 
 - **改了行为/加了模块** → 同步更新本文件相关小节（结构表、启用模块列表、命令）。纯重构 / 小修可不动文档。
 - **新增模块**：在 `user-lisp/` 下建 `init-xxx.el`，文件末 `(provide 'init-xxx)`，并在 `init.el` 末尾 `(require 'init-xxx)`。
-- **改完怎么验证**：批处理加载用 `/run`；语法/宏检查用 `make compile`（完事 `make clean`）。
+- **改完怎么验证**：批处理加载用 `/run`；再启动真实 GUI 看 `*Messages*` / `*Warnings*`。
 - **别碰** `elpa/`、`var/`、`etc/`、`custom.el`、`server/`；不要提交 `.elc` 或 `.user-lisp-autoloads.el`（已 gitignore）。
 - **运行期文件一律走 `var/` / `etc/`**（全量 profile 由 no-littering 统一收编）。新加的包若往仓库根写文件，
   先看 no-littering 有没有覆盖，没有就显式把它的路径指进 `var/`，别让根目录再长出运行期文件。
