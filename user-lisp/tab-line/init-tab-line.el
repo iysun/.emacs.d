@@ -4,7 +4,6 @@
 ;; 过滤 eglot buffer），替代 centaur-tabs，零第三方、零启动开销。两条 bar（mode-line +
 ;; tab-line）字号/内边距统一逻辑留在 `init-bars.el' 里，这个文件只管 tab-line 本身。
 ;; 标签不带图标（跟 mode-line 一样走纯文字，简约优先），故不依赖 nerd-icons。
-;; 布局：tabs 左对齐，分组名右对齐（见下方 `my/tab-line-format'）。
 ;;
 ;; ⚠ 本文件 `provide' 的符号是 `init-tab-line'，**不是** `tab-line'——内置库
 ;; `tab-line.el' 自己 `(provide 'tab-line)'，本文件如果也用这个名字会在同一个
@@ -152,49 +151,6 @@ face（由 `tab-line-tab-name-format-default' 统一 propertize/套用），颜�
 （tab-line 的默认缓存键不含 `buffer-modified-p'，不主动刷会滞后）。"
   (force-mode-line-update t))
 
-;; ---- 布局：tab 左对齐，分组名右对齐 ----
-;; 内置 `tab-line-tabs-buffer-groups' 把分组名当作 tabs 列表里的**第一个**元素（靠
-;; `group-tab' 标记），渲染出来是「[分组名][tab][tab]…」；这里把渲染入口换掉：
-;; 左半只画 buffer tabs，右半把分组名用 `:align-to' 顶到最右，视觉上左右平衡。
-;; 分组名仍复用 `tab-line-tab-name-format-function' 渲染，所以 `tab-line-tab-group'
-;; face、hover 高亮、点击（切到分组总览 `tab-line-groups'）都保持原样。
-(defun my/tab-line--group-tab-p (tab)
-  (and (listp tab) (alist-get 'group-tab tab)))
-
-(defconst my/tab-line-right-margin 0
-  "分组名右对齐时，其右边缘到 tab-line 右端的**额外**留白列数。
-分组名字符串自带 1 列尾部空格（见 `my/tab-line-buffer-group-by-project'，且现在
-会跟着 `tab-line-tab-group' face 一起渲染），所以 0 表示「分组名右边缘贴右端」；
-想让它离右端更远就调大本值（如 1、2）。")
-
-(defun my/tab-line--right-group (group-tab tabs)
-  "把 GROUP-TAB 渲染成右对齐字符串（前置一段可伸缩空白顶到右边缘）。
-TABS 传全量标签列表，保证 `tab-line-tab-face-functions' 里依赖位置的函数行为一致。"
-  (let ((label (funcall tab-line-tab-name-format-function group-tab tabs)))
-    (concat (propertize " " 'display
-                        `(space :align-to
-                                (- right ,(+ (string-width label)
-                                             my/tab-line-right-margin))))
-            label)))
-
-(defun my/tab-line-format ()
-  "自定义 tab-line：tabs 保持在左，分组名右对齐。"
-  (let* ((tabs (funcall tab-line-tabs-function))
-         (group-tab (seq-find #'my/tab-line--group-tab-p tabs)))
-    (if group-tab
-        (append (tab-line-format-template
-                 (seq-remove (lambda (tab) (eq tab group-tab)) tabs))
-                (list (my/tab-line--right-group group-tab tabs)))
-      ;; 没有分组头（如 `tab-line-groups' 总览模式）就走默认渲染。
-      (tab-line-format-template tabs))))
-
-(defun my/tab-line--install-format ()
-  "把当前 buffer 的 `tab-line-format' 指向自定义渲染。"
-  (when tab-line-mode
-    (setq-local tab-line-format '((:eval (my/tab-line-format))))))
-(add-hook 'tab-line-mode-hook #'my/tab-line--install-format)
-
-
 ;; ---- 按组操作：关分组内 buffer / ace-jump 跳标签（找回 centaur-tabs 的控制）----
 (defun my/tab-line--group-buffers (&optional group)
   "返回当前 tab-line 分组 GROUP（默认取当前 buffer 所在组）里、
@@ -283,11 +239,6 @@ buffer tab 的场景已经超出人工数字母找 tab 的实用范围，不值�
   ;; 各自不同深浅，见 init-bars.el）和标签自带的 `my/tab-line-tab-padding' 表达，
   ;; 不再额外插入分隔空白。
   (setq tab-line-separator "")
-  ;; 让分组名真正拿到 `tab-line-tab-group' face：内置 `tab-line-tab-face-functions'
-  ;; 默认只有 `(tab-line-tab-face-modified tab-line-tab-face-special)'，**不含**
-  ;; `tab-line-tab-face-group'，所以 init-bars.el 里给 `tab-line-tab-group' 设的
-  ;; 背景/内边距不会生效。这里补上，分组名才有自己独立的样式。
-  (add-to-list 'tab-line-tab-face-functions #'tab-line-tab-face-group)
   (advice-add 'tab-line-tabs-buffer-list :filter-return #'my/tab-line-filter))
 
 (add-hook 'first-change-hook #'my/tab-line-refresh)
