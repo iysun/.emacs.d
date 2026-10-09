@@ -113,7 +113,9 @@ mode-line 挤爆。"
 ;; 一 `setcdr' 就是全局共享结构一起改，不是某个 buffer 局部的事。我们已经自己
 ;; 手动控制 evil 段的显示位置了，不需要 evil 这份自动插入，直接关掉（nil 是
 ;; evil 自己文档写明的"不要标签"选项，不是靠副作用关闭）。
-(setq evil-mode-line-format nil)
+;; ---- 组装 ---- 前先把上面那条自动插入关掉（evil 已延迟加载，须在其加载后设）。
+(with-eval-after-load 'evil
+  (setq evil-mode-line-format nil))
 
 ;; ---- 组装 ----
 (defconst my-ui-mode-line-format

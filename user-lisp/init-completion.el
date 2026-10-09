@@ -2,9 +2,9 @@
 
 ;; 本文件在 `with-eval-after-load 'corfu' 里用了 `evil-define-key'（宏）。字节编译
 ;; 期 evil 必须已加载，否则该宏被当函数编译进 .elc，运行到 corfu 加载时报
-;; `Invalid function: evil-define-key`（同 init-keymaps.el 的顶层 require，见
-;; docs/notes/byte-compile-broken-elc.md）。user-lisp 机制会对本文件字节编译，故必须。
-(require 'evil)
+;; `Invalid function: evil-define-key`（见 docs/notes/byte-compile-broken-elc.md）。
+;; 用 `eval-when-compile' 只为编译期取宏；运行时 evil 延迟到 after-init 加载。
+(eval-when-compile (require 'evil))
 
 ;; Optionally use the `orderless' completion style.
 ;; (require 'orderless)

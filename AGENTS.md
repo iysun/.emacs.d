@@ -56,9 +56,12 @@
 
 当前启用的模块（见 `init.el` 末尾）：`init-base` `init-evil` `init-ui` `init-bars` `init-window`
 `init-completion` `init-dired` `init-git` `init-term` `init-project` `init-mc`
-`init-keymaps` `init-lsp` `init-format` `init-navigation`。`init-ai` / `init-evil-plugins` / `lang-go`
-已写好但注释停用（停用模块的 `use-package` 用 `:ensure nil`，避免 user-lisp 自动字节编译时联网
-装包；启用前先装好对应包）。
+`init-keymaps` `init-lsp` `init-format` `init-navigation`。
+其中 **`init-evil` 由 `init.el` 在 `after-init-hook`（depth -99）才 `require`**，让 evil 的加载
+不计入 `emacs-init-time`；故 `init-keymaps`/`init-completion` 取 `evil-define-key` 宏改用
+`eval-when-compile`。
+`init-ai` / `init-evil-plugins` / `lang-go` 已写好但注释停用（停用模块的 `use-package` 用
+`:ensure nil`，避免 user-lisp 自动字节编译时联网装包；启用前先装好对应包）。
 
 `init-format`（apheleia，非 LSP 场景的格式化；`SPC f` = `my/format-buffer` 统一入口，按 buffer
 是否有 eglot 托管自动分流到 eglot-format 或 apheleia-format-buffer）与
@@ -98,8 +101,10 @@ Emacs 31 的 user-lisp 机制在启动时会：
 
 - **文件顶层（含 `with-eval-after-load` 体内）用到某个包的宏时，必须在文件顶层 `(require '那个包)`。**
   否则字节编译器把宏当函数编译进 `.elc`，运行时报 `Invalid function: <宏名>`。
-- 已知需要：
-  - `init-evil.el`、`init-keymaps.el`、`init-completion.el`、`init-evil-plugins.el` → `(require 'evil)`
+- 已知需要（取 evil 宏）：
+  - `init-evil.el`、`init-evil-plugins.el` → `(require 'evil)`（这俩本身在 evil 加载后才被载入）
+  - `init-keymaps.el`、`init-completion.el` → `(eval-when-compile (require 'evil))`
+    —— evil 已延迟到 after-init 加载，运行时不能 require，只需编译期取宏
   - `init-ai.el`、`lang-go.el` → `(require 'use-package)`
   （`defhydra` 等有 autoload cookie 的宏会被编译器自动加载，不需要显式 require。）
 - 详见 [docs/notes/byte-compile-broken-elc.md](docs/notes/byte-compile-broken-elc.md)。

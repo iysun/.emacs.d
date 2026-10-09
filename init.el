@@ -67,7 +67,11 @@
   (use-package fd-dired :ensure t :defer t))
 
 (require 'init-base)
-(require 'init-evil)
+;; evil 延迟到 after-init 加载，使其不计入 `emacs-init-time'。init-evil.el 内部做
+;; (require 'evil)+(evil-mode 1)；init-keymaps/init-completion 顶层已改为
+;; eval-when-compile，故 init 期不会把 evil 拉起来。depth -99 保证它早于 after-init
+;; 的其它工作（字体 -95、use-completion-style 等）。
+(add-hook 'after-init-hook (lambda () (require 'init-evil)) -99)
 (require 'init-ui)
 (require 'init-bars)                    ; mode-line + tab-line（须在 init-ui 之后：复用其字体选择结果）
 (require 'init-window)

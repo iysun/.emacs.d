@@ -1,8 +1,10 @@
 ;; init.el 	-*- lexical-binding: t -*-
 
 ;; `evil-define-key' 是宏，编译期必须先加载 evil，否则被当函数编译成坏 .elc
-;; （加载时报 "Invalid function: evil-define-key"）。顶层 require 同时满足编译期与源码加载。
-(require 'evil)
+;; （加载时报 "Invalid function: evil-define-key"）。`eval-when-compile' 只为编译期
+;; 取宏；运行时 evil 已延迟到 after-init 加载，本文件的绑定都在
+;; `with-eval-after-load 'evil' 里，会在 evil 加载时生效。
+(eval-when-compile (require 'evil))
 (defvar eshell-mode-map)
 (defvar capf-autosuggest-active-mode-map)
 (defvar dired-mode-map)
