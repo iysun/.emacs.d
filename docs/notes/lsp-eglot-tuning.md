@@ -1,6 +1,6 @@
 # eglot / LSP 手感调优（含两个静默失效的陷阱）
 
-配置在 `lisp/init-lsp.el`。这里只记**为什么这么设**，以及踩过的坑。
+配置在 `user-lisp/init-lsp.el`。这里只记**为什么这么设**，以及踩过的坑。
 
 ## ⚠ `eglot-events-buffer-size` 是个静默失效的陷阱
 

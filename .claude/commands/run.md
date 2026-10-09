@@ -1,46 +1,42 @@
 ---
 name: run
-description: 批处理加载验证全量 + 精简两套 profile，确认配置能无错加载，按错修复
+description: 批处理加载验证配置能否无错加载；改完配置后的快速自检
 ---
 
-验证本 Emacs 配置能否正常加载。两套 profile 都用 `--batch` 加载，捕捉加载期错误。
+验证本 Emacs 配置能否干净加载：用 `--batch` 加载（无 GUI，只验证「能否无错加载」）。
+**视觉外观**（字体、主题、modeline、tab-line 等）仍需启动真实 Emacs 肉眼确认。
 
-## A. 全量 profile
+## 用法
+
+Emacs 31 的 user-lisp 机制在 `--batch` 下不会自动生效（`init-file-user` 为空，
+`prepare-user-lisp` 不运行），所以要先手动把 `user-lisp/` 及其子目录加进 load-path，
+再加载 `early-init.el` + `init.el`。在仓库根目录执行：
 
 ```powershell
 emacs --batch `
-  --eval "(setq user-emacs-directory (file-name-as-directory (expand-file-name `".`")))" `
-  --eval "(setq debug-on-error t)" `
-  --load early-init.el --load init.el `
-  --eval "(message `"== FULL PROFILE LOADED OK ==`")" 2>&1 | Select-Object -Last 8
+  --init-directory "$PWD" `
+  --eval '(dolist (d (list "user-lisp" "user-lisp/mode-line" "user-lisp/tab-line" "user-lisp/eshell-prompt")) (add-to-list (quote load-path) (expand-file-name d user-emacs-directory)))' `
+  -l "$PWD\early-init.el" -l "$PWD\init.el" `
+  --eval '(message "== CONFIG LOADED OK ==")' 2>&1 | Select-Object -Last 12
 Write-Output "EXIT=$LASTEXITCODE"
 ```
 
-## B. 精简 profile
+出现 `== CONFIG LOADED OK ==` 且 `EXIT=0`、无回退错误即视为通过。
 
-```powershell
-$env:EMACS_MINIMAL = "1"
-emacs --batch `
-  --eval "(setq user-emacs-directory (file-name-as-directory (expand-file-name `".`")))" `
-  --eval "(setq debug-on-error t)" `
-  --load init.el `
-  --eval "(message `"== MINIMAL PROFILE LOADED OK ==`")" 2>&1 | Select-Object -Last 6
-Write-Output "EXIT=$LASTEXITCODE"
-Remove-Item Env:\EMACS_MINIMAL
-```
+## 判断有无问题
 
-看到对应的 `== … LOADED OK ==` 且 `EXIT=0`、无回溯 → 该 profile 通过。
+- **有 bug 要修**：`Cannot open load file`（缺文件/缺 require）、`void-function`、`void-variable`、
+  `Symbol's value as variable is void`、`Invalid function: <宏名>`（字节编译期该宏没被加载 → 坏
+  `.elc`，见 [docs/notes/byte-compile-broken-elc.md](../../docs/notes/byte-compile-broken-elc.md)）。
+- **可忽略**：包里字节编译期的 obsolete/deprecation 警告、`assignment to free variable`
+  （多为 -Q 无关变量），不是错误。
 
-## 判断与修复
+## 启动真实 GUI 复核
 
-- **真 bug（要修）**：`Cannot open load file`（缺包/缺 require）、`void-function`、`void-variable`、
-  `Symbol's value as variable is void`、`wrong-type-argument`、模块加载顺序错。
-  按回溯定位 `文件:行` 修，回到对应步骤重验。
-- **可忽略**：包在字节编译期的 obsolete/deprecation 警告等信息性输出（非错误）。
+- 启动 `emacs`，看 `*Messages*` 与 `*Warnings*`。
+- user-lisp 机制会在启动时对 `user-lisp/` 按需字节编译（首次或改文件后有一次编译）。
 
 ## 注意
 
-- 批处理无 GUI，只验证「能否无错加载」。**视觉外观**（字体/主题/modeline/tab）仍需启动真实 Emacs 肉眼确认：
-  `emacs`（全量）/ `emacs --minimal`（精简），看 `*Messages*` 与 `*Warnings*`。
-- 包要已装在 `elpa/`；报缺包多半是首次安装没跑完——让用户在交互 Emacs 里触发安装。
-- 别修改 `elpa/`、`custom.el`；别在工作区留 `.elc`（交互会话 `load-prefer-newer` 为 nil，旧 `.elc` 会盖过新 `.el`）。
+- 不要装/删包在 `elpa/`；不要改 `custom.el`。
+- `.elc` 由 Emacs 自动生成且已 gitignore，勿手动提交；要清掉用 `make clean`。

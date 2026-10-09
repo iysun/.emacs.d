@@ -1,6 +1,6 @@
 # AI 补全（minuet + SiliconFlow）
 
-`lisp/init-ai.el`（当前在 `init.el` 末尾注释停用）用 [minuet] 接 SiliconFlow 的 OpenAI 兼容接口。
+`user-lisp/init-ai.el`（当前在 `init.el` 末尾注释停用）用 [minuet] 接 SiliconFlow 的 OpenAI 兼容接口。
 
 ## 关键点
 

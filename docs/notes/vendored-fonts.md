@@ -5,11 +5,11 @@
 
 ## 为什么
 
-`lisp/init-ui.el` 的字体选择一直是"开机探测系统字体，找到第一个装了的就用，都没有就沉默
+`user-lisp/init-ui.el` 的字体选择一直是"开机探测系统字体，找到第一个装了的就用，都没有就沉默
 跳过用 Emacs 默认"。这套机制本身没问题，但换一台新机器（尤其没手动装过 Nerd Font 的机器）
 时，mode-line/tab-line 里图标码位（分支图标、诊断图标、文件类型图标……）会渲染成豆腐块 □
 ——Windows 不自带任何打过 Nerd Font 补丁的字体，这是那次豆腐块 bug 的根因（见同一会话前半段
-对 `lisp/init-bars.el` 的修复）。
+对 `user-lisp/init-bars.el` 的修复）。
 
 把字体文件本身收进仓库，配一个一键装的脚本，能让"新机器 `git clone` 完，图标/中文/emoji
 就是对的"这件事变成可复现的，不用每次都手动去找字体装。
@@ -88,7 +88,7 @@ $pfc.Families | ForEach-Object { $_.Name }
   构建/版本，留着没坏处，但真正会命中的是中文名）。
 - Source Han Sans SC 的 family 名是**`思源黑体`**（中文），不是 `Source Han Sans SC`。
 
-`lisp/init-ui.el` 的候选表和 `scripts/install-fonts.py` 的清单都是按这次实测结果写的，
+`user-lisp/init-ui.el` 的候选表和 `scripts/install-fonts.py` 的清单都是按这次实测结果写的，
 以后要是重新 vendor 别的版本/变体，记得重新跑一遍上面这段确认 family 名，不要靠猜。
 
 ## 重新 vendor（上游更新时）
@@ -96,7 +96,7 @@ $pfc.Families | ForEach-Object { $_.Name }
 1. 从对应上游仓库拉新文件（具体路径见 `assets/fonts/README.md`），替换掉
    `assets/fonts/` 下的同名文件；如果上游重新组织过目录结构，文件名可能变，参照
    README 表格重新核对。
-2. 用上面那段 PowerShell 重新探测 family 名，跟 `lisp/init-ui.el` 候选表 /
+2. 用上面那段 PowerShell 重新探测 family 名，跟 `user-lisp/init-ui.el` 候选表 /
    `scripts/install-fonts.py` 的 `MANIFEST` 里写的对一下，不一致就同步改。
 3. 跑一次 `scripts/install-fonts.py --force` 强制重装，重启 Emacs 确认字体生效。
 
@@ -125,9 +125,9 @@ python scripts\install-fonts.py
 `print()` 因为没有控制台而报错）。文件/注册表早就有了，脚本一进"已装，跳过复制"分支就直接
 调 `AddFontResourceEx`，几十毫秒跑完，和 Emacs 启动完全没关系，不影响 `emacs-init-time`。
 
-刻意没有放进 `lisp/init-windows.el`（Emacs 启动路径）——试过一版在启动时做文件存在性检查、
+刻意没有放进 `user-lisp/init-windows.el`（Emacs 启动路径）——试过一版在启动时做文件存在性检查、
 缺了才补装，实测便宜（多数情况不起子进程），但还是被否了：这个仓库对启动路径极度敏感
-（见 `docs/startup-benchmark.md`、pdump 那一整套），任何东西碰启动路径都要先问，不能自己
+（见 `docs/startup-benchmark.md`、user-lisp 自动编译那一整套），任何东西碰启动路径都要先问，不能自己
 觉得"够便宜"就加。
 
 ```powershell

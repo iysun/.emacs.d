@@ -1,6 +1,6 @@
 # assets/fonts/ —— vendor 进本仓库的字体
 
-配置依赖的字体不能只靠"机器上恰好装了"来保证：`lisp/init-ui.el` 里图标码位用的
+配置依赖的字体不能只靠"机器上恰好装了"来保证：`user-lisp/init-ui.el` 里图标码位用的
 Nerd Font 补丁字体 Windows 不自带，新机器上会导致 mode-line/tab-line 图标渲染成
 豆腐块 □。这里把能合法重新分发的那部分字体文件直接收进仓库，配 `scripts/install-fonts.py`
 一键装进当前用户（不需要管理员），换新机器不用再手动找字体装。
@@ -24,7 +24,7 @@ Nerd Font 补丁字体 Windows 不自带，新机器上会导致 mode-line/tab-l
 
 微软雅黑 / DengXian / Segoe UI Symbol / Segoe UI Emoji（Windows 专有授权字体）、
 阿里巴巴普惠体、HarmonyOS Sans / Mi Sans ——这些字体的授权协议都明确禁止把字体文件
-本身单独重新分发到像本仓库这样的公开渠道。它们仍然是 `lisp/init-ui.el` 候选表里的
+本身单独重新分发到像本仓库这样的公开渠道。它们仍然是 `user-lisp/init-ui.el` 候选表里的
 选项（本机装了就用），只是不进 `assets/`。原因和调研过程见
 [docs/notes/vendored-fonts.md](../../docs/notes/vendored-fonts.md)。
 

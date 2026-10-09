@@ -1,7 +1,7 @@
 # 启动性能基准（多机对比）
 
 记录各台电脑上的 Emacs 启动速度，用于排查「同一套配置不同机器启动快慢差很多」的问题。
-配置/构建/开发流程见 [AGENTS.md](../AGENTS.md)；启动调优笔记见 [docs/notes/startup-performance.md](notes/startup-performance.md)。
+配置/开发流程见 [AGENTS.md](../AGENTS.md)；启动调优笔记见 [docs/notes/startup-performance.md](notes/startup-performance.md)。
 
 ## 怎么测
 
@@ -10,40 +10,26 @@
 ```sh
 python scripts/bench-startup.py        # 打印一段「机器记录块」到屏幕
 python scripts/bench-startup.py -a     # 直接把记录块追加到本文件「机器记录」区
-python scripts/bench-startup.py -n 8   # 每场景跑 8 次（默认 6）
+python scripts/bench-startup.py -n 8   # 跑 8 次（默认 6）
 ```
 
-脚本会自动：采集机器信息（CPU/内存/磁盘/OS/Emacs 版本/native-comp/pdmp）+ 对三种场景各跑 N 次
-**真实 GUI** `emacs-init-time`，输出可粘贴的 Markdown 块。把输出贴到下面「机器记录」区，或直接用 `-a`。
-
-三种场景：
-
-| 场景 | 启动方式 |
-|------|----------|
-| **dump 映像** | `--dump-file=emacs.pdmp` 内存映射预加载映像（日常实际用法，缺 pdmp 则跳过） |
-| **普通全量** | 不带 dump，正常加载全量 profile |
-| **精简 minimal** | `EMACS_MINIMAL=1`，单文件精简 profile |
+脚本自动：采集机器信息（CPU/内存/磁盘/OS/Emacs 版本/native-comp）+ 对**全量 profile** 跑 N 次
+**真实 GUI** `emacs-init-time`，输出可粘贴的 Markdown 块。
 
 ## 指标与排查要点
 
-- 每场景跑 N 次，**去掉第一次预热**，取 **min / 中位数**（Windows/磁盘缓存噪音大，**min 最具参考性**）。
-- 脚本每次启动都校验 `(featurep 'evil)`：三种场景都应加载 evil；非 ok 即视为 init 没正常加载，该样本作废。
-- ⚠️ 必须**真实 GUI** 测量，`--batch` 测不到 GUI 开销；脚本已用 `--init-directory` 把配置目录钉到本仓库
+- 跑 N 次，**去掉第一次预热**，取 **min / 中位数**（Windows/磁盘缓存噪音大，**min 最具参考性**）。
+- 每次启动校验 `(featurep 'evil)`（全量会加载 evil）；非 ok 视为 init 没正常加载，该样本作废。
+- ⚠️ 必须**真实 GUI** 测量，`--batch` 测不到 GUI 开销；脚本用 `--init-directory` 把配置目录钉到本仓库
   （否则不同 shell/平台下 `~/.emacs.d` 可能解析到别处）。细节见 [docs/notes/startup-performance.md](notes/startup-performance.md)。
-- **两机差异优先看这几个字段**：`native-comp` 是否可用、磁盘 **SSD/HDD**、`emacs.pdmp` 是否存在且与当前
-  Emacs 匹配、Emacs 版本/来源。这几项最能解释「同配置不同速度」。
+- **两机差异优先看这几个字段**：`native-comp` 是否可用、磁盘 **SSD/HDD**、Emacs 版本/来源。
 
 ## 机器记录
 
-> ⚠️ **下列记录已过期，勿据此下结论**（2026-07-27 标注）。两条都是 2026-06-25 在 **Emacs 30.2** 上测的；
-> 此后仓库做了「基于 Emacs 31 适配」，并修掉了两个 dump 静默 bug——当时的 `emacs.pdmp` 其实只烤进了
-> 20 个包中的 9 个（见 [notes/pdump-startup.md](notes/pdump-startup.md)「三个静默 bug」），
-> 「dump 映像」那一列因此不代表修复后的真实表现。
-> 更彻底的是：本机 emacs 已于 2026-07-27 换成 **msys2 UCRT64 下自编的 Emacs 31.0.91**
-> （带 native-comp，JIT 已开），见 [notes/emacs-install-msys2.md](notes/emacs-install-msys2.md)
-> ——版本和构建都变了，旧数据完全不可比。**需重跑 `/bench` 刷新。**
-
 <!-- 在此区粘贴 scripts/bench-startup.py 的输出块；或用 `-a` 自动追加 -->
+
+> ⚠️ 以下为**旧格式记录**（2026-06-25，Emacs 30.2，脚本当时还测「dump 映像 / 全量 / 精简 minimal」
+> 三种场景，含 `emacs.pdmp` 字段）。这些场景已随配置简化移除，数据仅供参考，**需重跑 `/bench` 刷新**。
 
 ### PC-20241114VUMP（2026-06-25）
 
@@ -55,16 +41,10 @@ python scripts/bench-startup.py -n 8   # 每场景跑 8 次（默认 6）
 | 磁盘 | SSD |
 | Emacs | GNU Emacs 30.2 |
 | native-comp | ❌ 不可用 |
-| emacs.pdmp | 48.2 MB（2026-06-25 08:48） |
 
 | 场景 | min(s) | 中位数(s) | 有效/总次数 |
 |---|---|---|---|
-| dump 映像 | 2.012 | 2.075 | 5/6 |
 | 普通全量 | 3.034 | 3.548 | 5/6 |
-| 精简 minimal | 1.109 | 1.209 | 5/6 |
-
-> 测量：`scripts/bench-startup.py`（每场景 6 次，去首次预热取 min/中位数；真实 GUI `emacs-init-time`，已 `--init-directory` 钉定本仓库）。
-> 备注：
 
 ### ballentin（2026-06-25）
 
@@ -76,13 +56,7 @@ python scripts/bench-startup.py -n 8   # 每场景跑 8 次（默认 6）
 | 磁盘 | SSD |
 | Emacs | GNU Emacs 30.2 |
 | native-comp | ❌ 不可用 |
-| emacs.pdmp | 48.2 MB（2026-06-24 23:48） |
 
 | 场景 | min(s) | 中位数(s) | 有效/总次数 |
 |---|---|---|---|
-| dump 映像 | 4.483 | 4.661 | 5/6 |
 | 普通全量 | 6.605 | 6.669 | 5/6 |
-| 精简 minimal | 2.092 | 2.146 | 5/6 |
-
-> 测量：`scripts/bench-startup.py`（每场景 6 次，去首次预热取 min/中位数；真实 GUI `emacs-init-time`，已 `--init-directory` 钉定本仓库）。
-> 备注：

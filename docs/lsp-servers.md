@@ -1,6 +1,6 @@
 # LSP Servers
 
-Eglot 使用的 LSP server 汇总。配置入口：`lisp/init-lsp.el`。
+Eglot 使用的 LSP server 汇总。配置入口：`user-lisp/init-lsp.el`。
 
 ## Go — gopls
 

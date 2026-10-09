@@ -21,8 +21,7 @@
   失败时的 `perror` + `_exit` 加了 `#ifndef _UCRT`。PKGBUILD 注释里直说
   *"001-ucrt.patch breaks stdout, causing `make sanity-check` to fail"*，所以他们在 mingw 环境
   **跳过了 sanity-check**。
-- 后果：本仓库靠读 batch 输出判成败的流程（`/run`、`/build`、`make compile`）会全部变成睁眼瞎。
-  当天修掉的三个 dump 静默 bug，正是靠 `已激活 N/N 个包` 这种行才发现的。
+- 后果：本仓库靠读 batch 输出判成败的流程（`/run`、`make compile`）会全部变成睁眼瞎。
 
 **自己从上游编译（不打这个补丁）的 ucrt64 Emacs 没有此问题**，实测 stdout / stderr 都正常，
 上游 `make sanity-check` 也能跑过。
@@ -93,25 +92,20 @@ foreach ($n in "emacs","emacsclient","emacsclientw","etags","ctags") {
 
 ## 换到 Emacs 31 之后连带变了什么
 
-- **`dump: 已激活 63/68 个包` 是健康值**，不再是 68/68。少的 5 个是
-  `project` / `jsonrpc` / `flymake` / `eglot` / `compat`——Emacs 31 都已内置且版本 ≥ elpa 副本，
-  package.el 于是主动跳过 elpa 那份改用内置的。实测 5 个 `require` 全部正常、magit 也正常。
-  **判据要看的是「跳过 0 个」和分子是否突然大幅下滑**，63/68 这个组合本身没问题。
-- **仓库里那条「Emacs 31.0.90 加载任意 `--dump-file` 必崩」是误判**，已在
-  [pdump-startup.md](pdump-startup.md) 推翻。真凶是 trampoline 和 eln-load-path 两个内容坑，
-  只是它们要 native-comp 构建才暴露，而当时对照组 scoop 30.2 没有 native-comp。
+- **elpa 里的 `project`/`jsonrpc`/`flymake`/`eglot`/`compat` 会被跳过**：Emacs 31 都内置且版本 ≥
+  elpa 副本，package.el 主动跳过 elpa 那份改用内置的。实测 5 个 `require` 全部正常、magit 也正常。
 - **Emacs 31 会对缺 `lexical-binding` cookie 的文件告警**（30 只在字节编译期告警，31 提前到
-  `load` 时）。`custom.el`（Customize 自动生成、已 gitignore）和 `lisp/init-ai.el` 都补了首行
+  `load` 时）。`custom.el`（Customize 自动生成、已 gitignore）和 `user-lisp/init-ai.el` 都补了首行
   cookie；`custom.el` 那行实测过 `custom-save-all` 重写时不会被冲掉。
   换机器时 `custom.el` 是重新生成的，需要再补一次。
-- **配置侧唯一的实质改动在 `lisp/init-lsp.el` 的 tree-sitter 路由**：`treesit-enabled-modes`
+- **配置侧唯一的实质改动在 `user-lisp/init-lsp.el` 的 tree-sitter 路由**：`treesit-enabled-modes`
   必须用 `setopt`（`setq` 静默失效，会导致 ts-mode 和 eglot 全部不生效），且列白名单而非写 `t`。
   原委见 [lsp-eglot-tuning.md](lsp-eglot-tuning.md)。
 - **两条新默认值配置里没覆盖，先用着**：`split-window-preferred-direction` 默认 `longest`
   （宽屏下 `display-buffer` 改为左右分屏；不适应就设 `'vertical`）、终端下
   `xterm-mouse-mode` 默认开启（只影响 TTY）。
 - **升级方式**：不再是 `pacman -Syu` 升 emacs（那只升 msys2 的库和工具链）。要升 Emacs 本身，
-  回 `/d/dev-cache/emacs31` `git pull` 重编重装。**升完必须 `make dump` 重建 pdmp。**
+  回 `/d/dev-cache/emacs31` `git pull` 重编重装。
 
 ## 保留的回退项
 
