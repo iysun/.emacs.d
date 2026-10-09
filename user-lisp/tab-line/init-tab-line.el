@@ -239,6 +239,11 @@ buffer tab 的场景已经超出人工数字母找 tab 的实用范围，不值�
   ;; 各自不同深浅，见 init-bars.el）和标签自带的 `my/tab-line-tab-padding' 表达，
   ;; 不再额外插入分隔空白。
   (setq tab-line-separator "")
+  ;; 让分组名真正拿到 `tab-line-tab-group' face：内置 `tab-line-tab-face-functions'
+  ;; 默认只有 `(tab-line-tab-face-modified tab-line-tab-face-special)'，**不含**
+  ;; `tab-line-tab-face-group'，所以 init-bars.el 里给 `tab-line-tab-group' 设的
+  ;; 背景/内边距不会生效。这里补上，分组名才有自己独立的样式。
+  (add-to-list 'tab-line-tab-face-functions #'tab-line-tab-face-group)
   (advice-add 'tab-line-tabs-buffer-list :filter-return #'my/tab-line-filter))
 
 (add-hook 'first-change-hook #'my/tab-line-refresh)
