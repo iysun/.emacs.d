@@ -1,9 +1,6 @@
----
-name: run
-description: 批处理加载验证配置能否无错加载；改完配置后的快速自检
----
+# 批处理加载验证
 
-验证本 Emacs 配置能否干净加载：用 `--batch` 加载（无 GUI，只验证「能否无错加载」）。
+改完配置后的快速自检：用 `--batch` 加载（无 GUI，只验证「能否无错加载」）。
 **视觉外观**（字体、主题、modeline、tab-line 等）仍需启动真实 Emacs 肉眼确认。
 
 ## 用法
@@ -22,12 +19,13 @@ Write-Output "EXIT=$LASTEXITCODE"
 ```
 
 出现 `== CONFIG LOADED OK ==` 且 `EXIT=0`、无回退错误即视为通过。
+（注：evil 延迟到 `after-init` 加载，batch 不跑 after-init，故批处理里 `(featurep 'evil)` 为 nil 属正常。）
 
 ## 判断有无问题
 
 - **有 bug 要修**：`Cannot open load file`（缺文件/缺 require）、`void-function`、`void-variable`、
   `Symbol's value as variable is void`、`Invalid function: <宏名>`（字节编译期该宏没被加载 → 坏
-  `.elc`，见 [docs/notes/byte-compile-broken-elc.md](../../docs/notes/byte-compile-broken-elc.md)）。
+  `.elc`，见 [../docs/notes/byte-compile-broken-elc.md](../docs/notes/byte-compile-broken-elc.md)）。
 - **可忽略**：包里字节编译期的 obsolete/deprecation 警告、`assignment to free variable`
   （多为 -Q 无关变量），不是错误。
 

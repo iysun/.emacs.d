@@ -21,7 +21,7 @@
   失败时的 `perror` + `_exit` 加了 `#ifndef _UCRT`。PKGBUILD 注释里直说
   *"001-ucrt.patch breaks stdout, causing `make sanity-check` to fail"*，所以他们在 mingw 环境
   **跳过了 sanity-check**。
-- 后果：本仓库靠读 batch 输出判成败的流程（`/run`）会全部变成睁眼瞎。
+- 后果：本仓库靠读 batch 输出判成败的流程（见 [.agent/run.md](../../.agent/run.md)）会全部变成睁眼瞎。
 
 **自己从上游编译（不打这个补丁）的 ucrt64 Emacs 没有此问题**，实测 stdout / stderr 都正常，
 上游 `make sanity-check` 也能跑过。

@@ -1,7 +1,4 @@
----
-name: bench
-description: 测本机 Emacs 启动速度（真实 GUI），结果追加到 docs/startup-benchmark.md，用于多机对比
----
+# 启动速度基准
 
 测量**本机** Emacs 启动速度并生成基准文档，便于排查「同一套配置不同机器启动快慢差很多」。
 脚本 `scripts/bench-startup.py`（跨平台 Windows/Linux/macOS），记录写入 `docs/startup-benchmark.md`。
@@ -26,4 +23,4 @@ python scripts/bench-startup.py -a        # 生成记录块并追加到 docs/sta
 
 - 必须**真实 GUI** 测量，脚本已如此；`--batch` 测不到 GUI 开销。
 - 脚本用 `--init-directory` 钉定仓库目录，避免不同 shell/平台把 `~/.emacs.d` 解析到别处。
-- 启动调优笔记见 [docs/notes/startup-performance.md](../../docs/notes/startup-performance.md)。
+- 启动调优笔记见 [../docs/notes/startup-performance.md](../docs/notes/startup-performance.md)。

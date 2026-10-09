@@ -76,6 +76,6 @@ per-launch ~5.3s 已接近本机这套配置的地板。日常体感要「秒开
 ## 权衡与验证
 
 - 代价：首次打开 dired / 首个代码文件会各多付一次对应加载（dired 包 / eglot）——属预期。
-- 验证：`/run` 确认两套 profile `EXIT=0`；`emacs` 启动后 `M-x emacs-init-time` 看实际耗时；
+- 验证：按 [.agent/run.md](../../.agent/run.md) 批处理加载确认 `EXIT=0`；`emacs` 启动后 `M-x emacs-init-time` 看实际耗时；
   确认 dired 键位（S/I/TAB/C-c C-r）、`.go`/`.c` 文件 eglot 正常起、主题/modeline 正常、无 dashboard 首屏。
 - 想看启动耗时可加：`(add-hook 'emacs-startup-hook (lambda () (message "ready in %s" (emacs-init-time))))`。

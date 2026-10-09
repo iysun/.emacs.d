@@ -29,7 +29,7 @@ python scripts/bench-startup.py -n 8   # 跑 8 次（默认 6）
 <!-- 在此区粘贴 scripts/bench-startup.py 的输出块；或用 `-a` 自动追加 -->
 
 > ⚠️ 以下为**旧格式记录**（2026-06-25，Emacs 30.2，脚本当时还测「dump 映像 / 全量 / 精简 minimal」
-> 三种场景，含 `emacs.pdmp` 字段）。这些场景已随配置简化移除，数据仅供参考，**需重跑 `/bench` 刷新**。
+> 三种场景，含 `emacs.pdmp` 字段）。这些场景已随配置简化移除，数据仅供参考，**需重跑 `python scripts/bench-startup.py` 刷新**。
 
 ### PC-20241114VUMP（2026-06-25）
 

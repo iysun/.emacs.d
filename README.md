@@ -26,5 +26,6 @@ emacs                 # 启动
 ## 文档
 
 - **[AGENTS.md](AGENTS.md)** — AI 协作规范、构建/运行/开发流程的**单一事实源**，先读这个。
+- **[.agent/](.agent/)** — 与 agent 无关的通用流程文档（`run.md` 批处理验证、`bench.md` 测速）。
 - **[docs/startup-benchmark.md](docs/startup-benchmark.md)** — 多机启动速度基准记录与测法。
 - **[docs/notes.md](docs/notes.md)** — 配置笔记索引（启动调优、字节编译、安装等）。

@@ -45,7 +45,7 @@ Symbol's value as variable is void: evil-a-between
 
 ## 排查方法
 
-- 启动时的自动字节编译、或 `/run`（批处理加载）都会暴露编译期问题；
+- 启动时的自动字节编译、或 [.agent/run.md](../.agent/run.md) 的批处理加载都会暴露编译期问题；
 - 再启动真实 GUI 看 `*Messages*` / `*Warnings*`。
 
 ## 清理

@@ -1,5 +1,5 @@
 # AGENTS.md
-个人 Emacs 配置仓库（Emacs Lisp）。本文件是 **AI 协作的单一事实源**：项目规范、构建/运行/开发流程都写在这里，其他 agent 适配文件（`CLAUDE.md`、`.cursor/rules/`）只做引用，不复制内容。
+个人 Emacs 配置仓库（Emacs Lisp）。本文件是 **AI 协作的单一事实源**：项目规范、构建/运行/开发流程都写在这里。与具体 agent 无关的通用流程文档放在 `.agent/`。
 
 > 平台：Windows（scoop 工具链，`emacs` / `make` / `git` 均在 PATH）。命令以 PowerShell 给出。
 > **emacs 是在 msys2 UCRT64 环境里从上游源码自编的 Emacs 31**（msys2 由 scoop 装，
@@ -7,7 +7,7 @@
 > 升级 = 回源码树 `git pull` 重编重装，**不是** `pacman -Syu`（那只升 msys2 的库）。
 > ⚠ 别改用 pacman 装的 `mingw-w64-ucrt-x86_64-emacs`：MSYS2 自家的 `001-ucrt.patch` 破坏了
 > stdout，那份的 `--batch` 没有任何控制台输出，本仓库靠读 batch 输出的流程
-> （`/run`）会全部变成睁眼瞎。装法、坑、分步 install 见
+> （靠读 batch 输出判成败）会全部变成睁眼瞎。装法、坑、分步 install 见
 > [docs/notes/emacs-install-msys2.md](docs/notes/emacs-install-msys2.md)。
 
 ## 这个项目是什么
@@ -19,12 +19,12 @@
 
 启动链：`early-init.el` →（Emacs 处理 user-lisp）→ `init.el` → `require` 各 `init-xxx` 模块。
 
-## AI 工具入口
+## Agent 命令文档（`.agent/`）
 
-- **`/run`**（Claude Code，`.claude/commands/run.md`）：批处理加载冒烟验证。
-- **`/bench`**（Claude Code，`.claude/commands/bench.md`）：测本机启动速度，追加到 `docs/startup-benchmark.md`。
-- Cursor：`.cursor/rules/project.mdc`（始终生效）+ `*.el` 条件规则，指向本文件。
-- Codex：原生读取本 `AGENTS.md`，无需额外文件。
+与具体 agent 无关的通用流程文档放 `.agent/`，任何 agent 都可直接读：
+
+- [.agent/run.md](.agent/run.md) — 批处理加载冒烟验证。
+- [.agent/bench.md](.agent/bench.md) — 测本机启动速度，追加到 `docs/startup-benchmark.md`。
 
 ## 目录结构
 
@@ -114,15 +114,19 @@ Emacs 31 的 user-lisp 机制在启动时会：
 
 ## 验证配置是否能正常加载
 
-`--batch` 下 user-lisp 机制不生效（`init-file-user` 为空），需先手动把 `user-lisp/` 加入
-load-path 再加载——`/run` 命令封装了这一步。
+`--batch` 下 user-lisp 机制不生效（`init-file-user` 为空），需先手动把 `user-lisp/` 及其
+子目录加入 load-path 再加载。完整命令见 [.agent/run.md](.agent/run.md)（在仓库根执行）：
 
-| 方法 | 命令 | 结果 |
-|------|------|------|
-| 批处理全量 | `/run`（等价于手动搭好 user-lisp load-path 后 `--load early-init.el init.el`） | ✅ 干净通过 |
+```powershell
+emacs --batch `
+  --init-directory "$PWD" `
+  --eval '(dolist (d (list "user-lisp" "user-lisp/evil-plugins" "user-lisp/gcmh" "user-lisp/mode-line" "user-lisp/tab-line" "user-lisp/eshell-prompt")) (add-to-list (quote load-path) (expand-file-name d user-emacs-directory)))' `
+  -l "$PWD\early-init.el" -l "$PWD\init.el" `
+  --eval '(message "== CONFIG LOADED OK ==")' 2>&1 | Select-Object -Last 12
+```
 
-注意批处理无 GUI，只验证「能否无错加载」；**视觉外观**（字体、主题、modeline、tab-line）
-仍需启动真实 Emacs 肉眼确认：
+出现 `== CONFIG LOADED OK ==` 且 `EXIT=0` 即通过。注意批处理无 GUI，只验证「能否无错加载」；
+**视觉外观**（字体、主题、modeline、tab-line）仍需启动真实 Emacs 肉眼确认：
 
 ```powershell
 emacs                          # 真实 GUI，看 *Messages* / *Warnings*
@@ -142,7 +146,7 @@ $env:SILICONFLOW_API_KEY = "sk-xxxx"   # 由用户在自己的 shell/系统环�
 
 - **改了行为/加了模块** → 同步更新本文件相关小节（结构表、启用模块列表、命令）。纯重构 / 小修可不动文档。
 - **新增模块**：在 `user-lisp/` 下建 `init-xxx.el`，文件末 `(provide 'init-xxx)`，并在 `init.el` 末尾 `(require 'init-xxx)`。
-- **改完怎么验证**：批处理加载用 `/run`；再启动真实 GUI 看 `*Messages*` / `*Warnings*`。
+- **改完怎么验证**：批处理加载见 [.agent/run.md](.agent/run.md)；再启动真实 GUI 看 `*Messages*` / `*Warnings*`。
 - **别 eager `require` 会连带拉起重库的包**：例如 `fd-dired` 顶层 require `find-dired`/`ibuffer`/
   `ibuf-ext`，`find-dired` 又拉起 `dired`——启动时 eager `(require 'fd-dired)` 实测多花 ~0.4s。
   这类包用 `use-package … :defer t` 即可，命令靠 autoload，首次用时再加载。
