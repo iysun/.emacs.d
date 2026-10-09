@@ -59,8 +59,10 @@
   (eval `(use-package ,package :ensure t :defer t)))
 
 (when (executable-find "fd")
-  (use-package fd-dired :ensure t :defer t)
-  (require 'fd-dired))
+  ;; 不要 eager `(require 'fd-dired)`：它顶层 require find-dired/ibuffer/ibuf-ext，
+  ;; find-dired 又拉起 dired，实测明显拖慢启动。`use-package ... :defer t' 已生成
+  ;; autoload，首次用 `M-x fd-dired` 时再加载。
+  (use-package fd-dired :ensure t :defer t))
 
 (require 'init-base)
 (require 'init-evil)

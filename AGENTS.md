@@ -133,6 +133,9 @@ $env:SILICONFLOW_API_KEY = "sk-xxxx"   # 由用户在自己的 shell/系统环�
 - **改了行为/加了模块** → 同步更新本文件相关小节（结构表、启用模块列表、命令）。纯重构 / 小修可不动文档。
 - **新增模块**：在 `user-lisp/` 下建 `init-xxx.el`，文件末 `(provide 'init-xxx)`，并在 `init.el` 末尾 `(require 'init-xxx)`。
 - **改完怎么验证**：批处理加载用 `/run`；再启动真实 GUI 看 `*Messages*` / `*Warnings*`。
+- **别 eager `require` 会连带拉起重库的包**：例如 `fd-dired` 顶层 require `find-dired`/`ibuffer`/
+  `ibuf-ext`，`find-dired` 又拉起 `dired`——启动时 eager `(require 'fd-dired)` 实测多花 ~0.4s。
+  这类包用 `use-package … :defer t` 即可，命令靠 autoload，首次用时再加载。
 - **别碰** `elpa/`、`var/`、`etc/`、`custom.el`、`server/`；不要提交 `.elc` 或 `.user-lisp-autoloads.el`（已 gitignore）。
 - **运行期文件一律走 `var/` / `etc/`**（全量 profile 由 no-littering 统一收编）。新加的包若往仓库根写文件，
   先看 no-littering 有没有覆盖，没有就显式把它的路径指进 `var/`，别让根目录再长出运行期文件。
