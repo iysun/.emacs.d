@@ -4,14 +4,12 @@
 ;; 实现因平台而异（Windows 用 im-select.exe，Linux/macOS 用 fcitx5-remote），
 ;; 用 `cond' 在一个函数里把所有平台分支放在一起，不按 OS 拆文件。
 ;;
-;; 之所以单独开一个文件而不是直接写进 lisp/init-evil.el：全量 profile 的
-;; `lisp/init-evil.el' 和精简 profile 的 `init-minimal.el' 是两条不相交的
-;; 加载路径，精简 profile 根本不 require `lisp/' 下任何全量模块，两边过去
-;; 各自重复定义过一份。这里复用 `early-init.el' 已经在用的「绝对路径 `load'，
-;; 两套 profile 都吃到」这条引导路径，只定义一份。
+;; 之所以单独开一个文件而不是直接写进 user-lisp/init-evil.el：输入法切换要由
+;; `early-init.el' 在最早期加载，而 `init-evil.el' 那时还没被 require，过去两边
+;; 各自重复定义过一份。这里单独成文件、由 `early-init.el' 用绝对路径 `load'，只定义一份。
 ;;
-;; 由 `early-init.el' 在最早期用绝对路径 `load'（那时 `lisp/' 还没被 init.el
-;; 加进 load-path，`require' 用不了）。
+;; 注：user-lisp 的 load-path 由 `prepare-user-lisp' 在更晚的启动阶段才建立，
+;; early-init 阶段还用不了 `require'，故走绝对路径 `load'。
 
 ;; Windows 用 im-select.exe；Linux/macOS 用 fcitx5-remote。找不到对应程序时
 ;; 静默跳过，不在没装该程序的平台上报错。
@@ -28,7 +26,7 @@
     (when (executable-find "fcitx5-remote")
       (call-process "fcitx5-remote" nil 0 nil "-c")))))
 
-;; 两套 profile 都用 evil，这里注册一次即可；`add-hook' 对尚未定义的 hook
+;; evil 加载后这里注册一次即可；`add-hook' 对尚未定义的 hook
 ;; 变量（evil 这时还没加载）也是安全的，evil 加载后自然生效。
 (add-hook 'evil-insert-state-exit-hook #'my/switch-to-english-input-method)
 

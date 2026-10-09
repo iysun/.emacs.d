@@ -1,6 +1,6 @@
-;; extensions/mode-line/mode-line.el 	-*- lexical-binding: t -*-
+;; user-lisp/mode-line/init-mode-line.el 	-*- lexical-binding: t -*-
 ;;
-;; mode-line 实现本体，由 `lisp/init-bars.el' `load'。基础结构和风格照抄
+;; mode-line 实现本体，由 `user-lisp/init-bars.el' `require'。基础结构和风格照抄
 ;; <https://github.com/LionyxML/emacs-solo> 的 `emacs-solo-mode-line.el'
 ;; （而不是更早那版 zdn/.emacs.d 的 nn-mode-line——那版分段更多、更花，跟
 ;; emacs-solo 的极简路子不是一回事，已弃用），具体保留哪些段则是问过用户、

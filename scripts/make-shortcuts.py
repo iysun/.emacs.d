@@ -5,15 +5,11 @@
     python scripts\\make-shortcuts.py
     python scripts\\make-shortcuts.py --bin <scoop>\\apps\\msys2\\current\\ucrt64\\bin
 
-建两个入口（当前用户，不需要管理员）：
-    Emacs                   → runemacs.exe --dump-file=<repo>\\emacs.pdmp   （日常，走映像）
-    Emacs (不用 dump 映像)  → runemacs.exe                                  （映像过期/损坏时兜底）
+建一个入口（当前用户，不需要管理员）：
+    Emacs  →  runemacs.exe
 
 为什么是 runemacs.exe：emacs.exe 是控制台子系统，双击必弹一个多余的终端窗口；
-runemacs.exe 是 GUI 子系统，且会把参数原样转交给 emacs.exe。
-为什么不指向 emacs-dump.py：Python 脚本双击同样会挂一个控制台窗口（除非配置了
-.py 的无窗口关联）。代价是快捷方式没有「pdmp 缺失就回退普通启动」的逻辑，所以才
-需要上面第二个入口做手工兜底。
+runemacs.exe 是 GUI 子系统，会把参数原样转交给 emacs.exe。
 
 依赖：pywin32（建 .lnk 走 WScript.Shell COM 对象，标准库没有等价物）：
     pip install pywin32
@@ -75,15 +71,11 @@ def main():
             "例如 <scoop>\\apps\\msys2\\current\\ucrt64\\bin"
         )
 
-    repo = Path(args.repo)
-    pdmp = repo / "emacs.pdmp"
     programs_dir = Path(os.environ["APPDATA"]) / "Microsoft" / "Windows" / "Start Menu" / "Programs"
     shell = win32com.client.Dispatch("WScript.Shell")
 
-    make_lnk(shell, programs_dir, runemacs, "Emacs", f'--dump-file="{pdmp}"',
-              "GNU Emacs (msys2/ucrt64 自编)，用 emacs.pdmp 映像加速启动")
-    make_lnk(shell, programs_dir, runemacs, "Emacs (不用 dump 映像)", "",
-              "GNU Emacs (msys2/ucrt64 自编)，普通启动；emacs.pdmp 过期或损坏时用这个")
+    make_lnk(shell, programs_dir, runemacs, "Emacs", "",
+              "GNU Emacs (msys2/ucrt64 自编)")
 
 
 if __name__ == "__main__":

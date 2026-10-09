@@ -1,6 +1,6 @@
-;; extensions/tab-line/tab-line.el 	-*- lexical-binding: t -*-
+;; user-lisp/tab-line/init-tab-line.el 	-*- lexical-binding: t -*-
 ;;
-;; tab-line 实现本体，由 `lisp/init-bars.el' `load'。原生 tab-line（按项目分组 +
+;; tab-line 实现本体，由 `user-lisp/init-bars.el' `require'。原生 tab-line（按项目分组 +
 ;; 过滤 eglot buffer），替代 centaur-tabs，零第三方、零启动开销。两条 bar（mode-line +
 ;; tab-line）字号/内边距统一逻辑留在 `init-bars.el' 里，这个文件只管 tab-line 本身。
 ;; 标签不带图标（跟 mode-line 一样走纯文字，简约优先），故不依赖 nerd-icons。
@@ -114,7 +114,7 @@ popper 未加载/`popper-mode' 未开启时 `popper-popup-p' 不存在，做特�
     (my/tab-line--show-tab-line (cdr win-buf))))
 
 ;; `init-bars'（load 本文件）排在 `init-window'（`(popper-mode +1)' 靠 autoload 拉起 popper）
-;; 之前，见 init-full.el，故必须 `with-eval-after-load'。
+;; 之前，见 init.el，故必须 `with-eval-after-load'。
 ;; ⚠ 三个挂载点里有两个是 popper 的私有函数（双短横），升级 popper 时顺手确认还在。
 (with-eval-after-load 'popper
   (advice-add 'popper--update-popups      :after #'my/tab-line--hide-in-popups)
@@ -127,7 +127,7 @@ popper 未加载/`popper-mode' 未开启时 `popper-popup-p' 不存在，做特�
 水平 line-width——实测 tab-line 下 `:box' 的水平 line-width 不会用 `:color' 真正
 填充那片区域，会透出整条 tab-line bar 自己的背景色，达不到\"padding 属于标签
 自己\"的效果（同样的 `:box' 用在垂直方向撑上下 padding 则没这个问题，见
-`lisp/init-bars.el' 的 `my-ui--v-box'）。字面空格必然跟标签名共享同一个容器
+`user-lisp/init-bars.el' 的 `my-ui--v-box'）。字面空格必然跟标签名共享同一个容器
 face（由 `tab-line-tab-name-format-default' 统一 propertize/套用），颜色不会错，
 是更可靠的写法。
 选中/未选中标签统一用这一个值，不做宽度上的区分——\"当前调用是否在渲染选中

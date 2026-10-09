@@ -1,5 +1,7 @@
 ;; lang-go.el -- Initialize Golang configurations -*- lexical-binding: t -*-
 
+(require 'use-package)                  ; 顶层用 use-package 宏，字节编译期需可用
+
 ;; Install tools
 (defconst go--tools
     '("golang.org/x/tools/gopls"
@@ -31,7 +33,9 @@
 
 ;; Golang
 (use-package go-mode
-  :ensure t
+  ;; :ensure nil —— 本模块默认停用。user-lisp 机制会字节编译 user-lisp/ 下所有文件，
+  ;; `:ensure t` 会在编译期联网装包。启用前先 `M-x package-install RET go-mode`。
+  :ensure nil
   ;; :functions (go-install-tools)
   :autoload godoc-gogetdoc
   :bind (:map go-mode-map

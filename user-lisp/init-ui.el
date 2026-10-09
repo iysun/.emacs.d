@@ -108,8 +108,8 @@
 ;; scripts/install-fonts.py 才会真正装进当前用户、被 find-font 认到——字体候选表
 ;; 本身"找不到就沉默跳过"的哲学不变（见上面几组 cl-loop），但"vendor 的字体明明
 ;; 在仓库里、却没跑安装脚本"是另一件事：忘跑了比沉默更值得提醒一下。
-;; 照抄 init-full.el 里 `my/check-pdmp-freshness' 的思路——正常沉默，
-;; 只在"有个手动步骤大概率忘跑了"时才 `display-warning'。
+;; 思路是「正常沉默，只在有个手动步骤大概率忘跑了时才提醒」——
+;; 即"vendor 的字体明明在仓库里、却没跑安装脚本"这种情况。
 (defconst my-ui--vendored-fonts
   '(("assets/fonts/JetBrainsMonoNLNerdFontMono-Regular.ttf" . "JetBrainsMonoNL NFM")
     ("assets/fonts/SarasaTermSCNerd-Regular.ttf" . "更纱终端书呆黑体-简")
@@ -265,7 +265,7 @@ scripts/install-fonts.py 大概率没跑过（或跑了但没重启 Emacs）—�
 (add-hook 'prog-mode-hook 'whitespace-mode)
 
 ;; diredfl-mode 的 hook 已随 2026-07-28 dired 简化移除（参照 zdn 精简掉 diredfl 包，
-;; 见 lisp/init-dired.el）。
+;; 见 user-lisp/init-dired.el）。
 
 ;; dashboard 首屏已禁用以提速启动（启动直接进 scratch/文件；inhibit-startup-screen 见 early-init.el）。
 ;; 若想恢复：取消下面 with-eval-after-load 与 (dashboard-setup-startup-hook) 的注释。

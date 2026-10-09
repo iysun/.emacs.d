@@ -1,7 +1,7 @@
 ;;; -*- lexical-binding: t; -*-
 ;; (require 'magit)
 
-;; Windows 上给 git 子进程定的环境变量已挪到 lisp/init-windows.el（early-init.el
+;; Windows 上给 git 子进程定的环境变量已挪到 user-lisp/init-windows.el（early-init.el
 ;; 阶段就设好，比这里更早，覆盖面也更全——不止 magit 会起 git 子进程）。
 
 ;; Magit 配置

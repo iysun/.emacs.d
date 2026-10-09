@@ -33,7 +33,7 @@ import winreg  # noqa: E402  (只在 Windows 上可导入)
 # 清单：assets/fonts/ 里的文件 -> 装好后 Windows/Emacs 认得的 family 名。
 # 这几个 family 名已经用 System.Drawing.Text.PrivateFontCollection 实测确认过
 # （字体内部 name table 里到底叫什么，不能只看文件名猜），必须跟
-# lisp/init-ui.el 字体候选表里的字符串完全一致，装完才会被 find-font 命中：
+# user-lisp/init-ui.el 字体候选表里的字符串完全一致，装完才会被 find-font 命中：
 #   - JetBrainsMonoNL NFM ——注意不是 "JetBrainsMono NFM"，NoLigatures 变体在
 #     name table 里带 "NL" 后缀，是为了跟 Ligatures 变体共存不冲突而故意设计的。
 #   - 更纱终端书呆黑体-简 ——Sarasa Term SC Nerd 这个补丁版构建把中文名当成主 family

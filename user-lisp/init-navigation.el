@@ -10,7 +10,7 @@
 ;; 见 init-keymaps.el），xref 前端没有等价物。
 
 ;; citre 需要外部 Universal Ctags（ctags/readtags）。本机没装就连包都不装，
-;; 同 init-full.el 里 fd-dired 的条件式写法。
+;; 同 init.el 里 fd-dired 的条件式写法。
 (when (executable-find "readtags")
   (use-package citre :ensure t :defer t)
   (require 'citre)

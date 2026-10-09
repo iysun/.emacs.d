@@ -1,7 +1,12 @@
 ;;; init-ai.el --- AI 补全（minuet + SiliconFlow）  -*- lexical-binding: t -*-
 
+(require 'use-package)                  ; 顶层用 use-package 宏，字节编译期需可用
+
 (use-package minuet
-  :ensure t
+  ;; :ensure nil —— 本模块默认停用。user-lisp 机制会字节编译 user-lisp/ 下所有文件，
+  ;; `:ensure t` 会在编译期联网装包（本机 gpg 签名校验会失败、产生噪音）。启用前先
+  ;; `M-x package-install RET minuet`（或把 minuet 加进 init.el 的包列表）。
+  :ensure nil
   :init
   ;; if you want to enable auto suggestion.
   ;; Note wthat you can manually invoke completions without enable minuet-auto-suggestion-mode

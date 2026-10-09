@@ -1,42 +1,27 @@
 EMACS ?= emacs
 ROOT := $(CURDIR)
-DUMP := $(ROOT)/emacs.pdmp
 
-.PHONY: all dump compile clean distclean
+.PHONY: compile clean
 
-# 默认构建：生成自定义 portable dump（emacs.pdmp），用 --dump-file 启动可大幅加速。
-all: dump
-
-# 预加载重包并转储成 emacs.pdmp（脚本见 dump.el）。
-# 启动：emacs --dump-file=$(DUMP)  或用 emacs-dump.py。
-# 注意：装/删包或重编升级 emacs 后必须重跑 `make dump`，否则映像不兼容。
-dump:
-	@echo "Building portable dump -> emacs.pdmp ..."
-	@$(EMACS) --batch -Q -l "$(ROOT)/dump.el"
-
-# 字节编译作语法检查（非默认；产物 .elc 仅供检查，别留在工作区，见 /build）。
+# 字节编译作语法检查（非默认）。Emacs 31 的 user-lisp 机制会在启动时按需自动
+# 字节编译 user-lisp/；这里提供一条手动全量入口，便于 CI 或排查「某宏在编译期
+# 没被加载 → 生成坏 .elc」这类问题（见 docs/notes/byte-compile-broken-elc.md）。
 compile:
 	@echo "Compiling Emacs Lisp files to .elc..."
 	@$(EMACS) --batch -Q \
 		--eval "(setq user-emacs-directory (file-name-as-directory \"$(ROOT)\"))" \
-		--eval "(add-to-list 'load-path (expand-file-name \"lisp\" user-emacs-directory))" \
 		--eval "(setq package-user-dir (expand-file-name \"elpa\" user-emacs-directory))" \
 		--eval "(require 'package)" \
 		--eval "(package-initialize)" \
-		--eval "(byte-recompile-directory user-emacs-directory 0)" \
+		--eval "(dolist (d (list \"user-lisp\" \"user-lisp/mode-line\" \"user-lisp/tab-line\" \"user-lisp/eshell-prompt\")) (add-to-list 'load-path (expand-file-name d user-emacs-directory)))" \
+		--eval "(byte-recompile-directory (expand-file-name \"user-lisp\" user-emacs-directory) 0)" \
+		--eval "(dolist (f '(\"early-init.el\" \"init.el\")) (byte-recompile-file (expand-file-name f user-emacs-directory) 0 0))" \
 		--eval "(message \"Byte compilation finished\")"
 
-# 清掉本仓库自己的 .elc（**不动** emacs.pdmp）。
-# 这是高频操作：`make compile' 只用于语法检查，检查完必须清掉产物——交互会话
-# load-prefer-newer 为 nil，残留旧 .elc 会悄悄盖过更新的 .el。
-# 用 Emacs 自己删而不是 find/rm：GNU find 语法在 Windows 会命中 system32\find.exe
-# 而静默失效（旧版 clean 就一直是坏的）。走 emacs --batch 三平台行为一致。
+# 清掉所有生成的 .elc（含 user-lisp 自动编译产物）与 user-lisp autoload 缓存，
+# 下次启动会按需重建。用 Emacs 自己删而不是 find/rm：GNU find 语法在 Windows 会
+# 命中 system32\find.exe 而静默失效，走 emacs --batch 三平台行为一致。
 clean:
 	@echo "Removing generated .elc ..."
 	@$(EMACS) --batch --eval "(let ((root (file-name-as-directory \"$(ROOT)\")) (n 0)) (dolist (f (directory-files-recursively root \"[.]elc$$\" nil (lambda (d) (not (member (file-name-nondirectory d) '(\"elpa\" \".git\" \"eln-cache\" \"straight\")))))) (delete-file f) (setq n (1+ n))) (message \"Removed %d .elc file(s)\" n))"
-
-# 连 emacs.pdmp 一起删。单独一个 target：pdmp 重建要几十秒，不该被高频的
-# 「清 .elc」顺手毁掉。
-distclean: clean
-	@echo "Removing emacs.pdmp ..."
-	@$(EMACS) --batch --eval "(let ((dump (expand-file-name \"emacs.pdmp\" (file-name-as-directory \"$(ROOT)\")))) (if (file-exists-p dump) (progn (delete-file dump) (message \"Removed emacs.pdmp\")) (message \"emacs.pdmp not present\")))"
+	@$(EMACS) --batch --eval "(let ((af (expand-file-name \"user-lisp/.user-lisp-autoloads.el\" (file-name-as-directory \"$(ROOT)\")))) (when (file-exists-p af) (delete-file af) (message \"Removed user-lisp autoloads cache\")))"

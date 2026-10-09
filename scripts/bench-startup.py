@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 """bench-startup.py — 跨平台(Windows/Linux/macOS)测量本机 Emacs 启动速度。
 
-测三种场景的【真实 GUI】emacs-init-time —— dump 映像 / 普通全量 / 精简(minimal) ——
-并采集机器信息，输出一段可粘进 docs/startup-benchmark.md 的「机器记录块」，用于多机对比排查。
+测【真实 GUI】emacs-init-time（全量 profile），并采集机器信息，输出一段可粘进
+docs/startup-benchmark.md 的「机器记录块」，用于多机对比排查。
 
 关键点（踩过的坑，勿删）：
   * 必须用真实 GUI 启动测 emacs-init-time，--batch 测不到 GUI 开销
@@ -31,7 +31,6 @@ import tempfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-PDMP = REPO / "emacs.pdmp"
 BENCH = REPO / "docs" / "startup-benchmark.md"  # 记录块追加目标
 TIMEOUT = 60  # 单次启动超时(秒)；超时记为无效样本
 
@@ -161,14 +160,6 @@ def native_comp(emacs: str) -> str:
         return "未知"
 
 
-def pdmp_info() -> str:
-    if not PDMP.exists():
-        return "缺失"
-    st = PDMP.stat()
-    mtime = datetime.datetime.fromtimestamp(st.st_mtime).strftime("%Y-%m-%d %H:%M")
-    return f"{st.st_size / 1024**2:.1f} MB（{mtime}）"
-
-
 # ----------------------------------------------------------------------------
 # 启动耗时测量
 # ----------------------------------------------------------------------------
@@ -243,19 +234,10 @@ def build_block(emacs: str, runs: int) -> str:
     host = platform.node() or "unknown-host"
     today = datetime.date.today().isoformat()
 
-    scenarios = []
-    if PDMP.exists():
-        scenarios.append(("dump 映像", [f"--dump-file={PDMP}"], {}))
-    else:
-        scenarios.append(("dump 映像", None, {}))  # 缺映像 → 跳过
-    scenarios.append(("普通全量", [], {}))
-    scenarios.append(("精简 minimal", [], {"EMACS_MINIMAL": "1"}))
+    scenarios = [("全量", [], {})]
 
     rows = []
     for name, args, env_extra in scenarios:
-        if args is None:
-            rows.append(f"| {name} | — | — | 跳过(emacs.pdmp 缺失) |")
-            continue
         print(f"  测量场景：{name} …", file=sys.stderr)
         lo, mid, valid, tot = stats(measure(emacs, args, env_extra, runs))
         note = f"{valid}/{tot}"
@@ -270,7 +252,6 @@ def build_block(emacs: str, runs: int) -> str:
         ("磁盘", disk_kind()),
         ("Emacs", emacs_version(emacs)),
         ("native-comp", native_comp(emacs)),
-        ("emacs.pdmp", pdmp_info()),
     ]
 
     lines = [f"### {host}（{today}）", "", "| 字段 | 值 |", "|---|---|"]

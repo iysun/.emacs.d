@@ -36,10 +36,9 @@
 (autoload 'eshell-delchar-or-maybe-eof "em-rebind")
 
 ;; ================= 提示符 =================
-;; 实现本体见 `extensions/eshell-prompt/eshell-prompt.el'（同 `init-bars.el' 用
-;; `load' 接 `extensions/mode-line'、`extensions/tab-line' 的方式）。
-(let ((dir (expand-file-name ".." (file-name-directory (or load-file-name buffer-file-name)))))
-  (load (expand-file-name "extensions/eshell-prompt/eshell-prompt" dir)))
+;; 实现本体见 `user-lisp/eshell-prompt/init-eshell-prompt.el'（与 init-bars 接
+;; mode-line/tab-line 同属 user-lisp 机制，直接 require）。
+(require 'init-eshell-prompt)
 
 ;; ================= 语法高亮 =================
 (add-hook 'eshell-mode-hook 'eshell-syntax-highlighting-global-mode)

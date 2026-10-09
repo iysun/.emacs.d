@@ -30,7 +30,7 @@
   (evil-commentary-mode)
   )
 
-;; 输入法切换（跨平台）已挪到 lisp/init-windows.el（`my/switch-to-english-input-method'
+;; 输入法切换（跨平台）已挪到 user-lisp/init-windows.el（`my/switch-to-english-input-method'
 ;; + C-SPC 绑定），early-init.el 阶段就加载好了，这里不用再定义。
 
 

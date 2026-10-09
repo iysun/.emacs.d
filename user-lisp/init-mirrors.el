@@ -1,12 +1,9 @@
 ;; init-mirrors.el 	-*- lexical-binding: t -*-
 ;;
-;; 包源镜像的**单一定义处**。全量 / 精简 / dump 三条路径都从这里取，
-;; 切镜像只改本文件一处。
+;; 包源镜像的**单一定义处**。切镜像只改本文件一处。
 ;;
-;; 使用方（都在 `package-initialize' 之前）：
-;;   init-full.el     (require 'init-mirrors)
-;;   init-minimal.el  (require 'init-mirrors)
-;;   dump.el          按路径 load（-Q 起，load-path 里没有 lisp/）
+;; 使用方（在 `package-initialize' 之前）：
+;;   init.el     (require 'init-mirrors)
 ;;
 ;; 注意：本文件只设 `package-archives'，不调用 `package-initialize'，
 ;; 由各使用方自行决定初始化时机。

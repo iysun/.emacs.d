@@ -6,31 +6,28 @@
 ;;
 ;; 结构：
 ;;   1. 两条 bar 共用的工具函数（图标可显示性探测等）
-;;   2. `extensions/mode-line/mode-line.el' / `extensions/tab-line/tab-line.el' ——
-;;      各自实现的本体，各占一个子目录（约定：`extensions/' 下每个扩展独立一层目录，
-;;      不直接放 .el 文件，方便以后每个扩展各带自己的资源/测试文件），各文件顶部有
-;;      自己的说明。用 `load' 而非 `require'：两个文件按当前用途各自 `provide' 了
-;;      `init-mode-line' / `init-tab-line'（tab-line 那个特意不叫 `tab-line'，免得
-;;      跟同名内置库撞名），但它们不在 `load-path' 上（`extensions/' 没加进去，
-;;      没必要为两个文件多一层全局搜索路径），直接按文件本身的相对位置 `load' 更直接。
-;;      `extensions/' 与 `lisp/' 同级（仓库根目录下），故下面用 `..' 回到根目录再拼路径。
+;;   2. `user-lisp/mode-line/init-mode-line.el' / `user-lisp/tab-line/init-tab-line.el' ——
+;;      各自实现的本体，各占 user-lisp/ 下一个子目录（约定：每个扩展独立一层目录，
+;;      方便以后各带自己的资源/测试文件），各文件顶部有自己的说明。
+;;      ⚠ 文件名/feature 特意叫 `init-mode-line' / `init-tab-line'，**不是** `mode-line' /
+;;      `tab-line'——Emacs 31 的 user-lisp 机制会把 user-lisp/ 各子目录**前置**到
+;;      load-path，若叫 `tab-line.el' 就会盖住内置库，内置 tab-line 反而加载不进来。
 ;;   3. 两条 bar 的尺寸 —— 字号与上下 padding 统一设置，两边都要用，故留在这里。
 (defun my-ui--glyph-displayable-p (str)
   "STR 里的字符是否都能在当前 frame 上找到字体显示。
 nerd-icons 的私用区图标即使字体族没装/没那个码位，`nerd-icons-*' 调用本身
 也不报错——只会插入一个没人认得的码位，渲染成豆腐块 □。`ignore-errors' 兜
 不住这种情况，得用 `char-displayable-p' 显式探测，探测不到就别用这个字符串，
-回退纯文本比顶着豆腐块强。mode-line（extensions/mode-line/mode-line.el）和
-tab-line（extensions/tab-line/tab-line.el）两边的图标缓存函数都用得到，故放在
+回退纯文本比顶着豆腐块强。mode-line（user-lisp/mode-line/init-mode-line.el）和
+tab-line（user-lisp/tab-line/init-tab-line.el）两边的图标缓存函数都用得到，故放在
 这个共享文件里。"
   (and (stringp str)
        (not (string-empty-p str))
        (display-graphic-p)
        (seq-every-p #'char-displayable-p str)))
 
-(let ((dir (expand-file-name ".." (file-name-directory (or load-file-name buffer-file-name)))))
-  (load (expand-file-name "extensions/mode-line/mode-line" dir))
-  (load (expand-file-name "extensions/tab-line/tab-line" dir)))
+(require 'init-mode-line)
+(require 'init-tab-line)
 
 ;; ================= 两条 bar 的尺寸 =================
 ;; 上下两条 bar（顶部 tab-line、底部 mode-line）做成**一对**：
@@ -42,7 +39,7 @@ tab-line（extensions/tab-line/tab-line.el）两边的图标缓存函数都用�
 ;; 上下 padding 用 box 实现，颜色取各自背景色 → 呈现为内边距而不是可见边框。
 ;; 左右 padding **不**用 box（见 `my-ui--v-box' 的说明——tab-line 下 box 的水平
 ;; line-width 实测不会用 :color 真正填充，会透出整条 bar 的背景色），标签内部的
-;; 左右留白改成文本里嵌字面空格，见 `extensions/tab-line/tab-line.el' 的
+;; 左右留白改成文本里嵌字面空格，见 `user-lisp/tab-line/init-tab-line.el' 的
 ;; `my/tab-line-tab-name'。
 ;;
 ;; 想再回到 zdn 那种细窄状态条：把 `my-ui-mode-line-height' 改成 0.87、
@@ -97,7 +94,7 @@ padding 为 0 则返回 nil。
 `:color' 真正填充那片区域——那里会透出 tab-line 整条 bar 自己的背景色，而不是
 标签自己的颜色，达不到\"padding 属于标签自己\"的效果（`:box' 的垂直 line-width
 则没这个问题，上下 padding 正常）。标签左右内边距因此改成文本里嵌字面空格
-（见 `extensions/tab-line/tab-line.el' 的 `my/tab-line-tab-name'）：
+（见 `user-lisp/tab-line/init-tab-line.el' 的 `my/tab-line-tab-name'）：
 空格字符必然跟标签名共享同一个容器 face（由 `tab-line-tab-name-format-default'
 统一套用），颜色不会错，是更可靠的写法。"
   (if (> my-ui-bar-padding 0)

@@ -4,7 +4,7 @@
 (setq gc-cons-threshold most-positive-fixnum)
 (setq gc-cons-percentage 0.6) ; 可选：当内存使用达到此百分比时也触发GC
 
-;; 启动完成后 gc-cons-threshold 交给 gcmh 动态管理（见 lisp/init-base.el），
+;; 启动完成后 gc-cons-threshold 交给 gcmh 动态管理（见 user-lisp/init-base.el），
 ;; 这里不再手动收紧到固定值：固定 20MB 在 eglot/jsonrpc/tree-sitter 频繁产生
 ;; 垃圾的场景下偏低，profiler 里能看到明显的 Automatic GC 占比、敲字卡顿。
 (add-hook 'emacs-startup-hook
@@ -16,7 +16,6 @@
 ;; 开着 JIT，elpa 里的包会在后台逐步编译进 `eln-cache/'，之后运行更快；
 ;; 首次启动/装包后会有一段后台 CPU 占用，属正常。
 ;; 编译告警只写 *Warnings*，不自动弹缓冲区（第三方包的告警干扰太多）。
-;; ⚠ dump 构建期是另一回事：`dump.el' 会关掉 JIT 和 subr trampoline，原因见该文件注释。
 (setq native-comp-jit-compilation t)
 (setq native-comp-async-report-warnings-errors 'silent)
 
@@ -50,11 +49,11 @@
 ;; Windows: avoid GC pauses caused by compacting font caches (Nerd Fonts etc.)
 (setq inhibit-compacting-font-caches t)
 
-;; Windows 专项设置（lisp/init-windows.el，非 Windows 平台空操作）+ 跨平台输入法
-;; 切换（lisp/init-ime.el，全量/精简两套 profile 共用一份）。这里 `lisp/' 还没
-;; 进 load-path（那是 init.el 干的事），用绝对路径 `load'。
-(load (expand-file-name "lisp/init-windows" user-emacs-directory))
-(load (expand-file-name "lisp/init-ime" user-emacs-directory))
+;; Windows 专项设置（user-lisp/init-windows.el，非 Windows 平台空操作）+ 跨平台
+;; 输入法切换（user-lisp/init-ime.el）。这两个要在最早期加载，而 user-lisp 的
+;; load-path 由 `prepare-user-lisp' 在更晚的启动阶段才建立，故这里仍用绝对路径 `load'。
+(load (expand-file-name "user-lisp/init-windows" user-emacs-directory))
+(load (expand-file-name "user-lisp/init-ime" user-emacs-directory))
 
 ;; Inhibit resizing frame
 (setq frame-inhibit-implied-resize t)

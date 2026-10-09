@@ -13,8 +13,9 @@
 **/*.elc
 **/__pycache__/
 
-# 自定义 portable dump（机器/emacs 版本相关，按需 `make dump` 重建）
-/emacs.pdmp
+# Emacs 31 user-lisp 机制自动生成（prepare-user-lisp 产出；.elc 已由上面的 **/*.elc 覆盖）
+/user-lisp/.user-lisp-autoloads.el
+/user-lisp/.user-lisp-autoloads.elc
 
 # tree-sitter grammar 二进制（平台相关，按需 M-x treesit-install-language-grammar）
 /tree-sitter/

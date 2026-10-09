@@ -1,5 +1,11 @@
 ;; init-completion.el   -*- lexical-binding: t -*-
 
+;; 本文件在 `with-eval-after-load 'corfu' 里用了 `evil-define-key'（宏）。字节编译
+;; 期 evil 必须已加载，否则该宏被当函数编译进 .elc，运行到 corfu 加载时报
+;; `Invalid function: evil-define-key`（同 init-keymaps.el 的顶层 require，见
+;; docs/notes/byte-compile-broken-elc.md）。user-lisp 机制会对本文件字节编译，故必须。
+(require 'evil)
+
 ;; Optionally use the `orderless' completion style.
 ;; (require 'orderless)
 (progn
@@ -31,7 +37,7 @@
 (add-hook 'vertico-mode-hook  'vertico-multiform-mode)
 
 
-;; which-key 是 Emacs 内置包（lisp/which-key.el，带 autoload，不用装/不用 require）。
+;; which-key 是 Emacs 内置包（Emacs 自带 lisp/which-key.el，带 autoload，不用装/不用 require）。
 ;; 前缀键按下后过一小段空闲时间自动弹出后续按键提示，跟下面 embark 那个
 ;; 「主动按 C-h 才展示」的机制互不冲突，两个都留着。
 (add-hook 'after-init-hook 'which-key-mode)

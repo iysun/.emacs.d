@@ -1,6 +1,6 @@
-;; extensions/eshell-prompt/eshell-prompt.el 	-*- lexical-binding: t -*-
+;; user-lisp/eshell-prompt/init-eshell-prompt.el 	-*- lexical-binding: t -*-
 ;;
-;; eshell 提示符实现本体，由 `lisp/init-term.el' `load'。
+;; eshell 提示符实现本体，由 `user-lisp/init-term.el' `require'。
 ;;
 ;; 自写，两行结构：第一行目录+git分支/脏净，第二行 >>。曾经外观照抄
 ;; `eshell-git-prompt' 的 multiline2 主题（user@host、分段框线、时间都在），
