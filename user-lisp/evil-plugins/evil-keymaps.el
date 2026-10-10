@@ -40,6 +40,10 @@
     (evil-define-key state dired-mode-map (kbd "C-a") 'dired-create-empty-file)
     (evil-define-key state dired-mode-map (kbd "C-d") 'dired-create-directory))
 
+  ;; C-w w 打开自写的窗口缩放 hydra（`hydra-window-size'，定义见 init-window.el）。
+  ;; 注意：覆盖了 evil 默认的 `C-w w'（`evil-window-next'，循环切窗）。
+  (define-key evil-window-map (kbd "w") #'hydra-window-size/body)
+
   ;; minuet（停用模块，用到才加载）
   (with-eval-after-load 'minuet
     (evil-define-key 'insert minuet-active-mode-map (kbd "<tab>") 'minuet-accept-suggestion)

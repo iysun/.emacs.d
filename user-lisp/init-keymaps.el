@@ -43,7 +43,6 @@
 (global-set-key (kbd "C-c m") 'consult-man)
 (global-set-key (kbd "C-c i") 'consult-info)
 (global-set-key (kbd "C-c e") 'eshell)
-(global-set-key (kbd "C-c w") 'hydra-window-size/body)
 ;; winner-undo/redo 绑到 hydra-winner 的包装函数：首次按键行为不变（直接执行），
 ;; 之后可用裸键 u/r 连续切换布局，定义见 init-window.el。
 (global-set-key (kbd "C-c u") 'hydra-winner/winner-undo)
