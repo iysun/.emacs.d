@@ -165,6 +165,7 @@ With prefix ARG, restrict to the current file instead."
     (kbd "[[")        'diff-file-prev
     (kbd "C-j")       'diff-hunk-next
     (kbd "C-k")       'diff-hunk-prev
+    (kbd "gr")        'revert-buffer
     (kbd "q")         'my/quit-window)
 
   ;; ------------------------------------------------------------- vc-annotate
@@ -210,7 +211,8 @@ With prefix ARG, restrict to the current file instead."
     (kbd "]]")        'log-view-msg-next
     (kbd "[[")        'log-view-msg-prev
     (kbd "C-j")       'log-view-file-next
-    (kbd "C-k")       'log-view-file-prev)
+    (kbd "C-k")       'log-view-file-prev
+    (kbd "gr")        'revert-buffer)
   ;; vc-git 的 log-view 绑定（vc-git-log-view-mode 派生自 log-view-mode）
   (evil-define-key 'normal vc-git-log-view-mode-map
     (kbd "q")         'my/quit-window
@@ -220,7 +222,8 @@ With prefix ARG, restrict to the current file instead."
     (kbd "gj")        'log-view-msg-next
     (kbd "gk")        'log-view-msg-prev
     (kbd "]]")        'log-view-msg-next
-    (kbd "[[")        'log-view-msg-prev)
+    (kbd "[[")        'log-view-msg-prev
+    (kbd "gr")        'revert-buffer)
 
   ;; --------------------------------------------------------------- log-edit
   (evil-define-key nil log-edit-mode-map
