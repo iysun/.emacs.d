@@ -15,6 +15,18 @@
                        (if (eq (next-window) (selected-window)) 0 1)))
 (add-hook 'window-configuration-change-hook #'my/update-bottom-divider)
 
+;; 关闭当前窗口：有分屏就删掉该窗口（分屏消失），单一窗口时退回 bury；
+;; 带前缀 C-u 时额外 kill 该窗口的 buffer。临时只读 buffer（VC/help/xref…）的 q 用它。
+(defun my/quit-window (arg)
+  "关闭当前窗口：分屏时直接删窗，否则 bury。ARG 非 nil 时再 kill buffer。"
+  (interactive "P")
+  (let ((buf (current-buffer)))
+    (if (and (> (length (window-list nil 'nomini)) 1)
+             (ignore-errors (delete-window) t))
+        nil
+      (quit-window nil))
+    (when arg (kill-buffer buf))))
+
 ;; defhydra 来自 hydra 包；显式 require，确保宏在此处可用（否则 fresh 机器
 ;; 上 hydra 未被自动加载时会报 void-function defhydra）。
 (require 'hydra)

@@ -49,7 +49,7 @@
 (defmacro evil-vc--readonly-bindings (map)
   "Apply evil-collection's read-only bindings to literal keymap MAP."
   `(evil-define-key 'normal ,map
-     (kbd "q")  'quit-window
+     (kbd "q")  'my/quit-window
      (kbd "ZZ") 'quit-window
      (kbd "ZQ") 'evil-quit
      ,@(apply #'append
@@ -165,12 +165,12 @@ With prefix ARG, restrict to the current file instead."
     (kbd "[[")        'diff-file-prev
     (kbd "C-j")       'diff-hunk-next
     (kbd "C-k")       'diff-hunk-prev
-    (kbd "q")         'quit-window)
+    (kbd "q")         'my/quit-window)
 
   ;; ------------------------------------------------------------- vc-annotate
   (evil-set-initial-state 'vc-annotate-mode 'normal)
   (evil-define-key 'normal vc-annotate-mode-map
-    (kbd "q")         'quit-window
+    (kbd "q")         'my/quit-window
     (kbd "a")         'vc-annotate-revision-previous-to-line
     (kbd "d")         'vc-annotate-show-diff-revision-at-line
     (kbd "=")         'vc-annotate-show-diff-revision-at-line
@@ -193,7 +193,7 @@ With prefix ARG, restrict to the current file instead."
   (evil-set-initial-state 'vc-git-log-view-mode 'normal)
   (evil-set-initial-state 'vc-svn-log-view-mode 'normal)
   (evil-define-key 'normal log-view-mode-map
-    (kbd "q")         'quit-window
+    (kbd "q")         'my/quit-window
     (kbd "c")         'log-view-modify-change-comment
     (kbd "d")         'log-view-diff
     (kbd "=")         'log-view-diff
@@ -213,7 +213,7 @@ With prefix ARG, restrict to the current file instead."
     (kbd "C-k")       'log-view-file-prev)
   ;; vc-git 的 log-view 绑定（vc-git-log-view-mode 派生自 log-view-mode）
   (evil-define-key 'normal vc-git-log-view-mode-map
-    (kbd "q")         'quit-window
+    (kbd "q")         'my/quit-window
     (kbd "d")         'log-view-diff
     (kbd "D")         'log-view-diff-changeset
     (kbd "<tab>")     'log-view-toggle-entry-display

@@ -15,27 +15,39 @@
 ;; 静默失效（编译器本身会报 "Unused lexical variable" 提示这个坑）。
 (require 'tab-line)
 
+(defconst my/tab-line-group-name-max 20
+  "tab-line 分组名（项目名）最多显示的字符数，超出截断并加省略号。")
+
+(defun my/tab-line--shorten-name (name)
+  "把项目名 NAME 截到 `my/tab-line-group-name-max' 个字符，超出加省略号。"
+  (if (and (> my/tab-line-group-name-max 1)
+           (> (length name) my/tab-line-group-name-max))
+      (concat (substring name 0 (1- my/tab-line-group-name-max)) "…")
+    name))
+
 (defun my/tab-line-buffer-group-by-project (&optional buffer)
   "Group buffers by project root via project.el.
-返回值首尾各带一个空格：`tab-line-separator' 现在是空串（标签之间紧挨着，见下面
-setup 那段），但分组名（如 \".emacs.d\"）跟左边的 bar 边缘、右边第一个标签之间
-都还需要一点视觉间隔，不然会跟边缘/标签糊在一起分不清——只加尾部空格时左边缘
-贴得死死的，看起来像少了左 padding。这两个空格直接是分组名字符串的一部分，会
-跟着 `tab-line-tab-group' 的背景色一起渲染（原理同标签自己的
-`my/tab-line-tab-padding'：文本里的字符必然跟着所在标签共享同一个容器 face，
-颜色不会错）。
-⚠ 这个返回值同时也是分组的\"身份\"标识——`my/tab-line--group-buffers' 等函数用
-`equal' 比较它来判断两个 buffer 是否同组，首尾空格对所有 buffer 一视同仁地加，
-比较结果不受影响，不用担心带来分组错乱。"
+每个项目分成两个组：文件 buffer 归 \"|项目|\"，非文件 buffer（编译 / xref /
+help / eshell / VC 等）归 \"[项目]\"；不在任何项目内的 buffer 归 \"Other\"。
+项目名超过 `my/tab-line-group-name-max' 个字符会截断并加省略号。
+⚠ 返回值同时是分组的\"身份\"标识（`my/tab-line--group-buffers' 用 `equal' 比较），
+截断后若两个项目名前部相同，会被当成同一个组。"
   (with-current-buffer (or buffer (current-buffer))
-    (let* ((dir (or (buffer-file-name) nil))
+    (let* ((file (buffer-file-name))
+           (dir (or file default-directory))
            (proj (project-current nil dir))
-           (root (when proj (project-root proj))))
-      (concat " "
-              (if (and root dir)
-                  (file-name-nondirectory (directory-file-name root))
-                "Other")
-              " "))))
+           (root (when proj (project-root proj)))
+           (name (my/tab-line--shorten-name
+                  (if root
+                      (file-name-nondirectory (directory-file-name root))
+                    "Other"))))
+      (cond
+       ;; 文件 buffer：项目文件组
+       (file (concat "[" name "]"))
+       ;; 非文件 buffer（VC / 编译 / xref / help / eshell …）：同项目的非文件组
+       (root (concat "|" name "|"))
+       ;; 不在任何项目内
+       (t " Other ")))))
 
 (defun my/tab-line--popup-buffer-p (buf)
   "BUF 是否应该被排除在 tab-line 之外：popper 弹窗或 dashboard 首页。

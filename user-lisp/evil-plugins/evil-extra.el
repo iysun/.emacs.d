@@ -12,6 +12,8 @@
 ;;   modes/wgrep        -> evil-collection-wgrep.el
 ;;   modes/proced       -> evil-collection-proced.el
 ;;
+;; 另：occur-mode 只做了最小绑定（本地补充，非 evil-collection）。
+;;
 ;; `evil-define-key' 是宏，编译期需 evil；运行时整体包在 `with-eval-after-load 'evil'；
 ;; 目标 map 未建好时由 `evil-define-key' 自动推迟。
 ;;
@@ -46,7 +48,7 @@
 (defmacro evil-extra--readonly-bindings (map)
   "Apply evil-collection's read-only bindings to literal keymap MAP."
   `(evil-define-key 'normal ,map
-     (kbd "q")  'quit-window
+     (kbd "q")  'my/quit-window
      (kbd "ZZ") 'quit-window
      (kbd "ZQ") 'evil-quit
      ,@(apply #'append
@@ -176,12 +178,19 @@
     (evil-define-key 'normal package-menu-mode-map "gx" 'package-browse-url))
 
   ;; ------------------------------------------------------------------ grep
+  (evil-set-initial-state 'grep-mode 'normal)
   (evil-define-key 'normal grep-mode-map
     "n"        'evil-search-next
     (kbd "C-j") 'next-error-no-select
-    (kbd "C-k") 'previous-error-no-select)
+    (kbd "C-k") 'previous-error-no-select
+    (kbd "q")   #'my/quit-window)
   (with-eval-after-load 'wgrep
     (evil-define-key 'normal grep-mode-map "i" 'wgrep-change-to-wgrep-mode))
+
+  ;; ------------------------------------------------------------------ occur
+  ;; occur 不在 evil-collection 里，这里补一个最小绑定：q 走 my/quit-window。
+  (evil-set-initial-state 'occur-mode 'normal)
+  (evil-define-key 'normal occur-mode-map (kbd "q") #'my/quit-window)
 
   ;; ----------------------------------------------------------------- wgrep
   (evil-define-key nil wgrep-mode-map

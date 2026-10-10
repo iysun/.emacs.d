@@ -159,7 +159,7 @@
     "gk"               'ibuffer-backward-line
     "]]"               'ibuffer-forward-filter-group
     "[["               'ibuffer-backward-filter-group
-    "q"                'quit-window
+    "q"                'my/quit-window
     "ZZ"               'quit-window
     "ZQ"               'quit-window))
 
