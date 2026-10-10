@@ -48,7 +48,7 @@
            for spec = (font-spec :family f)
            when (find-font spec)
            return (set-fontset-font t 'han spec nil 'prepend))
-  ;; 符号（制表符、箭头、几何图形等；magit/dired 的框线字符会用到）。
+  ;; 符号（制表符、箭头、几何图形等；dired 等的框线字符会用到）。
   ;; "Symbola" 是 assets/fonts/ 里 vendor 的字体（候选名不用改，字体名本来就叫这个），
   ;; 排第一优先于系统的 Segoe UI Symbol。
   (cl-loop for f in '("Symbola" "Segoe UI Symbol" "Symbol")
@@ -323,12 +323,12 @@ scripts/install-fonts.py 大概率没跑过（或跑了但没重启 Emacs）—�
 (add-hook 'after-init-hook 'use-emacs-theme)
 
 ;; ---- fringe 位图窄位图兜底放大（不做 HiDPI 整体放大）----
-;; 目标宽度定成 8——即 Emacs/magit-section 等包给 fringe 位图约定俗成的
+;; 目标宽度定成 8——即 Emacs 各包给 fringe 位图约定俗成的
 ;; 默认宽度。这条 advice 因此只会碰真正异常窄（<8px）的位图，把它们兜底放大到
-;; 可正常辨认的 8px；bookmark-mark、magit-section 的展开箭头这些本来就是标准
-;; 8px 位图，不会被这条 advice 碰到，原样使用包自带的形状/尺寸。
+;; 可正常辨认的 8px；bookmark-mark 这类本来就是标准 8px 位图，不会被这条 advice
+;; 碰到，原样使用包自带的形状/尺寸。
 ;; 之前这里试过把目标宽度定成 16 做「HiDPI 放大」，副作用是所有图标（包括
-;; bookmark 的旗子、magit 的箭头）都比行号数字/正文字符明显大一圈，观感突兀，
+;; bookmark 的旗子、各包的展开箭头）都比行号数字/正文字符明显大一圈，观感突兀，
 ;; 用户明确要求撤回——所以这里只保留「防止极端窄位图糊成一团」这一件事，
 ;; 不再整体放大。放大到 16px 那版同时还得把 frame 的 fringe 列宽也撑宽到
 ;; 16px（否则被裁切）；目标宽度改回 8 之后，fringe 列宽维持 Emacs 默认即可，
@@ -364,13 +364,13 @@ scripts/install-fonts.py 大概率没跑过（或跑了但没重启 Emacs）—�
 (defun my/fringe-scale-advice (orig-func &rest r)
   "`define-fringe-bitmap' 的 :around advice：位图窄于目标宽度时先放大再定义。
 HEIGHT 参数分两种情况，不能一视同仁地跟宽度同比放大：
-- 调用方没显式传 HEIGHT（如 `bookmark-mark'、magit-section 的展开箭头）——
+- 调用方没显式传 HEIGHT（如 `bookmark-mark'、各包的展开箭头）——
   这类是行数固定的小图标，本来就该宽高同比放大，否则放大后会被拉扁。
 - 调用方显式传了 HEIGHT（比如直接拿 `frame-char-height' 算出贴满一整行所需的
   真实像素行高）——这个高度已经是按当前行高精算出来的，
   跟位图宽度毫无关系，绝不能再乘一次宽度缩放比例。之前不分青红皂白地
   连高度也一起按宽度比例拉伸，会把「贴满一行」的位图拉得比实际行高还高，
-  多出来的部分溢到下一行的 fringe 里——bookmark/magit 的 fringe 图标错位、
+  多出来的部分溢到下一行的 fringe 里——bookmark 等的 fringe 图标错位、
   显示成锯齿状的问题根源就在这。"
   (let* ((bitmap (nth 0 r))
          (bits (nth 1 r))

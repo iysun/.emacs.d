@@ -1,6 +1,6 @@
 ;;; init.el --- 全量启动配置 -*- lexical-binding: t; -*-
 ;;
-;; 模块化完整配置：evil、补全栈、UI、LSP、magit 等。
+;; 模块化完整配置：evil、补全栈、UI、LSP、VC 等。
 ;;
 ;; 加载路径：`user-lisp/' 及其子目录（mode-line/tab-line/eshell-prompt）由 Emacs 31
 ;; 的 user-lisp 机制自动处理——`prepare-user-lisp' 在启动时把它们加入 load-path，
@@ -43,7 +43,6 @@
            embark-consult
            marginalia
            consult-eglot
-           magit
            ;; eshell-git-prompt 已移除：它的 multiline2 主题每画一次提示符要起 4 个
            ;; git 进程（本机实测 945ms/条命令）。提示符改为 user-lisp/init-term.el 里自写，
            ;; 分支名读 .git/HEAD、脏净标记异步算，见那里的说明。
@@ -81,6 +80,10 @@
 (require 'mc-evil)
 
 (require 'evil-keymaps)                 ; evil 专属键位（with-eval-after-load 'evil）
+(require 'evil-vc)                      ; 自 evil-collection 提取的 VC / diff-mode 键位
+(require 'evil-dired)                   ; 自 evil-collection 提取的 dired 键位
+(require 'evil-ibuffer)                 ; 自 evil-collection 提取的 ibuffer 键位
+(require 'evil-extra)                   ; 自 evil-collection 提取的其它 special mode 键位
 (require 'init-keymaps)                 ; 非 evil 全局键
 (require 'init-lsp)
 (require 'init-format)

@@ -41,7 +41,7 @@
 | `user-lisp/mode-line/init-mode-line.el` | mode-line 实现本体，`(provide 'init-mode-line)`，由 `init-bars.el` `require` |
 | `user-lisp/tab-line/init-tab-line.el` | tab-line 实现本体，`(provide 'init-tab-line)`。⚠ 特意不叫 `tab-line.el`：user-lisp 会把子目录**前置**到 load-path，叫 `tab-line.el` 会盖住内置库 |
 | `user-lisp/eshell-prompt/init-eshell-prompt.el` | eshell 提示符实现本体，由 `init-term.el` `require` |
-| `user-lisp/evil-plugins/` | evil 相关插件合集：**内联**的 `evil-surround` / `evil-commentary`(+integration) / `evil-visualstar`（GPLv3），以及本仓库的 `evil-config.el` / `evil-keymaps.el` / `evil-textobjects.el`(停用) / `mc-evil.el` / `ime.el`。见其 `README.md` |
+| `user-lisp/evil-plugins/` | evil 相关插件合集：**内联**的 `evil-surround` / `evil-commentary`(+integration) / `evil-visualstar`（GPLv3），以及本仓库的 `evil-config.el` / `evil-keymaps.el` / `evil-vc.el` / `evil-dired.el` / `evil-ibuffer.el` / `evil-extra.el` / `evil-textobjects.el`(停用) / `mc-evil.el` / `ime.el`。见其 `README.md` |
 | `user-lisp/gcmh/gcmh.el` | **内联**的 `gcmh`（GC 调优，GPLv3），由 `init-base.el` `require`。见其 `README.md` |
 | `user-lisp/lang-*.el` | 语言专属配置（如 `lang-go.el`，当前未启用） |
 | `themes/` | 本仓库自维护的主题文件（`*-theme.el`），由 `custom-theme-load-path` 接入（`user-lisp/init-ui.el`），新增主题放进去即可被 `switch-emacs-theme` 自动发现。共 5 个：`nn-world`（借自 zdn/.emacs.d，GPLv3，默认主题）、`catppuccin`/`crafters`/`gits`/`matrix` |
@@ -59,7 +59,7 @@
 当前启用的模块（见 `init.el` 末尾）：`init-base` `init-ui` `init-bars` `init-window`
 `init-completion` `init-dired` `init-git` `init-term` `init-project` `init-keymaps`
 `init-lsp` `init-format` `init-navigation`，以及 `user-lisp/evil-plugins/` 下的
-`evil-config` `evil-keymaps` `mc-evil`（`ime` 由 `early-init.el` 加载）。
+`evil-config` `evil-keymaps` `evil-vc` `evil-dired` `evil-ibuffer` `evil-extra` `mc-evil`（`ime` 由 `early-init.el` 加载）。
 其中 **`evil-config` 由 `init.el` 在 `after-init-hook`（depth -99）才 `require`**，让 evil 的加载
 不计入 `emacs-init-time`；故 `evil-keymaps`/`init-completion` 取 `evil-define-key` 宏改用
 `eval-when-compile`。

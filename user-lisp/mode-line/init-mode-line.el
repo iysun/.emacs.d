@@ -149,7 +149,7 @@ mode-line 挤爆。"
               mode-line-position-column-line-format '(" %l:%c"))
 
 ;; 跟之前一致：只在下面这几个 mode-hook 里 setq-local，其余缓冲区
-;; （magit/eshell/help/*scratch*/popper 弹窗…）保持 early-init.el 设的
+;; （eshell/help/*scratch*/popper 弹窗…）保持 early-init.el 设的
 ;; `(setq-default mode-line-format nil)'，即**完全没有 mode-line**——刻意的极简取向。
 ;; 这一点 emacs-solo 没有（它是全局 `setq-default'），沿用本仓库既有做法不改，
 ;; 跟这条 bar 本身的分段取舍无关——那管的是它长什么样，不是它在哪些 buffer

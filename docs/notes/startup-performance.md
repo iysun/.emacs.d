@@ -35,7 +35,7 @@
 | `evil-collection-init`（无参） | ~0.18s | **保持**——现代版按 mode 延迟，并不慢（曾被误判为大头） |
 | `treesit-auto` 裸 require | ~0 | **保持**——在基线噪音内 |
 | corfu/vertico/consult/embark/cape… | 合计 ~0.4s | **保持**——多在 `after-init-hook` |
-| `magit` | require 要 ~4.6s | **不在启动路径**（`init-git.el` 用 `with-eval-after-load 'magit`）；首次 `M-x magit` 才付这笔 |
+| ~~`magit`~~ | ~~require 要 ~4.6s~~ | **2026-10-10 已移除**：不再使用 magit，git 操作改用内置 VC（`C-x v d`）；`init-git.el` 里的 `with-eval-after-load 'magit` 也已删除 |
 
 ## 没采用的：package-quickstart
 

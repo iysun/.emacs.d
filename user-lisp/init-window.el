@@ -53,7 +53,6 @@
           "^\\*Buffer List.*\\*$"
           "\\*Ibuffer.*\\*" ibuffer-mode ;ibuffer-mode
           help-mode
-          magit-status-mode
           "COMMIT_EDITMSG"                       ;; exact match
           git-commit-ts-mode
           compilation-mode))

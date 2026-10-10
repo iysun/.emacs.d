@@ -44,7 +44,7 @@
 
 ;; 新机器首次装包时本地还没有 GnuPG keyring，GNU ELPA 的签名校验会因
 ;; "No public key" 失败，导致 compat / eglot 等已签名包无法安装，并连累
-;; 所有依赖它们的包（consult/vertico/corfu/magit ...）。
+;; 所有依赖它们的包（consult/vertico/corfu ...）。
 ;; 仅当本地没有 keyring 时关闭签名校验；一旦机器有了 keyring（如 Linux
 ;; 机器已导入 GNU ELPA 公钥），仍按默认进行校验。
 (when (not (file-exists-p

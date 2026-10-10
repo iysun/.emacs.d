@@ -13,7 +13,7 @@
 ;; 建立，`require' 用不了）。
 
 (when (eq system-type 'windows-nt)
-  ;; 文件属性与子进程管道。对 LSP / magit 这种高频起子进程、高频 stat 文件的
+  ;; 文件属性与子进程管道。对 LSP / git 这种高频起子进程、高频 stat 文件的
   ;; 场景影响最明显。
   (when (boundp 'w32-get-true-file-attributes)
     (setq w32-get-true-file-attributes nil     ; 不去解析真实 uid/gid/链接数，这步很贵
@@ -26,7 +26,7 @@
   (w32-set-console-codepage 65001)
   (w32-set-console-output-codepage 65001)
 
-  ;; 给 git 子进程定几个环境变量（原在 user-lisp/init-git.el）：magit 一次刷新会起
+  ;; 给 git 子进程定几个环境变量（原在 user-lisp/init-git.el）：git 前端一次刷新会起
   ;; 很多次 git，这几项能避免"卡在等输入"和无谓的锁竞争。
   (setenv "GIT_TERMINAL_PROMPT" "0")   ; 需要凭据时直接失败，不在无终端处挂起
   (setenv "GIT_ASK_YESNO" "false")     ; 同上，不弹交互确认
