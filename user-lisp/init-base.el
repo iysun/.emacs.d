@@ -123,7 +123,7 @@
 
 ;; 网络代理：同时设 `url-proxy-services`（package / url 库）和
 ;; `http(s)_proxy` 环境变量（git / curl / LSP 等子进程）。默认本机 Clash 端口。
-(defvar my/proxy-address "127.0.0.1:7890"
+(defvar my/proxy-address "127.0.0.1:7897"
   "HTTP(S) 代理地址，格式 host:port。")
 
 (defvar my/proxy-no-proxy "^\\(localhost\\|127\\.0\\.0\\.1\\)"
