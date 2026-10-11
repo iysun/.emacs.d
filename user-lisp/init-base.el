@@ -121,6 +121,46 @@
 ;; 新建 frame（如 `emacsclient -c'）默认不继承这个参数，需要单独设。
 (add-hook 'after-make-frame-functions #'my/set-buffer-predicate)
 
+;; 网络代理：同时设 `url-proxy-services`（package / url 库）和
+;; `http(s)_proxy` 环境变量（git / curl / LSP 等子进程）。默认本机 Clash 端口。
+(defvar my/proxy-address "127.0.0.1:7890"
+  "HTTP(S) 代理地址，格式 host:port。")
+
+(defvar my/proxy-no-proxy "^\\(localhost\\|127\\.0\\.0\\.1\\)"
+  "不走代理的主机名正则，对应 `url-proxy-services' 的 no_proxy 项。")
+
+(defun my/proxy-on ()
+  "启用网络代理（`my/proxy-address'）。"
+  (interactive)
+  (setq url-proxy-services
+        `(("http"     . ,my/proxy-address)
+          ("https"    . ,my/proxy-address)
+          ("no_proxy" . ,my/proxy-no-proxy)))
+  (let ((url (concat "http://" my/proxy-address)))
+    (setenv "http_proxy" url)
+    (setenv "https_proxy" url)
+    (setenv "HTTP_PROXY" url)
+    (setenv "HTTPS_PROXY" url))
+  (setenv "no_proxy" "localhost,127.0.0.1")
+  (setenv "NO_PROXY" "localhost,127.0.0.1")
+  (message "Proxy on: %s" my/proxy-address))
+
+(defun my/proxy-off ()
+  "关闭网络代理。"
+  (interactive)
+  (setq url-proxy-services nil)
+  (dolist (var '("http_proxy" "https_proxy" "HTTP_PROXY" "HTTPS_PROXY"
+                 "no_proxy" "NO_PROXY"))
+    (setenv var nil))
+  (message "Proxy off"))
+
+(defun my/proxy-toggle ()
+  "切换网络代理开关。"
+  (interactive)
+  (if url-proxy-services
+      (my/proxy-off)
+    (my/proxy-on)))
+
 (provide 'init-base)
 
 ;; (defun word-syntax- ()
