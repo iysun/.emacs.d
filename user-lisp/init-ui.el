@@ -111,43 +111,6 @@
              (member my-ui-default-font-family my-ui--nerd-patched-font-families))
     (setq nerd-icons-font-family my-ui-default-font-family)))
 
-;; ---- vendor 的字体：装了没 ----
-;; assets/fonts/ 里的字体文件本身进了仓库，但 Windows 上还得跑一遍
-;; scripts/install-fonts.py 才会真正装进当前用户、被 find-font 认到——字体候选表
-;; 本身"找不到就沉默跳过"的哲学不变（见上面几组 cl-loop），但"vendor 的字体明明
-;; 在仓库里、却没跑安装脚本"是另一件事：忘跑了比沉默更值得提醒一下。
-;; 思路是「正常沉默，只在有个手动步骤大概率忘跑了时才提醒」——
-;; 即"vendor 的字体明明在仓库里、却没跑安装脚本"这种情况。
-(defconst my-ui--vendored-fonts
-  '(("assets/fonts/JetBrainsMonoNLNerdFontMono-Regular.ttf" . "JetBrainsMonoNL NFM")
-    ("assets/fonts/SarasaTermSCNerd-Regular.ttf" . "更纱终端书呆黑体-简")
-    ("assets/fonts/SourceHanSansSC-Regular.otf" . "思源黑体")
-    ("assets/fonts/NotoColorEmoji-WindowsCompatible.ttf" . "Noto Color Emoji")
-    ("assets/fonts/Symbola.ttf" . "Symbola"))
-  "（仓库内相对路径 . 装好后的 family 名）。供 `my-ui--check-vendored-fonts' 逐项探测。")
-
-(defun my-ui--check-vendored-fonts ()
-  "assets/fonts/ 里有字体文件、但 find-font 探测不到对应 family，说明
-scripts/install-fonts.py 大概率没跑过（或跑了但没重启 Emacs）——`*Warnings*'
-里提示一下，别人换新机器 clone 完直接用，容易忘这一步。"
-  (when (eq system-type 'windows-nt)
-    (let ((missing
-           (seq-filter
-            (lambda (cell)
-              (and (file-exists-p (expand-file-name (car cell) user-emacs-directory))
-                   (not (find-font (font-spec :family (cdr cell))))))
-            my-ui--vendored-fonts)))
-      (when missing
-        (display-warning
-         'my-ui
-         (format "assets/fonts/ 里有 vendor 的字体，但本机还没装：%s
-跑一次：
-  python scripts\\install-fonts.py
-装完重启 Emacs。"
-                 (mapconcat #'cdr missing "、"))
-         :warning)))))
-(add-hook 'emacs-startup-hook #'my-ui--check-vendored-fonts)
-
 ;; 连字（ligature）。原先用的 `global-prettify-symbols-mode' 其实是把 "->" 之类
 ;; **替换成单个字符**（如 →），并非真连字，且会改变列宽、干扰对齐。
 ;; 这里改用 `composition-function-table'：让字体自己的连字字形生效，字符本身不变。
