@@ -247,9 +247,11 @@
 ;;   (setq dashboard-set-file-icons t))
 ;; (dashboard-setup-startup-hook)
 
-;; 本仓库自维护的主题目录（不依赖 doom-themes 包）。当前只有 zdn/.emacs.d 借来的
-;; nn-world，见 themes/nn-world-theme.el。加了新主题文件放这个目录即可，
-;; switch-emacs-theme 靠 custom-available-themes 现场扫这条 load-path，自动出现在候选里。
+;; 本仓库自维护的主题目录（不依赖任何主题包）：themes/ 下全是 `*-theme.el`。
+;; `nn-world` 是模板（借自 zdn/.emacs.d），其余（crafters/gits/matrix/catppuccin、
+;; gruvbox-dark/nord/dracula/monokai-pro）都是照它的结构换 24 槽调色板得到的变体——
+;; 加新变体 = 复制一份改那段 `let` 里的颜色。放这个目录即可被 switch-emacs-theme
+;; （custom-available-themes 现场扫这条 load-path）发现；Emacs 自带的 modus-* 等同样可选。
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
 
 (defun set-bigger-spacing ()                                               

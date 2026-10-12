@@ -44,7 +44,7 @@
 | `user-lisp/evil-plugins/` | evil 相关插件合集：**内联**的 `evil-surround` / `evil-commentary`(+integration) / `evil-visualstar`（GPLv3），以及本仓库的 `evil-config.el` / `evil-keymaps.el` / `evil-vc.el` / `evil-dired.el` / `evil-ibuffer.el` / `evil-extra.el` / `mc-evil.el` / `ime.el`。见其 `README.md` |
 | `user-lisp/gcmh/gcmh.el` | **内联**的 `gcmh`（GC 调优，GPLv3），由 `init-base.el` `require`。见其 `README.md` |
 | `user-lisp/lang-*.el` | 语言专属配置（如 `lang-go.el`，当前未启用） |
-| `themes/` | 本仓库自维护的主题文件（`*-theme.el`），由 `custom-theme-load-path` 接入（`user-lisp/init-ui.el`），新增主题放进去即可被 `switch-emacs-theme` 自动发现。共 5 个：`nn-world`（借自 zdn/.emacs.d，GPLv3，默认主题）、`catppuccin`/`crafters`/`gits`/`matrix` |
+| `themes/` | 本仓库自维护的主题文件（`*-theme.el`），由 `custom-theme-load-path` 接入（`user-lisp/init-ui.el`），新增主题放进去即可被 `switch-emacs-theme` 自动发现。共 9 个：`nn-world`（借自 zdn/.emacs.d，GPLv3，**模板**）、`catppuccin`/`crafters`/`gits`/`matrix`，以及照 nn-world 模板换 24 槽调色板生成的 `gruvbox-dark`/`nord`/`dracula`/`monokai-pro`（结构/face 表沿用 nn-world）。Emacs 自带的 `modus-vivendi`/`modus-operandi` 等也在候选里 |
 | `assets/fonts/` | vendor 进仓库的字体文件（OFL 等自由许可），配 `scripts/install-fonts.py` 装进当前用户。见 [docs/notes/vendored-fonts.md](docs/notes/vendored-fonts.md) |
 | `custom.el` | Customize 自动生成，**已 gitignore，勿手改** |
 | `elpa/` | 第三方包，**已 gitignore，勿编辑/勿提交** |
