@@ -71,8 +71,11 @@
           "^\\*Buffer List.*\\*$"
           "\\*Ibuffer.*\\*" ibuffer-mode ;ibuffer-mode
           help-mode
-          "COMMIT_EDITMSG"                       ;; exact match
-          git-commit-ts-mode
+          ;; VC 提交 buffer（`C-x v v' 弹出的 *vc-log*）也走弹窗。
+          ;; 原 `COMMIT_EDITMSG' / `git-commit-ts-mode' 是 magit 时代的，已随 magit 移除。
+          ;; buffer 名固定是 *vc-log*（vc-start-logentry），用名字正则最稳——popper 对 mode 项
+          ;; 是按 major-mode **精确**匹配，而它是 vc-git-log-edit-mode，写 log-edit-mode 不中。
+          "^\\*vc-log\\*$"
           compilation-mode))
   )
 (popper-mode +1)
