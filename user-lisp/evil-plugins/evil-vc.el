@@ -196,6 +196,20 @@ With prefix ARG, restrict to the current file instead."
   (evil-define-key 'normal log-view-mode-map
     (kbd "q")         'my/quit-window
     (kbd "c")         'log-view-modify-change-comment
+    ;; ---- commit 级操作 ----
+    ;; 这 5 个 log-view 自带（默认 R/x/X/e/C），但 evil normal 态把对应单字母占了
+    ;; （evil-replace / evil-delete-char / evil-delete-backward-char / evil-forward-word-end /
+    ;; evil-change-to-eol），所以显式补回。
+    ;; ⚠ x/X 改写历史（Emacs 侧自带确认；已推送的历史默认被
+    ;;   `vc-allow-rewriting-published-history' 拦住）：
+    ;;   R = 生成反向提交（= git revert，安全）
+    ;;   x = 回退分支到该提交，改动留工作区（= reset --mixed）
+    ;;   X = 回退分支并丢弃改动（= reset --hard）
+    (kbd "R")         'log-view-revert-or-delete-revisions
+    (kbd "x")         'log-view-uncommit-revisions-from-end
+    (kbd "X")         'log-view-delete-revisions-from-end
+    (kbd "e")         'log-view-modify-change-comment       ; 与 c 同命令（补上游键位）
+    (kbd "C")         'log-view-cherry-pick
     (kbd "d")         'log-view-diff
     (kbd "=")         'log-view-diff
     (kbd "D")         'log-view-diff-changeset
