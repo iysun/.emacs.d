@@ -68,6 +68,7 @@
 `forward-thing 'evil-word` 与 `iw/aw` 的 thingatpt bounds 都走它）；`i SPC w` / `a SPC w` 按
 **subword**（camelCase 边界）；`W`/`iW`/`aW` 仍是空白分隔大词。⚠ 自定义 forward-op 必须返回
 「未移动数」（0=成功），否则 `evil-forward-nearest` 的 `(zerop ...)` 会报 wrong-type-argument。
+另开 `global-subword-mode`，让 Emacs 自身的 M-f/M-b/M-d 也按 subword 切（evil 侧不依赖它）。
 `init-ai` / `lang-go` 已写好但注释停用（停用模块的
 `use-package` 用 `:ensure nil`，避免 user-lisp 自动字节编译时联网装包；启用前先装好对应包）。
 

@@ -94,10 +94,12 @@
 ;; ⚠ 字符类写死 [[:word:]_-] 而不用语法表：'-' 在 basic 模式是标点、在 lisp 模式是符号，
 ;; 写死才能跨 mode 一致；[:word:] 含 CJK，故中文整段也算一个整词。
 ;;
-;; ⚠ 不启用 global-subword-mode：evil 分词不依赖它（整词走 skip-chars；subword 对象直接调
-;; subword-forward）。这里只 `require' subword 取函数（subword-forward 非 autoload），
-;; 不全局开 subword-mode —— Emacs 自身的 M-f/M-b/M-d 保持默认整词行为。
+;; 启用 `global-subword-mode'：让 Emacs 自身的词命令 M-f/M-b/M-d… 也按 subword 切。
+;; （Emacs 31 的 subword-mode 经 `find-word-boundary-function-table' 让 `forward-word' 认
+;; camelCase 边界——不是改键、不是 advice，所以绑在 `forward-word' 上的 M-f/M-b/M-d 一并生效。）
+;; evil 侧不依赖它：w/b/e 走 skip-chars 整词运动，i␣w/a␣w 直接调 subword-forward，开不开都不影响。
 (require 'subword)
+(global-subword-mode t)
 
 (defun forward-evil-whole-word (&optional count)
   "整词运动：前移 COUNT 个整词的末尾；COUNT 为负则回退到词首。
