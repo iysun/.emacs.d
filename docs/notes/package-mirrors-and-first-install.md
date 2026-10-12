@@ -5,7 +5,7 @@
 包源集中在 **`user-lisp/init-mirrors.el`**（唯一定义处），USTC / 清华 TUNA / 官方三套各存一个常量，
 文件末尾一行 `setq` 选用哪套。**换镜像只改那一行。**
 
-只有一处使用方：`init.el` 在 `package-initialize` 之前 `(require 'init-mirrors)`。不要再在别处写 `package-archives`。
+只有一处使用方：`init.el` 里 `(require 'init-mirrors)`（在任何 package 安装/刷新之前生效）。不要再在别处写 `package-archives`。
 
 ## 新机器首次安装的签名校验兜底
 

@@ -37,11 +37,15 @@
 | corfu/vertico/consult/embark/cape… | 合计 ~0.4s | **保持**——多在 `after-init-hook` |
 | ~~`magit`~~ | ~~require 要 ~4.6s~~ | **2026-10-10 已移除**：不再使用 magit，git 操作改用内置 VC（`C-x v d`）；`init-git.el` 里的 `with-eval-after-load 'magit` 也已删除 |
 
-## 没采用的：package-quickstart
+## package-quickstart（已采用）
 
-试过 `(setq package-quickstart t)` + 预生成 `package-quickstart.el`。实测只快 ~100ms，
-因为 `init.el` 显式调 `(package-initialize)`（它**不走** quickstart；只有 `package-activate-all` 才用）。
-为 ~100ms 改 init.el 又得每次装/删包重新生成 311KB 文件，不值——**已回退**。
+`early-init.el`：`(setq package-quickstart t)`（快照 `var/package-quickstart.el`）+ `(package-activate-all)`，
+**不再**显式 `(package-initialize)`。实测真实 GUI `emacs-init-time` **1.25s → 0.92s（约 −0.33s）**。
+
+早期曾试过 quickstart 但"只快 ~100ms"——那是**仍显式调 `(package-initialize)`** 时的结论；
+quickstart 只被 `package-activate-all` 使用，必须把 `package-initialize` 去掉才吃得到收益。
+快照过期**不报错**，由 `init.el` 的 `my/check-quickstart-freshness` 兜底告警；装/删包走
+package.el 会自动重建（`package--quickstart-maybe-refresh`），手工改 `elpa/` 则需 `M-x package-quickstart-refresh`。
 
 ## after-init-hook 分项（`emacs -Q` 逐项计时）
 

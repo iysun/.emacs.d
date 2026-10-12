@@ -21,12 +21,24 @@
 
 ;; 自己初始化包，而不是让 Emacs 自动激活：放这里只做一次，且必须早于 user-lisp 的
 ;; 自动字节编译——否则编译时 evil / gcmh 等未激活，会失败并把错误刷进 *Compile-Log*。
-;; 关掉 Emacs 的自动激活（`package-enable-at-startup'），否则会与下面显式那次重复：
-;; `package-initialize' 每次都做 load-all-descriptors + read-archive-contents +
-;; package-activate-all + build-compatibility-table，纯浪费。
+;;
+;; 用 `package-quickstart'：把「激活所有已装包」预计算成 var/package-quickstart.el(.elc)，
+;; 启动时 `package-activate-all' 只 `load' 这一个文件，省掉逐包读描述符/找目录/load
+;; autoloads（实测启动约 −0.3s）。⚠ 只有 `package-activate-all' 走 quickstart，且要求
+;; `package-activated-list' 为空——所以这里**不能**再调 `(package-initialize)'（那会做
+;; 全量 load-all-descriptors + read-archive-contents，把 quickstart 的收益抵消）。
 (setq package-enable-at-startup nil)
 (require 'package)
-(package-initialize)
+(setq package-quickstart t
+      ;; 放 var/：已 gitignore，且避开「根目录过期 quickstart 被当激活清单读走」的坑。
+      package-quickstart-file (expand-file-name "var/package-quickstart.el" user-emacs-directory))
+;; 缺失兜底：快照不存在（新机器/换目录）时先生成一次，避免一直走慢路径。
+;; （refresh 内部会 package-initialize 'no-activate 读描述符，够自足。）
+(unless (or (file-exists-p package-quickstart-file)
+            (file-exists-p (concat package-quickstart-file "c")))
+  (make-directory (file-name-directory package-quickstart-file) t)
+  (package-quickstart-refresh))
+(package-activate-all)
 
 ;; user-lisp 会自动字节编译 user-lisp/ 下所有文件。本配置大量「先 setq 包变量、
 ;; 包用的时候才加载」以及调用 autoload 函数，编译期必然产生成片

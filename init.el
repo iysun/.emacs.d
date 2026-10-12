@@ -13,8 +13,10 @@
 
 (require 'package)
 (require 'init-mirrors)                 ; package-archives 的唯一定义处
-;; 包已由 early-init 显式初始化；这里仅在未初始化时兜底（例如 --batch 直接 -l init.el）。
-(unless (bound-and-true-p package--initialized)
+;; 包已由 early-init 通过 `package-activate-all' 激活；这里仅在未激活时兜底
+;; （例如 --batch 直接 -l init.el）。⚠ 走 quickstart 时 `package--initialized' 仍为 nil，
+;; 故用 `package--activated'（package-activate-all 会置它）判，别用 package--initialized。
+(unless (bound-and-true-p package--activated)
   (package-initialize))
 
 (require 'use-package)
@@ -93,6 +95,30 @@
 ;;(require 'evil-textobjects)
 ;;
 ;;(require 'lang-go)
+
+;; ---- package-quickstart 新鲜度自检 ----
+;; quickstart 快照过期时 `package-activate-all' **不报错**、静默用旧集合（新装的包会
+;; 「装了却没激活」）。这里仿旧 pdmp 自检：快照早于 elpa/ 最后改动就告警。
+;; 装/删包走 package.el 会自动重建（`package--quickstart-maybe-refresh'），手工改 elpa/ 不会。
+(defun my/check-quickstart-freshness ()
+  "用 package-quickstart 启动时，若快照早于 elpa/ 最后改动则告警。"
+  (when (and (bound-and-true-p package-quickstart)
+             (bound-and-true-p package-quickstart-file))
+    (let* ((qs (or (and (file-exists-p (concat package-quickstart-file "c"))
+                        (concat package-quickstart-file "c"))
+                   (and (file-exists-p package-quickstart-file)
+                        package-quickstart-file)))
+           (elpa (expand-file-name "elpa" user-emacs-directory)))
+      (when (and qs (file-directory-p elpa)
+                 (time-less-p (file-attribute-modification-time (file-attributes qs))
+                              (file-attribute-modification-time (file-attributes elpa))))
+        (display-warning
+         'quickstart
+         (format "package-quickstart（%s）早于 elpa/ 最后改动（%s）：可能装/删过包，快照是旧的。请 M-x package-quickstart-refresh 重建。"
+                 (format-time-string "%F %R" (file-attribute-modification-time (file-attributes qs)))
+                 (format-time-string "%F %R" (file-attribute-modification-time (file-attributes elpa))))
+         :warning)))))
+(add-hook 'emacs-startup-hook #'my/check-quickstart-freshness)
 
 (provide 'init)
 ;;; init.el ends here

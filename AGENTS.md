@@ -30,7 +30,7 @@
 
 | 路径 | 作用 |
 |------|------|
-| `early-init.el` | GC 延迟、native-comp、**早期初始化包**（`package-enable-at-startup nil` + `(package-initialize)`，须早于 user-lisp 自动编译）、init 期抑制重绘/回显、收窄编译告警、首装签名校验兜底；用绝对路径 `load` `user-lisp/init-windows` 与 `user-lisp/evil-plugins/ime` |
+| `early-init.el` | GC 延迟、native-comp、**早期激活包**（`package-enable-at-startup nil` + `package-quickstart` + `(package-activate-all)`，须早于 user-lisp 自动编译；快照缺失时自动 `package-quickstart-refresh`）、init 期抑制重绘/回显、收窄编译告警、首装签名校验兜底；用绝对路径 `load` `user-lisp/init-windows` 与 `user-lisp/evil-plugins/ime` |
 | `init.el` | 顶层启动：声明包列表（`use-package … :ensure t :defer t`）+ `require` 各模块 |
 | `user-lisp/` | 功能模块目录，由 Emacs 31 user-lisp 机制自动加入 load-path 并字节编译/生成 autoload |
 | `user-lisp/init-*.el` | 各功能模块（每个 `(provide 'init-xxx)`） |
@@ -87,11 +87,15 @@ Emacs 31 的 user-lisp 机制在启动时会：
 `.elc`（或 `M-x prepare-user-lisp` 带前缀强制重建），下次启动会按需重编。
 
 > ⚠ 两个**必须在 `early-init.el` 里设好、别改回去**的开关：
-> - **包初始化必须在 `early-init` 完成**（`package-enable-at-startup nil` + `(package-initialize)`）：
->   user-lisp 的自动字节编译发生在 init **之前**，若那时包还没激活（evil/gcmh/hydra… 不在
->   load-path），编译会失败并把错误刷进 `*Compile-Log*`。`init.el` 用
->   `(unless package--initialized …)` 守卫，避免重复初始化（`package-initialize` 每次都会做全量
->   load-all-descriptors / read-archive-contents / activate-all，很重）。
+> - **包必须在 `early-init` 里激活完成**（`package-enable-at-startup nil` + `package-quickstart t`
+>   + `(package-activate-all)`）：user-lisp 的自动字节编译发生在 init **之前**，若那时包还没激活
+>   （evil/gcmh/hydra… 不在 load-path），编译会失败并把错误刷进 `*Compile-Log*`。
+>   - 用 `package-quickstart`（快照 `var/package-quickstart.el`）把「激活所有包」预计算成一份文件，
+>     快照缺失时 early-init 会先 `package-quickstart-refresh` 生成一次（实测启动 ~−0.3s）。
+>   - ⚠ 走 quickstart 时 `package--initialized` 仍为 nil，`init.el` 的兜底守卫要用
+>     `package--activated`（`package-activate-all` 会置它），**别**再调 `(package-initialize)`
+>     （它会做全量 load-all-descriptors/read-archive-contents，抵消 quickstart 收益）。
+>   - 快照过期**不报错**，靠 `init.el` 的 `my/check-quickstart-freshness` 告警（早于 `elpa/` 就提醒重建）。
 > - **收窄 `byte-compile-warnings`**（`(not free-vars unresolved obsolete interactive-only lexical)`）：
 >   本配置大量"先 `setq` 包变量、用时才加载"，编译必然产生成片此类良性告警；真正的
 >   语法 / 宏错误仍会暴露（运行时也会立刻报）。
@@ -99,7 +103,7 @@ Emacs 31 的 user-lisp 机制在启动时会：
 ## 字节编译与 .elc（重要）
 
 因为 user-lisp 机制会自动字节编译，`.elc` 成为实际加载物（交互会话 `load-prefer-newer` 为 nil，
-优先 `.elc`）。前提是编译时包已激活——见上「构建 / 编译」的 `package-enable-at-startup` 说明。
+优先 `.elc`）。前提是编译时包已激活——见上「构建 / 编译」的 `package-quickstart` 说明。
 下面这条是**硬性要求**：
 
 - **文件顶层（含 `with-eval-after-load` 体内）用到某个包的宏时，必须在文件顶层 `(require '那个包)`。**
