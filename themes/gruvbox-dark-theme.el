@@ -2,8 +2,8 @@
 ;;; Commentary:
 ;; 由 themes/nn-world-theme.el 换调色板生成：结构、face 列表与 nn-world 完全一致，
 ;; 只替换那 24 槽调色板。底层模板借自 zdn/.emacs.d（GPLv3）。
-;; 版面/色相取 Gruvbox Dark (medium) 的官方色；结构灰阶（bright/dim/secondary/tertiary）按 nn-world
-;; 自身的 bg->fg 比例插值，red-deep/green-deep 由同色系向 bg 混合（官方无对应色）。
+;; Gruvbox Dark (medium)（深色）；结构灰阶 bright/dim/secondary/tertiary 按 nn-world 自身的 bg->fg
+;; 比例插值，red-deep/green-deep 向「较暗一端」混合——这些槽官方无对应色。
 ;;; Code:
 
 (deftheme gruvbox-dark)
