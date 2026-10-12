@@ -17,15 +17,21 @@
 
 ;; 关闭当前窗口：有分屏就删掉该窗口（分屏消失），单一窗口时退回 bury；
 ;; 带前缀 C-u 时额外 kill 该窗口的 buffer。临时只读 buffer（VC/help/xref…）的 q 用它。
+;; 例外：VC 提交 buffer（log-edit）的 q 应是"放弃本次提交"——提交只在 `log-edit-done'
+;; 里发生，所以 kill 掉该 buffer 即取消；交给 `log-edit-kill-buffer'（= C-c C-k，
+;; 会顺手关窗口/hide 文件列表）。这样各处 q 都走同一个 `my/quit-window'。
 (defun my/quit-window (arg)
-  "关闭当前窗口：分屏时直接删窗，否则 bury。ARG 非 nil 时再 kill buffer。"
+  "关闭当前窗口：分屏时直接删窗，否则 bury。ARG 非 nil 时再 kill buffer。
+在 VC 提交 buffer（`log-edit-mode'）里则放弃本次提交并关掉它。"
   (interactive "P")
-  (let ((buf (current-buffer)))
-    (if (and (> (length (window-list nil 'nomini)) 1)
-             (ignore-errors (delete-window) t))
-        nil
-      (quit-window nil))
-    (when arg (kill-buffer buf))))
+  (if (derived-mode-p 'log-edit-mode)
+      (log-edit-kill-buffer)
+    (let ((buf (current-buffer)))
+      (if (and (> (length (window-list nil 'nomini)) 1)
+               (ignore-errors (delete-window) t))
+          nil
+        (quit-window nil))
+      (when arg (kill-buffer buf)))))
 
 ;; defhydra 来自 hydra 包；显式 require，确保宏在此处可用（否则 fresh 机器
 ;; 上 hydra 未被自动加载时会报 void-function defhydra）。

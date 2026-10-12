@@ -231,7 +231,7 @@ With prefix ARG, restrict to the current file instead."
     [remap evil-save-modified-and-close] #'log-edit-done
     [remap evil-quit]                    #'log-edit-kill-buffer)
   (evil-define-key 'normal log-edit-mode-map
-    (kbd "q")         'log-edit-kill-buffer     ; 放弃本次提交并关掉 *vc-log*（= C-c C-k）
+    (kbd "q")         'my/quit-window           ; 与其它 VC buffer 一致；log-edit 里 = 放弃本次提交
     (kbd "g?")        'log-edit-mode-help
     (kbd "ZZ")        'quit-window
     (kbd "ZQ")        'quit-window
