@@ -85,7 +85,7 @@
 
 ;; ---- 词运动 / 分词（word motion & subwords）----
 ;; 口径（最终）：w/b/e 与 iw/aw 按「整词」（identifier 级 [[:word:]_-]+，即
-;; fooBarBaz / foo-bar-baz / foo_bar_baz 各算一个）；agw/igw 按「subword」。
+;; fooBarBaz / foo-bar-baz / foo_bar_baz 各算一个）；i SPC w / a SPC w 按「subword」。
 ;;
 ;; 实现整词：把 evil 的 `evil-word' 词运动换成整词运动。`w/b/e` 走 `forward-thing 'evil-word'，
 ;; `iw/aw` 走 `bounds-of-thing-at-point 'evil-word'`（thingatpt 通用算法再经 forward-thing），
@@ -94,10 +94,10 @@
 ;; ⚠ 字符类写死 [[:word:]_-] 而不用语法表：'-' 在 basic 模式是标点、在 lisp 模式是符号，
 ;; 写死才能跨 mode 一致；[:word:] 含 CJK，故中文整段也算一个整词。
 ;;
-;; ⚠ subword-mode：evil 分词已不依赖它（整词走 skip-chars；agw/igw 直接调 subword-forward）。
-;; 保留它只是让 Emacs 自己的词命令（M-f/M-b/M-d…）也按 subword 走。
+;; ⚠ 不启用 global-subword-mode：evil 分词不依赖它（整词走 skip-chars；subword 对象直接调
+;; subword-forward）。这里只 `require' subword 取函数（subword-forward 非 autoload），
+;; 不全局开 subword-mode —— Emacs 自身的 M-f/M-b/M-d 保持默认整词行为。
 (require 'subword)
-(global-subword-mode t)
 
 (defun forward-evil-whole-word (&optional count)
   "整词运动：前移 COUNT 个整词的末尾；COUNT 为负则回退到词首。
