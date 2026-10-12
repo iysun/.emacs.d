@@ -96,22 +96,50 @@
 (require 'subword)
 (global-subword-mode t)
 
-;; evil-little-word：真正的「小词」= 光标所在的 subword。
-;; （旧实现 defalias 成 symbol 后又用 `'word' thing，实测 igw≡iw、agw≡aw，是坏的。）
-(defun forward-evil-little-word (&optional count)
-  "Move forward COUNT little words (subwords)."
-  (subword-forward (or count 1)))
+;; ---- agw/igw：整词（identifier 级；与 subword 级的 iw/aw 相对）----
+;; 目标：w/b/e 与 iw/aw 按 subword 分词；agw/igw 把整块标识符当一个词。
+;; 例：fooBarBaz / foo-bar-baz / foo_bar_baz 各算一个整词。
+;; 用显式字符类 [[:word:]_ -] 而非语法表：'-' 在 basic 模式是标点、在 lisp 模式是符号，
+;; 写死才能跨 mode 一致（[:word:] 含 CJK，故中文整段也当一个整词）。
+(defconst my/whole-word-chars "[:word:]_-"
+  "整词字符集：[[:word:]] + 下划线 + 连字符（skip-chars 语法，`-' 置末尾按字面量）。")
 
-(put 'evil-little-word 'forward-op #'forward-evil-little-word)
-;; 不自己实现 bounds：thingatpt 的通用算法（先 forward 再 backward，失败则反向）能正确
-;; 处理“光标停在二词交界/大小写边界”的情况；自己写会因为 subword-backward 在边界处退回
-;; 上一个 subword 而错位。
+(defun my/bounds-of-evil-whole-word ()
+  "光标位于整词内时返回 (BEG . END)，否则 nil。"
+  (save-excursion
+    (let ((p (point)))
+      (skip-chars-backward my/whole-word-chars)
+      (let ((beg (point)))
+        (skip-chars-forward my/whole-word-chars)
+        (let ((end (point)))
+          (when (and (< beg end) (<= beg p) (<= p end)
+                     ;; 至少含一个 word 字符：避免把孤立的 -- / __ 当整词
+                     (save-excursion (goto-char beg) (looking-at-p "[[:word:]]")))
+            (cons beg end)))))))
 
-(evil-define-text-object evil-a-little-word (count &optional beg end type)
-  "Select a little word (subword) plus adjacent whitespace.
-⚠ 不用 `evil-select-an-object'：它对 subword 这类「两对象之间无空白」的情况会多吞一个
-后继对象（实测 `agw` 在 `fooBarBaz` 上选到 `fooBar'）。改为在内层范围上补相邻空白。"
-  (let* ((range (evil-select-inner-object 'evil-little-word beg end type count))
+(defun forward-evil-whole-word (&optional count)
+  "Move forward COUNT whole words (identifier level)."
+  (let ((count (or count 1)))
+    (if (> count 0)
+        (dotimes (_ count)
+          (skip-chars-forward "^[:word:]_-")
+          (skip-chars-forward "[:word:]_-"))
+      (dotimes (_ (- count))
+        (skip-chars-backward "^[:word:]_-")
+        (skip-chars-backward "[:word:]_-")))))
+
+(put 'evil-whole-word 'forward-op #'forward-evil-whole-word)
+(put 'evil-whole-word 'bounds-of-thing-at-point #'my/bounds-of-evil-whole-word)
+
+(evil-define-text-object evil-inner-whole-word (count &optional beg end type)
+  "Select inner whole word (identifier: fooBarBaz / foo-bar-baz / foo_bar_baz)."
+  (evil-select-inner-object 'evil-whole-word beg end type count))
+
+(evil-define-text-object evil-a-whole-word (count &optional beg end type)
+  "Select a whole word (identifier) plus adjacent whitespace.
+不用 `evil-select-an-object'：它对「两对象之间无空白」的对象会多吞一个后继对象
+（实测 `agw` 在 `fooBarBaz` 上会选到 `fooBar'）。改为在 inner 范围上补相邻空白。"
+  (let* ((range (evil-select-inner-object 'evil-whole-word beg end type count))
          (b (evil-range-beginning range))
          (e (evil-range-end range)))
     (if (and b e (< b e))
@@ -125,11 +153,7 @@
                 (evil-range (+ b ws2) e type :expanded t)))))
       range)))
 
-(evil-define-text-object evil-inner-little-word (count &optional beg end type)
-  "Select inner little word (subword)."
-  (evil-select-inner-object 'evil-little-word beg end type count))
-
-(define-key evil-outer-text-objects-map (kbd "gw") 'evil-a-little-word)
-(define-key evil-inner-text-objects-map (kbd "gw") 'evil-inner-little-word)
+(define-key evil-outer-text-objects-map (kbd "gw") 'evil-a-whole-word)
+(define-key evil-inner-text-objects-map (kbd "gw") 'evil-inner-whole-word)
 
 (provide 'evil-config)

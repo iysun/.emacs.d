@@ -63,6 +63,10 @@
 其中 **`evil-config` 由 `init.el` 在 `after-init-hook`（depth -99）才 `require`**，让 evil 的加载
 不计入 `emacs-init-time`；故 `evil-keymaps`/`init-completion` 取 `evil-define-key` 宏改用
 `eval-when-compile`。
+**分词口径**（`evil-config.el`）：`w`/`b`/`e` 与 `iw`/`aw` 按 **subword**（在 camelCase 及 `_`/`-`
+边界切；靠 `global-subword-mode`——Emacs 31 的 `subword-mode` 经 `find-word-boundary-function-table`
+改写 `forward-word`，而 `forward-evil-word` 内部即调 `forward-word`）；`agw`/`igw` 按**整词**
+（`[[:word:]_-]+`，即 `fooBarBaz`/`foo-bar-baz`/`foo_bar_baz` 各算一个）；`W` 仍是空白分隔大词。
 `init-ai` / `lang-go` 已写好但注释停用（停用模块的
 `use-package` 用 `:ensure nil`，避免 user-lisp 自动字节编译时联网装包；启用前先装好对应包）。
 
