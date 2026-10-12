@@ -83,30 +83,51 @@
 (define-key evil-inner-text-objects-map evil-textobj-between-i-key
             'evil-inner-between)
 
-;; evil-little-word
-;; Turn on subword-mode everywhere
+;; ---- 词运动 / 分词（word motion & subwords）----
+;; 之前这里用 Evil FAQ 的「整符号」配方：
+;;   (fset 'original-forward-evil-word ...) (defalias #'forward-evil-word #'forward-evil-symbol)
+;; 后果：w≡W（`w' 变成按空白/符号切）、camelCase 不切、中文整句一坨，还顺手覆盖了 evil
+;; `forward-evil-word' 自带的标点串 + CJK 词类别处理。现删除该 override，恢复 evil 原版。
+;;
+;; ⚠ 关于 subword：Emacs 31 的 `subword-mode' 通过 `find-word-boundary-function-table'
+;; （buffer-local char-table）改写 `forward-word' 的词边界——**不是**改键、**不是** advice。
+;; 而 `forward-thing 'evil-word' → forward-evil-word' 内部正是调 `forward-word'，所以只要
+;; subword-mode 开着，w/b/e（以及 dw/cw/iw/aw…）就会自动在 camelCase 处分词，无需再 override。
+(require 'subword)
 (global-subword-mode t)
-;; Backup the original 'forward-evil-word' function before overriding it.
-(fset 'original-forward-evil-word (symbol-function 'forward-evil-word))
-;; From the Evil FAQ.
-;; Defaults all word movements, including editing operations, to 
-;; 'whole symbols', which is what we want by default.
-(defalias #'forward-evil-word #'forward-evil-symbol)
 
-;; custom evil-select-an-object and evil-select-inner-object thing, evil-***
-;; (defun forward-evil-o-word (&optional count)
-;;   "Forward by little words."
-;;   (original-forward-evil-word count))
+;; evil-little-word：真正的「小词」= 光标所在的 subword。
+;; （旧实现 defalias 成 symbol 后又用 `'word' thing，实测 igw≡iw、agw≡aw，是坏的。）
+(defun forward-evil-little-word (&optional count)
+  "Move forward COUNT little words (subwords)."
+  (subword-forward (or count 1)))
+
+(put 'evil-little-word 'forward-op #'forward-evil-little-word)
+;; 不自己实现 bounds：thingatpt 的通用算法（先 forward 再 backward，失败则反向）能正确
+;; 处理“光标停在二词交界/大小写边界”的情况；自己写会因为 subword-backward 在边界处退回
+;; 上一个 subword 而错位。
 
 (evil-define-text-object evil-a-little-word (count &optional beg end type)
-  "Select a little word."
-  ;; (evil-select-an-object 'evil-o-word beg end type count))
-  (evil-select-an-object 'word beg end type count))
+  "Select a little word (subword) plus adjacent whitespace.
+⚠ 不用 `evil-select-an-object'：它对 subword 这类「两对象之间无空白」的情况会多吞一个
+后继对象（实测 `agw` 在 `fooBarBaz` 上选到 `fooBar'）。改为在内层范围上补相邻空白。"
+  (let* ((range (evil-select-inner-object 'evil-little-word beg end type count))
+         (b (evil-range-beginning range))
+         (e (evil-range-end range)))
+    (if (and b e (< b e))
+        (save-excursion
+          (goto-char e)
+          (let ((ws (skip-chars-forward " \t")))
+            (if (> ws 0)
+                (evil-range b (+ e ws) type :expanded t)
+              (goto-char b)
+              (let ((ws2 (skip-chars-backward " \t")))
+                (evil-range (+ b ws2) e type :expanded t)))))
+      range)))
 
 (evil-define-text-object evil-inner-little-word (count &optional beg end type)
-  "Select inner little word."
-  ;; (evil-select-inner-object 'evil-o-word beg end type count))
-  (evil-select-inner-object 'word beg end type count))
+  "Select inner little word (subword)."
+  (evil-select-inner-object 'evil-little-word beg end type count))
 
 (define-key evil-outer-text-objects-map (kbd "gw") 'evil-a-little-word)
 (define-key evil-inner-text-objects-map (kbd "gw") 'evil-inner-little-word)

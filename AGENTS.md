@@ -41,7 +41,7 @@
 | `user-lisp/mode-line/init-mode-line.el` | mode-line 实现本体，`(provide 'init-mode-line)`，由 `init-bars.el` `require` |
 | `user-lisp/tab-line/init-tab-line.el` | tab-line 实现本体，`(provide 'init-tab-line)`。⚠ 特意不叫 `tab-line.el`：user-lisp 会把子目录**前置**到 load-path，叫 `tab-line.el` 会盖住内置库 |
 | `user-lisp/eshell-prompt/init-eshell-prompt.el` | eshell 提示符实现本体，由 `init-term.el` `require` |
-| `user-lisp/evil-plugins/` | evil 相关插件合集：**内联**的 `evil-surround` / `evil-commentary`(+integration) / `evil-visualstar`（GPLv3），以及本仓库的 `evil-config.el` / `evil-keymaps.el` / `evil-vc.el` / `evil-dired.el` / `evil-ibuffer.el` / `evil-extra.el` / `evil-textobjects.el`(停用) / `mc-evil.el` / `ime.el`。见其 `README.md` |
+| `user-lisp/evil-plugins/` | evil 相关插件合集：**内联**的 `evil-surround` / `evil-commentary`(+integration) / `evil-visualstar`（GPLv3），以及本仓库的 `evil-config.el` / `evil-keymaps.el` / `evil-vc.el` / `evil-dired.el` / `evil-ibuffer.el` / `evil-extra.el` / `mc-evil.el` / `ime.el`。见其 `README.md` |
 | `user-lisp/gcmh/gcmh.el` | **内联**的 `gcmh`（GC 调优，GPLv3），由 `init-base.el` `require`。见其 `README.md` |
 | `user-lisp/lang-*.el` | 语言专属配置（如 `lang-go.el`，当前未启用） |
 | `themes/` | 本仓库自维护的主题文件（`*-theme.el`），由 `custom-theme-load-path` 接入（`user-lisp/init-ui.el`），新增主题放进去即可被 `switch-emacs-theme` 自动发现。共 5 个：`nn-world`（借自 zdn/.emacs.d，GPLv3，默认主题）、`catppuccin`/`crafters`/`gits`/`matrix` |
@@ -63,7 +63,7 @@
 其中 **`evil-config` 由 `init.el` 在 `after-init-hook`（depth -99）才 `require`**，让 evil 的加载
 不计入 `emacs-init-time`；故 `evil-keymaps`/`init-completion` 取 `evil-define-key` 宏改用
 `eval-when-compile`。
-`init-ai` / `evil-plugins/evil-textobjects` / `lang-go` 已写好但注释停用（停用模块的
+`init-ai` / `lang-go` 已写好但注释停用（停用模块的
 `use-package` 用 `:ensure nil`，避免 user-lisp 自动字节编译时联网装包；启用前先装好对应包）。
 
 `init-format`（apheleia，非 LSP 场景的格式化；`SPC f` = `my/format-buffer` 统一入口，按 buffer
@@ -109,7 +109,7 @@ Emacs 31 的 user-lisp 机制在启动时会：
 - **文件顶层（含 `with-eval-after-load` 体内）用到某个包的宏时，必须在文件顶层 `(require '那个包)`。**
   否则字节编译器把宏当函数编译进 `.elc`，运行时报 `Invalid function: <宏名>`。
 - 已知需要（取 evil 宏）：
-  - `evil-plugins/evil-config.el`、`evil-plugins/evil-textobjects.el` → `(require 'evil)`（这俩本身在 evil 加载后才被载入）
+  - `evil-plugins/evil-config.el` → `(require 'evil)`（本身在 evil 加载后才被载入）
   - `evil-plugins/evil-keymaps.el`、`init-completion.el` → `(eval-when-compile (require 'evil))`
     —— evil 已延迟到 after-init 加载，运行时不能 require，只需编译期取宏
   - `init-ai.el`、`lang-go.el` → `(require 'use-package)`

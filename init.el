@@ -92,8 +92,6 @@
 (require 'init-navigation)
 
 ;;(require 'init-ai)
-;;(require 'evil-textobjects)
-;;
 ;;(require 'lang-go)
 
 ;; ---- package-quickstart 新鲜度自检 ----
