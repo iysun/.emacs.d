@@ -79,6 +79,14 @@ With prefix ARG, restrict to the current file instead."
 
 (with-eval-after-load 'evil
 
+  ;; VC 命令的**输出** buffer（`*vc-git : <仓库根>*` 之类）没有专用 major-mode，是
+  ;; `special-mode`（vc-dispatcher.el 里显式设的，注释写着"让 q 一致工作"）。但 evil 给
+  ;; special-mode 的初始态是 **normal**，normal 态的 `q' 被 `evil-record-macro' 占了 ——
+  ;; 于是那个 buffer 里按 q 变成"开始录宏"，关不掉。这里按本仓库既有的约定
+  ;; （只读临时 buffer 的 q = `my/quit-window'，见 init-window.el）统一补上；
+  ;; help/xref 等其它 special-mode buffer 一并受益。
+  (evil-define-key 'normal special-mode-map (kbd "q") 'my/quit-window)
+
   ;; ------------------------------------------------------------------ vc-dir
   (evil-set-initial-state 'vc-dir-mode 'normal)
   (evil-define-key 'normal vc-dir-mode-map

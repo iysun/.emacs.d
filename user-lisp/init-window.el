@@ -76,6 +76,10 @@
           ;; buffer 名固定是 *vc-log*（vc-start-logentry），用名字正则最稳——popper 对 mode 项
           ;; 是按 major-mode **精确**匹配，而它是 vc-git-log-edit-mode，写 log-edit-mode 不中。
           "^\\*vc-log\\*$"
+          ;; VC 命令的输出 buffer（`*vc-git : <仓库根>*`、`*vc-hg : …*` 等，格式见
+          ;; vc-git.el 的 `(format "*vc-%s : %s*" …)`）——没有专用 major-mode，是
+          ;; `special-mode`（vc-dispatcher.el 里显式设的）。一行收全部后端。
+          "^\\*vc-[a-z0-9]+ : "
           compilation-mode))
   )
 (popper-mode +1)
