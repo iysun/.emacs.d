@@ -6,6 +6,15 @@
 ;; Magit 已移除（不用了）。git 操作改用内置 VC：`C-x v d` 进 vc-dir，
 ;; 键位见 user-lisp/evil-plugins/evil-vc.el。
 
+;; `C-x v v' 提交时不再多弹一个 buffer：Emacs 默认的 `log-edit-hook' 含
+;; `log-edit-show-files'，它会用 `display-buffer' 再弹一个 **dedicated** 的
+;; `*log-edit-files*'（待提交文件列表）窗口——于是提交时同时出现 `*vc-log*' 与
+;; `*log-edit-files*' 两个 buffer，提交完还得手动关掉后者。去掉该项，只留提交信息 buffer。
+;; （`log-edit-insert-changelog' 留着；git 仓库无 ChangeLog 时它只建一个隐藏的
+;;  `*changes to ...*'，不占窗口。若也不想要，把它一并从 hook 里 remove 即可。）
+(with-eval-after-load 'log-edit
+  (setq log-edit-hook (remove 'log-edit-show-files log-edit-hook)))
+
 ;; diff-hl 已移除：diff-hl-flydiff-mode 靠全局 0.3s idle timer 给每个改过的
 ;; buffer 起 git diff 子进程算 hunk，Windows 上 CreateProcess 本来就比 POSIX
 ;; fork+exec 贵得多（本机 eshell-git-prompt 实测过单次 git 子进程两三百毫秒起步），
