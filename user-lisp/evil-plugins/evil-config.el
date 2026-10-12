@@ -84,62 +84,72 @@
             'evil-inner-between)
 
 ;; ---- 词运动 / 分词（word motion & subwords）----
-;; 之前这里用 Evil FAQ 的「整符号」配方：
-;;   (fset 'original-forward-evil-word ...) (defalias #'forward-evil-word #'forward-evil-symbol)
-;; 后果：w≡W（`w' 变成按空白/符号切）、camelCase 不切、中文整句一坨，还顺手覆盖了 evil
-;; `forward-evil-word' 自带的标点串 + CJK 词类别处理。现删除该 override，恢复 evil 原版。
+;; 口径（最终）：w/b/e 与 iw/aw 按「整词」（identifier 级 [[:word:]_-]+，即
+;; fooBarBaz / foo-bar-baz / foo_bar_baz 各算一个）；agw/igw 按「subword」。
 ;;
-;; ⚠ 关于 subword：Emacs 31 的 `subword-mode' 通过 `find-word-boundary-function-table'
-;; （buffer-local char-table）改写 `forward-word' 的词边界——**不是**改键、**不是** advice。
-;; 而 `forward-thing 'evil-word' → forward-evil-word' 内部正是调 `forward-word'，所以只要
-;; subword-mode 开着，w/b/e（以及 dw/cw/iw/aw…）就会自动在 camelCase 处分词，无需再 override。
+;; 实现整词：把 evil 的 `evil-word' 词运动换成整词运动。`w/b/e` 走 `forward-thing 'evil-word'，
+;; `iw/aw` 走 `bounds-of-thing-at-point 'evil-word'`（thingatpt 通用算法再经 forward-thing），
+;; 两条路都解析到 `forward-evil-word'——所以 defalias 这一个函数，词运动与 iw/aw 一起变整词。
+;;
+;; ⚠ 字符类写死 [[:word:]_-] 而不用语法表：'-' 在 basic 模式是标点、在 lisp 模式是符号，
+;; 写死才能跨 mode 一致；[:word:] 含 CJK，故中文整段也算一个整词。
+;;
+;; ⚠ subword-mode：evil 分词已不依赖它（整词走 skip-chars；agw/igw 直接调 subword-forward）。
+;; 保留它只是让 Emacs 自己的词命令（M-f/M-b/M-d…）也按 subword 走。
 (require 'subword)
 (global-subword-mode t)
 
-;; ---- agw/igw：整词（identifier 级；与 subword 级的 iw/aw 相对）----
-;; 目标：w/b/e 与 iw/aw 按 subword 分词；agw/igw 把整块标识符当一个词。
-;; 例：fooBarBaz / foo-bar-baz / foo_bar_baz 各算一个整词。
-;; 用显式字符类 [[:word:]_ -] 而非语法表：'-' 在 basic 模式是标点、在 lisp 模式是符号，
-;; 写死才能跨 mode 一致（[:word:] 含 CJK，故中文整段也当一个整词）。
-(defconst my/whole-word-chars "[:word:]_-"
-  "整词字符集：[[:word:]] + 下划线 + 连字符（skip-chars 语法，`-' 置末尾按字面量）。")
-
-(defun my/bounds-of-evil-whole-word ()
-  "光标位于整词内时返回 (BEG . END)，否则 nil。"
-  (save-excursion
-    (let ((p (point)))
-      (skip-chars-backward my/whole-word-chars)
-      (let ((beg (point)))
-        (skip-chars-forward my/whole-word-chars)
-        (let ((end (point)))
-          (when (and (< beg end) (<= beg p) (<= p end)
-                     ;; 至少含一个 word 字符：避免把孤立的 -- / __ 当整词
-                     (save-excursion (goto-char beg) (looking-at-p "[[:word:]]")))
-            (cons beg end)))))))
-
 (defun forward-evil-whole-word (&optional count)
-  "Move forward COUNT whole words (identifier level)."
-  (let ((count (or count 1)))
-    (if (> count 0)
-        (dotimes (_ count)
-          (skip-chars-forward "^[:word:]_-")
-          (skip-chars-forward "[:word:]_-"))
-      (dotimes (_ (- count))
-        (skip-chars-backward "^[:word:]_-")
-        (skip-chars-backward "[:word:]_-")))))
+  "整词运动：前移 COUNT 个整词的末尾；COUNT 为负则回退到词首。
+整词 = [[:word:]_-]+（字母数字/CJK + 下划线 + 连字符）。
 
-(put 'evil-whole-word 'forward-op #'forward-evil-whole-word)
-(put 'evil-whole-word 'bounds-of-thing-at-point #'my/bounds-of-evil-whole-word)
+返回**未能移动的整词数**（0 = 成功）——这是 evil `forward-op'/`forward-thing' 的约定：
+`evil-forward-beginning'/`evil-forward-nearest' 内部用 `(zerop (forward-thing ...))' 判断成功。
+⚠ 必须返回数字；返回 nil 会让 `evil-bounds-of-not-thing-at-point' 的 `(zerop ...)' 报
+wrong-type-argument（曾导致 aw/b 报错、w 落点错位）。"
+  (let* ((count (or count 1))
+         (n (abs count))
+         (dir (if (> count 0) 1 -1)))
+    (while (and (> n 0)
+                (let ((start (point)))
+                  (if (> dir 0)
+                      (progn (skip-chars-forward "^[:word:]_-")
+                             (skip-chars-forward "[:word:]_-"))
+                    (skip-chars-backward "^[:word:]_-")
+                    (skip-chars-backward "[:word:]_-"))
+                  (/= start (point))))
+      (setq n (1- n)))
+    n))
 
-(evil-define-text-object evil-inner-whole-word (count &optional beg end type)
-  "Select inner whole word (identifier: fooBarBaz / foo-bar-baz / foo_bar_baz)."
-  (evil-select-inner-object 'evil-whole-word beg end type count))
+;; 让 `evil-word'（w/b/e、iw/aw、`*' 搜索、双击选词…）都按整词。
+;; `forward-thing 'evil-word' 解析到 (intern-soft "forward-evil-word")，即下面这个 defalias。
+(defalias #'forward-evil-word #'forward-evil-whole-word)
 
-(evil-define-text-object evil-a-whole-word (count &optional beg end type)
-  "Select a whole word (identifier) plus adjacent whitespace.
-不用 `evil-select-an-object'：它对「两对象之间无空白」的对象会多吞一个后继对象
-（实测 `agw` 在 `fooBarBaz` 上会选到 `fooBar'）。改为在 inner 范围上补相邻空白。"
-  (let* ((range (evil-select-inner-object 'evil-whole-word beg end type count))
+;; ---- agw/igw：subword ----
+;; thing `evil-subword' 的 forward-op 用 `subword-forward'（按 camelCase/大小写边界切）。
+(defun forward-evil-subword (&optional count)
+  "Move forward COUNT subwords；返回未能移动的个数（0 = 成功），同 evil forward-op 约定。"
+  (let* ((count (or count 1))
+         (n (abs count))
+         (dir (if (> count 0) 1 -1)))
+    (while (and (> n 0)
+                (let ((start (point)))
+                  (subword-forward dir)
+                  (/= start (point))))
+      (setq n (1- n)))
+    n))
+
+(put 'evil-subword 'forward-op #'forward-evil-subword)
+
+(evil-define-text-object evil-inner-subword (count &optional beg end type)
+  "Select inner subword."
+  (evil-select-inner-object 'evil-subword beg end type count))
+
+(evil-define-text-object evil-a-subword (count &optional beg end type)
+  "Select a subword plus adjacent whitespace.
+不用 `evil-select-an-object'：它对「两对象之间无空白」的 subword 会多吞一个后继对象
+（实测在 fooBarBaz 上会选成 fooBar），改为在 inner 范围上补相邻空白。"
+  (let* ((range (evil-select-inner-object 'evil-subword beg end type count))
          (b (evil-range-beginning range))
          (e (evil-range-end range)))
     (if (and b e (< b e))
@@ -153,7 +163,7 @@
                 (evil-range (+ b ws2) e type :expanded t)))))
       range)))
 
-(define-key evil-outer-text-objects-map (kbd "gw") 'evil-a-whole-word)
-(define-key evil-inner-text-objects-map (kbd "gw") 'evil-inner-whole-word)
+(define-key evil-outer-text-objects-map (kbd "SPC w") 'evil-a-subword)
+(define-key evil-inner-text-objects-map (kbd "SPC w") 'evil-inner-subword)
 
 (provide 'evil-config)
