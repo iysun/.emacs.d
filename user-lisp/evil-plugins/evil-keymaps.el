@@ -35,20 +35,9 @@
     (evil-normalize-keymaps))
   (add-hook 'eshell-mode-hook #'my/eshell-evil-insert-keys 90)
 
-  ;; dired：C-a 新建文件、C-d 新建目录
-  (dolist (state '(normal insert visual))
-    (evil-define-key state dired-mode-map (kbd "C-a") 'dired-create-empty-file)
-    (evil-define-key state dired-mode-map (kbd "C-d") 'dired-create-directory))
-
   ;; C-w w 打开自写的窗口缩放 hydra（`hydra-window-size'，定义见 init-window.el）。
   ;; 注意：覆盖了 evil 默认的 `C-w w'（`evil-window-next'，循环切窗）。
   (define-key evil-window-map (kbd "w") #'hydra-window-size/body)
-
-  ;; minuet（停用模块，用到才加载）
-  (with-eval-after-load 'minuet
-    (evil-define-key 'insert minuet-active-mode-map (kbd "<tab>") 'minuet-accept-suggestion)
-    (evil-define-key 'insert minuet-active-mode-map (kbd "M-p") 'minuet-previous-suggestion)
-    (evil-define-key 'insert minuet-active-mode-map (kbd "M-n") 'minuet-next-suggestion))
 
   ;; visual 态：Y 复制到系统剪贴板
   (evil-define-key 'visual 'global (kbd "Y") 'clipboard-kill-ring-save)
