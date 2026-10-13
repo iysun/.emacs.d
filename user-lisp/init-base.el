@@ -162,13 +162,3 @@
     (my/proxy-on)))
 
 (provide 'init-base)
-
-;; (defun word-syntax- ()
-;;   (interactive)
-;;   (modify-syntax-entry ?- "w"))
-
-;; (defun word-syntax_ ()
-;;   (interactive)
-;;   (modify-syntax-entry ?_ "w"))
-
-;; (modify-syntax-entry ?- "w")

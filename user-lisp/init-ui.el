@@ -147,7 +147,6 @@
                       (buffer-name))))
 
 ;; rainbow-delimiters
-;; (require 'rainbow-delimiters)
 (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
 
 ;; whitespace：显示 Tab（»）与空格（·）占位符。
@@ -239,13 +238,6 @@
 ;; 见 user-lisp/init-dired.el）。
 
 ;; dashboard 首屏已禁用以提速启动（启动直接进 scratch/文件；inhibit-startup-screen 见 early-init.el）。
-;; 若想恢复：取消下面 with-eval-after-load 与 (dashboard-setup-startup-hook) 的注释。
-;; (with-eval-after-load 'dashboard
-;;   (setq dashboard-startup-banner (expand-file-name "logo.svg" user-emacs-directory))
-;;   (setq dashboard-icon-type 'nerd-icons)
-;;   (setq dashboard-set-heading-icons t)
-;;   (setq dashboard-set-file-icons t))
-;; (dashboard-setup-startup-hook)
 
 ;; 本仓库自维护的主题目录（不依赖任何主题包）：themes/ 下全是 `*-theme.el`。
 ;; `nn-world` 是模板（借自 zdn/.emacs.d），其余（crafters/gits/matrix/catppuccin、

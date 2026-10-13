@@ -38,7 +38,6 @@
     (kill-local-variable 'my/evil-was-active-before-mc))) ; 清理变量
 
 ;; 添加钩子
-;; (add-hook 'multiple-cursors-mode-enabled-hook #'my/disable-evil-for-mc)
 (dolist (cmd '(mc/mark-next-like-this
                mc/mark-previous-like-this
                mc/mark-all-like-this

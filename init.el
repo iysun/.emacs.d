@@ -91,9 +91,6 @@
 (require 'init-format)
 (require 'init-navigation)
 
-;;(require 'init-ai)
-;;(require 'lang-go)
-
 ;; ---- package-quickstart 新鲜度自检 ----
 ;; quickstart 快照过期时 `package-activate-all' **不报错**、静默用旧集合（新装的包会
 ;; 「装了却没激活」）。这里仿旧 pdmp 自检：快照早于 elpa/ 最后改动就告警。

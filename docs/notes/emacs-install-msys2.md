@@ -95,7 +95,7 @@ foreach ($n in "emacs","emacsclient","emacsclientw","etags","ctags") {
 - **elpa 里的 `project`/`jsonrpc`/`flymake`/`eglot`/`compat` 会被跳过**：Emacs 31 都内置且版本 ≥
   elpa 副本，package.el 主动跳过 elpa 那份改用内置的。实测 5 个 `require` 全部正常、magit 也正常。
 - **Emacs 31 会对缺 `lexical-binding` cookie 的文件告警**（30 只在字节编译期告警，31 提前到
-  `load` 时）。`custom.el`（Customize 自动生成、已 gitignore）和 `user-lisp/init-ai.el` 都补了首行
+  `load` 时）。`custom.el`（Customize 自动生成、已 gitignore）补了首行
   cookie；`custom.el` 那行实测过 `custom-save-all` 重写时不会被冲掉。
   换机器时 `custom.el` 是重新生成的，需要再补一次。
 - **配置侧唯一的实质改动在 `user-lisp/init-lsp.el` 的 tree-sitter 路由**：`treesit-enabled-modes`

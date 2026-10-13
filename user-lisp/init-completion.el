@@ -6,8 +6,7 @@
 ;; 用 `eval-when-compile' 只为编译期取宏；运行时 evil 延迟到 after-init 加载。
 (eval-when-compile (require 'evil))
 
-;; Optionally use the `orderless' completion style.
-;; (require 'orderless)
+;; 补全风格：orderless 组合匹配。
 (progn
   (setq completion-styles '(orderless basic))
   (setq completion-category-defaults nil)
@@ -20,14 +19,8 @@
 (unless (fboundp 'compat--seconds-to-string)
   (defalias 'compat--seconds-to-string #'seconds-to-string))
 
-;; (require 'marginalia)
 (add-hook 'after-init-hook 'marginalia-mode)
-;; (use-package vertico-posframe
-;;   :ensure t
-;;   :hook (vertico-mode . vertico-posframe-mode))
 
-
-;; (require 'vertico)
 (with-eval-after-load 'vertico
   (setq vertico-count 10)
   (setq vertico-cycle t)
@@ -42,7 +35,6 @@
 ;; 「主动按 C-h 才展示」的机制互不冲突，两个都留着。
 (add-hook 'after-init-hook 'which-key-mode)
 
-;; (require 'embark)
 ;; 组合键 C-h 可以展示后续的有效按键
 (setq prefix-help-command 'embark-prefix-help-command)
 ;; Embark 使用 posframe 打开
@@ -74,7 +66,6 @@
   (advice-add #'embark-verbose-indicator :around #'embark-get-buffer-pos-display)
   )
 
-;; (require 'consult)
 (progn
   ;; Tweak the register preview
   (advice-add #'register-preview :override #'consult-register-window)
@@ -88,17 +79,9 @@
 
 (add-hook 'completion-list-mode-hook 'consult-preview-at-point-mode)
 
-;; (require 'embark-consult)
-;; (with-eval-after-load 'embark-consult
-;;   (define-key minibuffer-mode-map (kbd "C-c C-o") 'embark-export)
-;;   )
 (add-hook 'embark-collect-mode-hook 'consult-preview-at-point-mode)
 
 ;; Auto completion - corfu
-;;(unless (package-installed-p 'corfu)
-;;(package-install 'corfu))
-
-;; (require 'corfu)
 ;; 设置 corfu 变量（corfu-auto 由下面的补全风格切换按需设置，不在这里写死）
 (progn
   ;; 自动弹窗的最小前缀长度（corfu-auto.el 的上游默认就是 3）。
@@ -154,14 +137,6 @@
                        #'corfu-previous
                      cmd))))
   )
-
-;; Emacs 原生配置
-;; TAB cycle if there are only few candidates
-;; (setq completion-cycle-threshold 3)
-
-;; Enable indentation+completion using the TAB key.
-;; `completion-at-point' is often bound to M-TAB.
-;; (setq tab-always-indent 'complete)
 
 ;; Emacs 30 and newer: Disable Ispell completion function.
 (setq text-mode-ispell-word-completion nil)

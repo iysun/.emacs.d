@@ -52,7 +52,6 @@
   ("q" nil "退出"))
 
 
-;; (require 'popper)
 (with-eval-after-load 'popper
   (setq popper-window-height 20)
   (setq popper-reference-buffers

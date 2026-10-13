@@ -43,7 +43,6 @@
 | `user-lisp/eshell-prompt/init-eshell-prompt.el` | eshell 提示符实现本体，由 `init-term.el` `require` |
 | `user-lisp/evil-plugins/` | evil 相关插件合集：**内联**的 `evil-surround` / `evil-commentary`(+integration) / `evil-visualstar`（GPLv3），以及本仓库的 `evil-config.el` / `evil-keymaps.el` / `evil-vc.el` / `evil-dired.el` / `evil-ibuffer.el` / `evil-extra.el` / `mc-evil.el` / `ime.el`。见其 `README.md` |
 | `user-lisp/gcmh/gcmh.el` | **内联**的 `gcmh`（GC 调优，GPLv3），由 `init-base.el` `require`。见其 `README.md` |
-| `user-lisp/lang-*.el` | 语言专属配置（如 `lang-go.el`，当前未启用） |
 | `themes/` | 本仓库自维护的主题文件（`*-theme.el`），由 `custom-theme-load-path` 接入（`user-lisp/init-ui.el`），新增主题放进去即可被 `switch-emacs-theme` 自动发现。共 13 个：`nn-world`（借自 zdn/.emacs.d，GPLv3，**模板**）、`catppuccin`/`crafters`/`gits`/`matrix`，深色 `gruvbox-dark`/`nord`/`dracula`/`monokai-pro`，浅色 `gruvbox-light`/`catppuccin-latte`/`solarized-light`/`one-light`（后 8 个都照 nn-world 模板换 24 槽调色板生成，结构与 face 表一致）。Emacs 自带的 `modus-vivendi`/`modus-operandi` 等也在候选里 |
 | `assets/fonts/` | vendor 进仓库的字体文件（OFL 等自由许可），配 `scripts/install-fonts.py` 装进当前用户。见 [docs/notes/vendored-fonts.md](docs/notes/vendored-fonts.md) |
 | `custom.el` | Customize 自动生成，**已 gitignore，勿手改** |
@@ -69,8 +68,6 @@
 **subword**（camelCase 边界）；`W`/`iW`/`aW` 仍是空白分隔大词。⚠ 自定义 forward-op 必须返回
 「未移动数」（0=成功），否则 `evil-forward-nearest` 的 `(zerop ...)` 会报 wrong-type-argument。
 另开 `global-subword-mode`，让 Emacs 自身的 M-f/M-b/M-d 也按 subword 切（evil 侧不依赖它）。
-`init-ai` / `lang-go` 已写好但注释停用（停用模块的
-`use-package` 用 `:ensure nil`，避免 user-lisp 自动字节编译时联网装包；启用前先装好对应包）。
 
 `init-format`（apheleia，非 LSP 场景的格式化；`SPC f` = `my/format-buffer` 统一入口，按 buffer
 是否有 eglot 托管自动分流到 eglot-format 或 apheleia-format-buffer）与
@@ -118,7 +115,6 @@ Emacs 31 的 user-lisp 机制在启动时会：
   - `evil-plugins/evil-config.el` → `(require 'evil)`（本身在 evil 加载后才被载入）
   - `evil-plugins/evil-keymaps.el`、`init-completion.el` → `(eval-when-compile (require 'evil))`
     —— evil 已延迟到 after-init 加载，运行时不能 require，只需编译期取宏
-  - `init-ai.el`、`lang-go.el` → `(require 'use-package)`
   （`defhydra` 等有 autoload cookie 的宏会被编译器自动加载，不需要显式 require。）
 - 详见 [docs/notes/byte-compile-broken-elc.md](docs/notes/byte-compile-broken-elc.md)。
 
@@ -141,16 +137,6 @@ emacs --batch `
 ```powershell
 emacs                          # 真实 GUI，看 *Messages* / *Warnings*
 ```
-
-## AI 代码补全（minuet）
-
-`user-lisp/init-ai.el`（当前停用）用 minuet 接 SiliconFlow。密钥**不写进配置**，从环境变量读取：
-
-```powershell
-$env:SILICONFLOW_API_KEY = "sk-xxxx"   # 由用户在自己的 shell/系统环境设置
-```
-
-`init-ai.el` 里 `:api-key` 传的是**环境变量名字符串**，由 minuet 自行 `getenv`。切勿把真实密钥硬编码进任何文件。
 
 ## 维护约定（判断式，非强制）
 

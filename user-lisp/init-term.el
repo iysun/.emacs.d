@@ -1,13 +1,6 @@
 ;; init-term.el 	-*- lexical-binding: t -*-
 ;; eshell 配置
 
-;; eshell 键绑定
-;;(define-key eshell-mode-map (kbd "C-l") 'eshell-clear)
-;;(define-key eshell-mode-map (kbd "<M-tab>") 'tab-bar-switch-to-next-tab)
-;; eshell 模式键绑定
-;;(define-key eshell-mode-map (kbd "C-d") 'eshell-delchar-or-maybe-eof)
-;;(define-key eshell-mode-map (kbd "C-r") 'consult-history)
-
 ;; eshell 自定义函数
 (defvar eshell-buffer-maximum-lines)   ; eshell 定义；提前声明为 special，避免编译期"未使用"告警
 (defun eshell-clear ()
@@ -77,7 +70,6 @@
             (setq eshell-prefer-lisp-functions t)
             (setq password-cache t)
             (setq password-cache-expiry 900)
-            ;; (setenv "TERM" "xterm-256color")
             (setq-local truncate-lines -1)
             ))
 
