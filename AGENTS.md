@@ -128,10 +128,12 @@ emacs --batch `
   --init-directory "$PWD" `
   --eval '(dolist (d (list "user-lisp" "user-lisp/evil-plugins" "user-lisp/gcmh" "user-lisp/mode-line" "user-lisp/tab-line" "user-lisp/eshell-prompt")) (add-to-list (quote load-path) (expand-file-name d user-emacs-directory)))' `
   -l "$PWD\early-init.el" -l "$PWD\init.el" `
-  --eval '(message "== CONFIG LOADED OK ==")' 2>&1 | Select-Object -Last 12
+  --eval '(princ "== CONFIG LOADED OK ==\n")' 2>&1 | Select-Object -Last 12
 ```
 
-出现 `== CONFIG LOADED OK ==` 且 `EXIT=0` 即通过。注意批处理无 GUI，只验证「能否无错加载」；
+出现 `== CONFIG LOADED OK ==` 且 `EXIT=0` 即通过。⚠ 末行必须用 `princ` 而非 `message`：
+`early-init.el` 设了 `inhibit-message t`，只靠 `window-setup-hook` 恢复，而 `--batch` 不触发该 hook，
+用 `(message ...)` 会被吞掉、永远看不到 OK 字样。注意批处理无 GUI，只验证「能否无错加载」；
 **视觉外观**（字体、主题、modeline、tab-line）仍需启动真实 Emacs 肉眼确认：
 
 ```powershell

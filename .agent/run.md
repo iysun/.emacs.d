@@ -14,12 +14,16 @@ emacs --batch `
   --init-directory "$PWD" `
   --eval '(dolist (d (list "user-lisp" "user-lisp/evil-plugins" "user-lisp/gcmh" "user-lisp/mode-line" "user-lisp/tab-line" "user-lisp/eshell-prompt")) (add-to-list (quote load-path) (expand-file-name d user-emacs-directory)))' `
   -l "$PWD\early-init.el" -l "$PWD\init.el" `
-  --eval '(message "== CONFIG LOADED OK ==")' 2>&1 | Select-Object -Last 12
+  --eval '(princ "== CONFIG LOADED OK ==\n")' 2>&1 | Select-Object -Last 12
 Write-Output "EXIT=$LASTEXITCODE"
 ```
 
 出现 `== CONFIG LOADED OK ==` 且 `EXIT=0`、无回退错误即视为通过。
-（注：evil 延迟到 `after-init` 加载，batch 不跑 after-init，故批处理里 `(featurep 'evil)` 为 nil 属正常。）
+（注：末行必须用 `princ` 而非 `message`——`early-init.el` 设了 `inhibit-message t`，只靠
+`window-setup-hook` 恢复，`--batch` 不触发它，`message` 会被吞掉、看不到 OK 字样。
+另：`(featurep 'evil)` 在批处理里**不可靠**——`after-init-hook` 不跑，但 `evil-keymaps` /
+`init-completion` 顶层的 `eval-when-compile (require 'evil)` 在加载源码时（batch 下
+`load-prefer-newer` 为 t）会执行，故结果取决于加载的是 `.el` 还是 `.elc`，别拿它判断成败。）
 
 ## 判断有无问题
 
