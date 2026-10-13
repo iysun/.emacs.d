@@ -35,7 +35,6 @@
          '(evil
            posframe
            multiple-cursors
-           ace-window
            hydra
            rainbow-delimiters
            nerd-icons

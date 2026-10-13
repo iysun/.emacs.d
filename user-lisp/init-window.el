@@ -1,6 +1,10 @@
 ;; init-window.el 	-*- lexical-binding: t -*-
 (add-hook 'after-init-hook 'winner-mode)
 
+;; 内置 windmove：S-<方向> 按方向切窗。Emacs 31 下 `windmove-default-keybindings'
+;; 会启用 `windmove-mode'，其 keymap 优先于 shift-select，S-箭头不冲突。
+(windmove-default-keybindings)
+
 ;; 窗口分隔线：比默认的 `vertical-border' 干净（它会和 fringe 挤在一起）。
 ;; 底部分隔线宽度置 0，只在真的有上下分屏时才由下面的钩子临时给 1，
 ;; 避免单窗口时 mode-line 底下多出一条没用的线。

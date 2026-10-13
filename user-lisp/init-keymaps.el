@@ -60,7 +60,6 @@
 (global-set-key (kbd "M-g k") 'consult-global-mark)
 (global-set-key (kbd "M-g i") 'consult-imenu)
 (global-set-key (kbd "M-g I") 'consult-imenu-multi)
-(global-set-key (kbd "M-g w") 'ace-window)
 ;; ace-jump 式按字母跳标签，原生 tab-line 版（C-u C-u 关闭该 tab；
 ;; 原版 C-u 单前缀「交换 tab 顺序」无法移植，见 my/tab-line-ace-jump 文档字符串）。
 (global-set-key (kbd "M-g t") 'my/tab-line-ace-jump)
