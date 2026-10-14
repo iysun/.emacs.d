@@ -123,11 +123,80 @@ wrong-type-argument（曾导致 aw/b 报错、w 落点错位）。"
       (setq n (1- n)))
     n))
 
-;; 让 `evil-word'（w/b/e、iw/aw、`*' 搜索、双击选词…）都按整词。
+;; 让 `evil-word'（w/b/e、iw/aw、双击选词…）都按整词。
 ;; `forward-thing 'evil-word' 解析到 (intern-soft "forward-evil-word")，即下面这个 defalias。
+;; ⚠ `*' / `#' 不在此列：evil-search 模块下它们被 `evil-select-search-module' 改绑到
+;;   evil-ex-*-word-*，取词用 Emacs `word'（不含 -）而非 `evil-word'，故单独处理——
+;;   见下面「搜索光标下的整词」一节。
 (defalias #'forward-evil-word #'forward-evil-whole-word)
 
-;; ---- agw/igw：subword ----
+;; ---- 搜索光标下的整词：`*' / `#' / `g*' / `g#' ----
+;; 背景：`evil-search-module' 的 :set（`evil-select-search-module'）会把 `*' 从
+;; `evil-search-word-forward' 换成 `evil-ex-search-word-forward'，后者经
+;; `evil-ex-start-word-search' 用 Emacs `word'（[[:word:]]，不含 `-'）取词
+;; → `foo-bar' 只搜到 `foo'，不吃上面的整词 alias。这里改绑成自建命令：取词走
+;; `evil-word'（整词），搜索仍走 evil-ex（故 `gn' / `cgn' 照常可用）。
+;;
+;; ⚠ 词边界 `\<' / `\>' 基于语法表，`-' 不是 word 字符 → 取到 `-foo' / `foo-' /
+;;   `--flag' 这类首尾带 `-' 的整词时，直接套 `\<...\>' 会**匹配不到**（实测
+;;   `\<-foo\>' 匹配 `-foo' 得 nil）。故 bounded 时先去掉首尾的 `-'（`_' 是 word
+;;   字符，不动），退化成搜内部词——等价 Vim 的 `*'（Vim 的 iskeyword 也不含 `-'）。
+;;   unbounded（g*/g#）不加边界，原样搜。
+(defun my/evil-ex-search-word-regex (string unbounded)
+  "整词 STRING 的搜索正则。UNBOUNDED 时不加词边界、原样返回。"
+  (if unbounded
+      (regexp-quote string)
+    (let ((w (replace-regexp-in-string "\\`-+\\|-+\\'" "" string)))
+      (if (string-empty-p w)
+          (regexp-quote string)         ; 整词全是 `-'，无从加边界
+        (format "\\<%s\\>" (regexp-quote w))))))
+
+(defun my/evil-ex-start-word-search (unbounded direction count)
+  "同 evil 的 `evil-ex-start-word-search'，但取词用 `evil-word'（整词）。
+词边界处理见上方说明。"
+  (let* ((string (or (evil-find-thing (eq direction 'forward) 'evil-word)
+                     (user-error "No word under point")))
+         (regex (my/evil-ex-search-word-regex string unbounded)))
+    (setq evil-ex-search-count count
+          evil-ex-search-direction direction
+          evil-ex-search-pattern
+          (let (evil-ex-search-vim-style-regexp)
+            (evil-ex-make-search-pattern regex))
+          evil-ex-search-offset nil
+          evil-ex-last-was-search t)
+    (unless (equal regex (car evil-ex-search-history))
+      (push regex evil-ex-search-history))
+    (evil-push-search-history regex (eq direction 'forward)))
+  (evil-ex-delete-hl 'evil-ex-search)
+  (evil-ex-search-next count))
+
+(evil-define-motion my/evil-ex-search-word-forward (count &optional _symbol)
+  "搜索光标下的整词（前向）；走 evil-ex，故 `gn' / `cgn' 可用。"
+  :jump t :type exclusive
+  (interactive (list (prefix-numeric-value current-prefix-arg)))
+  (my/evil-ex-start-word-search nil 'forward count))
+(evil-define-motion my/evil-ex-search-word-backward (count &optional _symbol)
+  "搜索光标下的整词（后向）；走 evil-ex，故 `gn' / `cgn' 可用。"
+  :jump t :type exclusive
+  (interactive (list (prefix-numeric-value current-prefix-arg)))
+  (my/evil-ex-start-word-search nil 'backward count))
+(evil-define-motion my/evil-ex-search-unbounded-word-forward (count &optional _symbol)
+  "搜索光标下的整词（前向，不加词边界）＝ `g*'."
+  :jump t :type exclusive
+  (interactive (list (prefix-numeric-value current-prefix-arg)))
+  (my/evil-ex-start-word-search t 'forward count))
+(evil-define-motion my/evil-ex-search-unbounded-word-backward (count &optional _symbol)
+  "搜索光标下的整词（后向，不加词边界）＝ `g#'."
+  :jump t :type exclusive
+  (interactive (list (prefix-numeric-value current-prefix-arg)))
+  (my/evil-ex-start-word-search t 'backward count))
+
+(define-key evil-motion-state-map "*"  #'my/evil-ex-search-word-forward)
+(define-key evil-motion-state-map "#"  #'my/evil-ex-search-word-backward)
+(define-key evil-motion-state-map "g*" #'my/evil-ex-search-unbounded-word-forward)
+(define-key evil-motion-state-map "g#" #'my/evil-ex-search-unbounded-word-backward)
+
+;; ---- i SPC w / a SPC w：subword ----
 ;; thing `evil-subword' 的 forward-op 用 `subword-forward'（按 camelCase/大小写边界切）。
 (defun forward-evil-subword (&optional count)
   "Move forward COUNT subwords；返回未能移动的个数（0 = 成功），同 evil forward-op 约定。"

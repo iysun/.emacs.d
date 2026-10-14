@@ -65,7 +65,13 @@
 **分词口径**（`evil-config.el`）：`w`/`b`/`e` 与 `iw`/`aw` 按**整词**（`[[:word:]_-]+`，
 即 `fooBarBaz`/`foo-bar-baz`/`foo_bar_baz` 各算一个；实现为把 `forward-evil-word` alias 成整词运动，
 `forward-thing 'evil-word` 与 `iw/aw` 的 thingatpt bounds 都走它）；`i SPC w` / `a SPC w` 按
-**subword**（camelCase 边界）；`W`/`iW`/`aW` 仍是空白分隔大词。⚠ 自定义 forward-op 必须返回
+**subword**（camelCase 边界）；`W`/`iW`/`aW` 仍是空白分隔大词。
+`*`/`#` 与 `g*`/`g#` 也按整词：evil-search 模块会把 `*` 从 `evil-search-word-forward` 改绑到
+`evil-ex-search-word-forward`，后者取词用 Emacs `word`（不含 `-`/`_`），故本仓库重绑为自建的
+`my/evil-ex-search-*-word-*`——取词走 `evil-word`、搜索仍走 evil-ex（`gn`/`cgn` 可用）。
+⚠ bounded（`*`/`#`）时首尾的 `-` 会被去掉（如 `-foo` 搜 `foo`、`--flag` 搜 `flag`），
+因为 `\<`/`\>` 是基于语法表的词边界、不含 `-`；`g*`/`g#`（unbounded）不加边界、原样搜。
+⚠ 自定义 forward-op 必须返回
 「未移动数」（0=成功），否则 `evil-forward-nearest` 的 `(zerop ...)` 会报 wrong-type-argument。
 另开 `global-subword-mode`，让 Emacs 自身的 M-f/M-b/M-d 也按 subword 切（evil 侧不依赖它）。
 
