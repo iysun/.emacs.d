@@ -76,6 +76,18 @@
 ;; from emacs (especially on Microsoft Windows)
 (prefer-coding-system 'utf-8)
 
+;; 子进程输出统一按 UTF-8 解码（读取侧原来是 `undecided'，Windows 上是
+;; `undecided-dos'，靠内容探测猜编码）。
+;; 为什么必须钉死：consult-ripgrep / consult-grep / consult-git-grep 必须传
+;; `--null'（输出用 NUL 分隔「文件名 / 行号 / 内容」），流里一出现 NUL 字节，
+;; `undecided' 的探测就把整段判成二进制 → 选中 `no-conversion'，中文不再被
+;; 解码、以原始字节存进候选串，界面上显示成 `\345\240...' 这种八进制转义
+;; （症状：M-s r 搜索中文结果乱码）。设成 utf-8 后不再依赖探测。
+;; 写侧原为 `undecided-unix'，一并设成 utf-8（保持 LF）。
+;; 注意：这会覆盖其它子进程的默认解码；仍需按 GBK 解读的程序可另在
+;; `process-coding-system-alist' 里加条目（如已有的 ping/cmdproxy）。
+(setq default-process-coding-system '(utf-8 . utf-8))
+
 ;; Windows: avoid GC pauses caused by compacting font caches (Nerd Fonts etc.)
 (setq inhibit-compacting-font-caches t)
 
