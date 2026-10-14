@@ -24,6 +24,14 @@
 ;; 改动历史见 git log；未改动状态跟踪改靠内置 VC（`C-x v d` 里能看完整的
 ;; unstaged/staged 改动）。
 
+;; vc-dir 里 up-to-date / ignored 文件：首次打开目录本就不显示，但**提交后**它们会
+;; 变成 up-to-date 残留在列表里。取值：
+;;   'revert = 只在 `gr'（revert-buffer）刷新时隐藏（当前）；
+;;   t       = 一变成 up-to-date/ignored 就自动从显示移除；
+;;   nil     = 不自动（默认）。
+;; 手动隐藏仍是 vc-dir 里的 `(' 或 `o'（= vc-dir-hide-up-to-date）。
+(setq vc-dir-auto-hide-up-to-date 'revert)
+
 ;; 打开文件时若检测到冲突标记就自动开 smerge-mode（省去手动 M-x）。
 ;; 只扫文件开头到第一个匹配，代价可忽略。
 (defun my/auto-smerge-mode ()
