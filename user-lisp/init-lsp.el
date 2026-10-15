@@ -60,6 +60,11 @@
 (add-hook 'tsx-ts-mode-hook 'eglot-ensure)
 (add-hook 'c-ts-mode-hook 'eglot-ensure)
 (add-hook 'c++-ts-mode-hook 'eglot-ensure)
+;; C 的 ts grammar 本机缺失（`treesit-language-available-p 'c` = nil），.c/.h 会落在**原生**
+;; `c-mode`；而 `c-ts-mode` 不在上面的白名单里、也不会 remap，故原生 mode 必须也挂，
+;; 否则 C 文件（如 d:/projects/cjson）根本不会起 eglot。c++ 一并挂，保持一致。
+(add-hook 'c-mode-hook 'eglot-ensure)
+(add-hook 'c++-mode-hook 'eglot-ensure)
 
 ;; eglot 专属设置移进 with-eval-after-load，避免 setq 早于 defcustom 定义的不确定性。
 (with-eval-after-load 'eglot
@@ -85,7 +90,7 @@
                           :usePlaceholders   t
                           :completeUnimported t)))
 
-  (add-to-list 'eglot-server-programs '((c++-ts-mode c-ts-mode) "clangd"))
+  (add-to-list 'eglot-server-programs '((c++-ts-mode c++-mode c-ts-mode c-mode) "clangd"))
   (add-to-list 'eglot-server-programs '((python-ts-mode python-mode) "pyright-langserver" "--stdio"))
   (add-to-list 'eglot-server-programs '((typescript-ts-mode tsx-ts-mode js-ts-mode) "typescript-language-server" "--stdio"))
   (require 'consult-eglot)
