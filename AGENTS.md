@@ -41,6 +41,7 @@
 | `user-lisp/mode-line/init-mode-line.el` | mode-line 实现本体，`(provide 'init-mode-line)`，由 `init-bars.el` `require` |
 | `user-lisp/tab-line/init-tab-line.el` | tab-line 实现本体，`(provide 'init-tab-line)`。⚠ 特意不叫 `tab-line.el`：user-lisp 会把子目录**前置**到 load-path，叫 `tab-line.el` 会盖住内置库 |
 | `user-lisp/eshell-prompt/init-eshell-prompt.el` | eshell 提示符实现本体，由 `init-term.el` `require` |
+| `user-lisp/init-parens.el` | **括号显示**：默认很淡（`my-paren-face`）+ 光标处强调（`show-paren` 反显加粗）。机制**改编自 rainbow-delimiters**（GPLv3），只保留"走括号 + 跳过字符串/注释/转义/双字符 opener"的必要代码、砍掉深度配色机器，故不再依赖 `rainbow-delimiters`；淡色按主题 fg/bg 现场混合（用 `init-ui` 的 `my-ui--*`，须在其后 `require`） |
 | `user-lisp/evil-plugins/` | evil 相关插件合集：**内联**的 `evil-surround` / `evil-commentary`(+integration) / `evil-visualstar`（GPLv3），以及本仓库的 `evil-config.el` / `evil-keymaps.el` / `evil-vc.el` / `evil-dired.el` / `evil-ibuffer.el` / `evil-extra.el` / `mc-evil.el` / `ime.el`。见其 `README.md` |
 | `user-lisp/gcmh/gcmh.el` | **内联**的 `gcmh`（GC 调优，GPLv3），由 `init-base.el` `require`。见其 `README.md` |
 | `themes/` | 本仓库自维护的主题文件（`*-theme.el`），由 `custom-theme-load-path` 接入（`user-lisp/init-ui.el`），新增主题放进去即可被 `switch-emacs-theme` 自动发现。共 13 个：`nn-world`（借自 zdn/.emacs.d，GPLv3，**模板**）、`catppuccin`/`crafters`/`gits`/`matrix`，深色 `gruvbox-dark`/`nord`/`dracula`/`monokai-pro`，浅色 `gruvbox-light`/`catppuccin-latte`/`solarized-light`/`one-light`（后 8 个都照 nn-world 模板换 24 槽调色板生成，结构与 face 表一致）。Emacs 自带的 `modus-vivendi`/`modus-operandi` 等也在候选里 |
@@ -55,7 +56,7 @@
 | `scripts/make-shortcuts.py` | Windows：在开始菜单建 Emacs 快捷方式（指向 `runemacs.exe`）。需 `pip install pywin32` |
 | `scripts/install-fonts.py` | Windows：把 `assets/fonts/` 里 vendor 的字体装进当前用户（不需要管理员）。只用标准库 |
 
-当前启用的模块（见 `init.el` 末尾）：`init-base` `init-ui` `init-bars` `init-window`
+当前启用的模块（见 `init.el` 末尾）：`init-base` `init-ui` `init-parens` `init-bars` `init-window`
 `init-completion` `init-dired` `init-git` `init-term` `init-project` `init-keymaps`
 `init-lsp` `init-format` `init-navigation`，以及 `user-lisp/evil-plugins/` 下的
 `evil-config` `evil-keymaps` `evil-vc` `evil-dired` `evil-ibuffer` `evil-extra` `mc-evil`（`ime` 由 `early-init.el` 加载）。

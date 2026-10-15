@@ -306,16 +306,6 @@
    `(eshell-ls-symlink    ((t :foreground ,blue :bold t)))
    `(eshell-prompt        ((t :foreground ,pink)))
 
-   `(rainbow-delimiters-depth-1-face   ((t :foreground ,yellow)))
-   `(rainbow-delimiters-depth-2-face   ((t :foreground ,pink)))
-   `(rainbow-delimiters-depth-3-face   ((t :foreground ,blue-muted)))
-   `(rainbow-delimiters-depth-4-face   ((t :foreground ,orange)))
-   `(rainbow-delimiters-depth-5-face   ((t :foreground ,purple-muted)))
-   `(rainbow-delimiters-depth-6-face   ((t :foreground ,green)))
-   `(rainbow-delimiters-depth-7-face   ((t :foreground ,teal)))
-   `(rainbow-delimiters-depth-8-face   ((t :foreground ,gold)))
-   `(rainbow-delimiters-unmatched-face ((t :inherit warning)))
-
    `(indent-bars-1 ((t :foreground ,red)))
    `(indent-bars-2 ((t :foreground ,orange)))
    `(indent-bars-3 ((t :foreground ,yellow)))

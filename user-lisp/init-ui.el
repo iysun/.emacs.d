@@ -134,20 +134,12 @@
 ;; auto pair
 (electric-pair-mode t)
 
-;; 括号匹配：当配对的开括号已滚出屏幕时，在顶部浮层显示它所在那行。
-;; 读长函数 / 深嵌套时很有用，且是内置能力，零依赖。
-(setq show-paren-style 'parenthesis
-      show-paren-context-when-offscreen 'overlay
-      blink-matching-paren-highlight-offscreen t)
-(show-paren-mode 1)
+;; 括号显示（默认很淡 + 光标处强调）见 user-lisp/init-parens.el。
 
 ;; 标题栏显示文件名，未保存时前置 ●（比默认那串 user@host 有用）
 (setq frame-title-format
       '(:eval (concat (if (and buffer-file-name (buffer-modified-p)) "● " "")
                       (buffer-name))))
-
-;; rainbow-delimiters
-(add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
 
 ;; whitespace：显示 Tab（»）与空格（·）占位符。
 ;; 空格显示曾在 37605ee（2026-06-25「tab 字符设置」）里被一并去掉，这里按需加回。

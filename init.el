@@ -36,7 +36,6 @@
            posframe
            multiple-cursors
            hydra
-           rainbow-delimiters
            nerd-icons
            popper
            consult
@@ -71,6 +70,7 @@
 ;; 拉起来。depth -99 保证它早于 after-init 的其它工作（字体 -95、use-completion-style 等）。
 (add-hook 'after-init-hook (lambda () (require 'evil-config)) -99)
 (require 'init-ui)
+(require 'init-parens)                  ; 括号淡色 + 光标处强调（须在 init-ui 之后：用其 fg/bg 混合）
 (require 'init-bars)                    ; mode-line + tab-line（须在 init-ui 之后：复用其字体选择结果）
 (require 'init-window)
 (require 'init-completion)
