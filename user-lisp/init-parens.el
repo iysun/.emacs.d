@@ -22,7 +22,7 @@
 ;; 依赖 `init-ui.el' 的 `my-ui--fg' / `my-ui--bg' / `my-ui--blend-fg'，故 init.el 里
 ;; 在 `init-ui' **之后** require。
 
-(defcustom my-paren-fade 0.22
+(defcustom my-paren-fade 0.4
   "括号色中保留默认前色的比例：0 = 完全背景色（最淡），1 = 原色。越小越淡。"
   :type 'number :group 'faces)
 
