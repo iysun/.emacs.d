@@ -123,10 +123,11 @@ font-lock 关键词函数。"
     (set-face-attribute 'my-paren-mismatch-face nil
                         :foreground (my-ui--fg 'error "#ff5555")
                         :background 'unspecified :weight 'bold)
-    ;; 光标处：反显（背景色当前景、主题强调色当背景）+ 加粗，比主题默认的细 box 显眼
+    ;; 光标处：换成主题强调色 + 加粗。**不加背景块**——否则字形会被画成背景色，看着像"括号没了"。
+    ;; （想改成反显色块：把 :foreground 换成 bg、:background 换成强调色即可。）
     (set-face-attribute 'show-paren-match nil
-                        :foreground bg
-                        :background (my-ui--fg 'font-lock-keyword-face "#5fafd7")
+                        :foreground (my-ui--fg 'font-lock-keyword-face "#5fafd7")
+                        :background 'unspecified
                         :weight 'bold :box nil :underline nil)))
 
 (add-hook 'after-init-hook #'my-paren-setup-faces t)
