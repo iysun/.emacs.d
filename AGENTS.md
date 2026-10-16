@@ -25,6 +25,7 @@
 
 - [.agent/run.md](.agent/run.md) — 批处理加载冒烟验证。
 - [.agent/bench.md](.agent/bench.md) — 测本机启动速度，追加到 `docs/startup-benchmark.md`。
+- [.agent/check-comments-only.el](.agent/check-comments-only.el) — 校验「只改了注释、代码没动」（解析成 sexp 比对）。
 
 ## 目录结构
 
@@ -147,8 +148,25 @@ emacs --batch `
 emacs                          # 真实 GUI，看 *Messages* / *Warnings*
 ```
 
+## 注释规范（硬性：写/改代码的 agent 必须遵守）
+
+- **默认不写注释**。只在 WHY 不显然时写一条：隐藏约束、微妙不变量、特定 bug 的 workaround、
+  会让读者意外的行为。（判据与措辞取自 Claude Code 系统提示词的 comment 条款。）
+- 自检问句：**删掉这条注释会让将来读代码的人困惑吗？不会就别写。**
+- 不写 WHAT（好名字已经说明）；不写「本任务是 / 谁调用 / 对应 issue #123」这类会腐烂的引用。
+- 望文生义的注释直接删，不要换个说法重写（`;; 用 rg 做兜底搜索`、
+  `(setq completion-ignore-case t)  ; capf 匹配不区分大小写`）。
+- 留下的一律压到最短（十几字级别，可加 `⚠`）：`;; ⚠ 必须 setopt：setq 不触发 :set`。
+- 头注释最多两行、能删就删（没有非写不可的就别写头注释）；行内注释同样只留最短形式。
+- `docstring` 是代码不是注释：行为不显然时写一句，禁止多行注释块。
+- **不删别人的注释**——除非同时删掉它描述的代码，或确认它是错的：看似废话的注释可能在记录
+  当前 diff 看不出来的教训。（本仓库目前由维护者本人要求成批删减，属显式授权。）
+- 改注释**不许动代码**：`.agent/check-comments-only.el` 校验（基线 HEAD 与工作区解析成
+  sexp 比对，全部 `代码等价 OK`）+ 字节编译无 warning + `.agent/run.md` 冒烟。
+
 ## 维护约定（判断式，非强制）
 
+- **注释一律按上面的「注释规范」写**：默认不写，只在 WHY 不显然时留最短一条；评审代码时先看这条。
 - **改了行为/加了模块** → 同步更新本文件相关小节（结构表、启用模块列表、命令）。纯重构 / 小修可不动文档。
 - **新增模块**：在 `user-lisp/` 下建 `init-xxx.el`，文件末 `(provide 'init-xxx)`，并在 `init.el` 末尾 `(require 'init-xxx)`。
 - **改完怎么验证**：批处理加载见 [.agent/run.md](.agent/run.md)；再启动真实 GUI 看 `*Messages*` / `*Warnings*`。
