@@ -192,6 +192,21 @@
   (evil-set-initial-state 'occur-mode 'normal)
   (evil-define-key 'normal occur-mode-map (kbd "q") #'my/quit-window)
 
+  ;; ---------------------------------------------------- command-line window
+  ;; Vim 的 `q:' / `q/' / `q?' 在 evil 里没有绑定。进这个窗口的路子是：在 `:' /
+  ;; `/' / `?' 命令行里按 `C-f'（`evil-command-line-map' 的 C-f =
+  ;; `evil-command-window'）。
+  ;; 窗口 buffer 叫 `*Command Line*'，major-mode 是 `evil-command-window-mode'——
+  ;; 它派生自 **fundamental-mode** 而非 special-mode（故 evil-vc.el 里挂在
+  ;; special-mode-map 上的 q 覆盖不到），evil 自己又只绑了 RET
+  ;; （`evil-command-window-execute'）。于是 normal 态的 q 落到全局的
+  ;; `evil-record-macro'，按下去变成"开始录宏"、关不掉。这里按本仓库约定补 q。
+  ;; ⚠ 只补 q：这个 buffer 是要正常编辑命令行历史的，不能套
+  ;; `evil-extra--readonly-bindings'（那条 remap 会把 insert/change/delete 一并禁掉）。
+  ;; q 关窗后由 evil 装在窗口上的 `delete-window' 参数送回仍在编辑的命令行长。
+  (evil-define-key 'normal evil-command-window-mode-map
+    (kbd "q") #'my/quit-window)
+
   ;; ----------------------------------------------------------------- wgrep
   (evil-define-key nil wgrep-mode-map
     [remap evil-write] 'wgrep-finish-edit)
