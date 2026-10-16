@@ -27,8 +27,8 @@
 
 (defun my/tab-line-buffer-group-by-project (&optional buffer)
   "Group buffers by project root via project.el.
-每个项目分成两个组：文件 buffer 归 \"|项目|\"，非文件 buffer（编译 / xref /
-help / eshell / VC 等）归 \"[项目]\"；不在任何项目内的 buffer 归 \"Other\"。
+每个项目分成两个组：文件 buffer 归 \"[项目]\"，非文件 buffer（编译 / xref /
+help / eshell / VC 等）归 \"|项目|\"；不在任何项目内的 buffer 归 \"Other\"。
 项目名超过 `my/tab-line-group-name-max' 个字符会截断并加省略号。
 ⚠ 返回值同时是分组的\"身份\"标识（`my/tab-line--group-buffers' 用 `equal' 比较），
 截断后若两个项目名前部相同，会被当成同一个组。"
