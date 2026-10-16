@@ -1,18 +1,6 @@
 ;; user-lisp/tab-line/init-tab-line.el 	-*- lexical-binding: t -*-
-;;
-;; tab-line 实现本体，由 `user-lisp/init-bars.el' `require'。原生 tab-line（按项目分组 +
-;; 过滤 eglot buffer），替代 centaur-tabs，零第三方、零启动开销。两条 bar（mode-line +
-;; tab-line）字号/内边距统一逻辑留在 `init-bars.el' 里，这个文件只管 tab-line 本身。
-;; 标签不带图标（跟 mode-line 一样走纯文字，简约优先），故不依赖 nerd-icons。
-;;
-;; ⚠ 本文件 `provide' 的符号是 `init-tab-line'，**不是** `tab-line'——内置库
-;; `tab-line.el' 自己 `(provide 'tab-line)'，本文件如果也用这个名字会在同一个
-;; load-path 上跟内置库撞名，`require' 到底加载哪个全看搜索顺序，随时炸。
-;; tab-line 是 Emacs 内置库，这里提前 require（而非等 global-tab-line-mode 在
-;; after-init-hook 里才隐式拉起）：下面 my/tab-line-ace-jump 用 `let' 动态覆写
-;; `tab-line-tab-name-function'，字节/native 编译器要在编译期就看到该符号已被
-;; `defcustom' 声明为 special，才会生成真正的动态绑定；否则会被当成普通词法变量
-;; 静默失效（编译器本身会报 "Unused lexical variable" 提示这个坑）。
+
+;; ⚠ 不能省：否则 let 覆写会被当词法变量
 (require 'tab-line)
 
 (defconst my/tab-line-group-name-max 20
@@ -42,11 +30,8 @@ help / eshell / VC 等）归 \"|项目|\"；不在任何项目内的 buffer 归 
                       (file-name-nondirectory (directory-file-name root))
                     "Other"))))
       (cond
-       ;; 文件 buffer：项目文件组
        (file (concat "[" name "]"))
-       ;; 非文件 buffer（VC / 编译 / xref / help / eshell …）：同项目的非文件组
        (root (concat "|" name "|"))
-       ;; 不在任何项目内
        (t " Other ")))))
 
 (defun my/tab-line--popup-buffer-p (buf)
@@ -71,23 +56,6 @@ popper 未加载/`popper-mode' 未开启时 `popper-popup-p' 不存在，做特�
                             (string-match-p "\\`\\s-*\\*eglot" name)))
                     (my/tab-line--popup-buffer-p buf))
           (push buf result))))))
-
-;; ---- popper 弹窗窗口里不画 tab-line ----
-;; 上面的过滤只管「弹窗 buffer 不出现在**别人**的标签列表里」；弹窗**自己**那个窗口顶上
-;; 仍会被 `global-tab-line-mode' 画一条 tab-line（内容是它所属分组的标签），一个只有
-;; `popper-window-height' 行高的弹窗顶着这么一条，纯属占地方。
-;;
-;; tab-line 没有 window-local 开关，只有 buffer-local 的 `tab-line-format'（由
-;; `tab-line-mode' 维护）。popper 处理 mode-line 走的正是同一条路：`popper--update-popups'
-;; （挂在 `window-configuration-change-hook' 上）在弹窗集合变化后给 `popper-open-popup-alist'
-;; 里的 buffer 局部改写 `mode-line-format'，`popper-raise-popup' 与 `popper--restore-mode-lines'
-;; （popper-mode 关闭时调用）负责还原。这里就搭在同样这三个时机上，只是把「改 mode-line」
-;; 换成「开关局部 `tab-line-mode'」——跟着 popper 自己的状态机走，时机最准。
-;;
-;; 性能：`popper--update-popups' 调用很频繁，但这里新增的只是遍历 `popper-open-popup-alist'
-;; （通常 0~2 个元素）做一次布尔判断，且 `(when tab-line-mode ...)' 保证重复触发是 no-op。
-;; 改 `tab-line-format' 不改变 window configuration，不会在这个钩子里自激——popper 自己在同一
-;; 个钩子里改 `mode-line-format' 已经验证过这一点。
 
 (defun my/tab-line--hide-tab-line (buf)
   "关掉 BUF 局部的 `tab-line-mode'。"
@@ -125,15 +93,11 @@ popper 未加载/`popper-mode' 未开启时 `popper-popup-p' 不存在，做特�
   (dolist (win-buf win-buf-alist)
     (my/tab-line--show-tab-line (cdr win-buf))))
 
-;; `init-bars'（load 本文件）排在 `init-window'（`(popper-mode +1)' 靠 autoload 拉起 popper）
-;; 之前，见 init.el，故必须 `with-eval-after-load'。
-;; ⚠ 三个挂载点里有两个是 popper 的私有函数（双短横），升级 popper 时顺手确认还在。
 (with-eval-after-load 'popper
   (advice-add 'popper--update-popups      :after #'my/tab-line--hide-in-popups)
   (advice-add 'popper-raise-popup         :after #'my/tab-line--restore-on-raise)
   (advice-add 'popper--restore-mode-lines :after #'my/tab-line--restore-in-alist))
 
-;; ---- 标签文本：左右 padding + buffer 名 + 修改标记（不带图标，简约优先）----
 (defconst my/tab-line-tab-padding " "
   "每个标签左右各留的字面空格 padding。用文本字符撑，而不是 face 的 `:box'
 水平 line-width——实测 tab-line 下 `:box' 的水平 line-width 不会用 `:color' 真正
@@ -163,7 +127,6 @@ face（由 `tab-line-tab-name-format-default' 统一 propertize/套用），颜�
 （tab-line 的默认缓存键不含 `buffer-modified-p'，不主动刷会滞后）。"
   (force-mode-line-update t))
 
-;; ---- 按组操作：关分组内 buffer / ace-jump 跳标签（找回 centaur-tabs 的控制）----
 (defun my/tab-line--group-buffers (&optional group)
   "返回当前 tab-line 分组 GROUP（默认取当前 buffer 所在组）里、
 实际会显示为 tab 的 buffer 列表，顺序与 tab-line 实际展示顺序一致。
@@ -232,9 +195,6 @@ buffer tab 的场景已经超出人工数字母找 tab 的实用范围，不值�
                          (format "跳转到 tab [%s]: "
                                  (mapconcat (lambda (c) (char-to-string (car c)))
                                             label-alist " ")))))
-          ;; 此处 tab-line-tab-name-function 已随上面的 let 退出而自动恢复
-          ;; （无论正常返回还是 C-g 之类的非局部退出，动态绑定都会先解开，
-          ;; 再轮到 unwind-protect 的清理表达式），所以这里清缓存用的是原始渲染函数。
           (tab-line-force-update nil))
         (setq target (cdr (assq key label-alist)))
         (cond
@@ -246,15 +206,9 @@ buffer tab 的场景已经超出人工数字母找 tab 的实用范围，不值�
   (setq tab-line-tabs-function 'tab-line-tabs-buffer-groups)
   (setq tab-line-tabs-buffer-group-function #'my/tab-line-buffer-group-by-project)
   (setq tab-line-tab-name-function #'my/tab-line-tab-name)
-  (setq tab-line-close-button-show nil)    ; 不显关闭按钮，标签只留文字，更简约
-  ;; 不留分隔符：标签之间紧挨着，边界靠每个标签自己的背景块（选中/未选中/分组名
-  ;; 各自不同深浅，见 init-bars.el）和标签自带的 `my/tab-line-tab-padding' 表达，
-  ;; 不再额外插入分隔空白。
+  (setq tab-line-close-button-show nil)
   (setq tab-line-separator "")
-  ;; 让分组名真正拿到 `tab-line-tab-group' face：内置 `tab-line-tab-face-functions'
-  ;; 默认只有 `(tab-line-tab-face-modified tab-line-tab-face-special)'，**不含**
-  ;; `tab-line-tab-face-group'，所以 init-bars.el 里给 `tab-line-tab-group' 设的
-  ;; 背景/内边距不会生效。这里补上，分组名才有自己独立的样式。
+  ;; ⚠ 内置默认不含 tab-line-tab-face-group，不补上分组名 face 不生效
   (add-to-list 'tab-line-tab-face-functions #'tab-line-tab-face-group)
   (advice-add 'tab-line-tabs-buffer-list :filter-return #'my/tab-line-filter))
 
@@ -263,12 +217,6 @@ buffer tab 的场景已经超出人工数字母找 tab 的实用范围，不值�
 
 (add-hook 'after-init-hook 'global-tab-line-mode)
 
-;; ---- consult-buffer 里的「切换 tab 分组」源：narrow 键 ?g ----
-;; 对应 centaur-tabs 时代最终版本的 my-consult--source-centaur-groups
-;; （centaur-tabs-get-groups 枚举 + centaur-tabs-switch-group 动作）。
-;; 原生机制：`tab-line-tabs-buffer-groups' 优先看 window-parameter `tab-line-group'；
-;; 一旦当前 buffer 本身就属于该分组，它会自动清掉这个覆盖、回到「跟随当前 buffer」
-;; 的默认状态，不需要手动复位——所以这里只需要设一次 window-parameter 就够了。
 (defun my/tab-line--group-names ()
   "当前所有 tab-line 分组名（按字母序去重），供 consult `?g' 源枚举。"
   (seq-sort #'string<
@@ -291,4 +239,5 @@ buffer tab 的场景已经超出人工数字母找 tab 的实用范围，不值�
 (with-eval-after-load 'consult
   (add-to-list 'consult-buffer-sources 'my/consult--source-tab-line-group 'append))
 
+;; ⚠ provide 名撞内置库 tab-line.el
 (provide 'init-tab-line)

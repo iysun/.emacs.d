@@ -1,25 +1,4 @@
 ;; user-lisp/eshell-prompt/init-eshell-prompt.el 	-*- lexical-binding: t -*-
-;;
-;; eshell 提示符实现本体，由 `user-lisp/init-term.el' `require'。
-;;
-;; 自写，两行结构：第一行目录+git分支/脏净，第二行 >>。曾经外观照抄
-;; `eshell-git-prompt' 的 multiline2 主题（user@host、分段框线、时间都在），
-;; 嫌太花后砍掉了这些装饰，只留下当初为了性能换掉的两处底层实现。
-;;
-;; 为什么不直接用 `eshell-git-prompt-multiline2'：它每画一次提示符要**起 4 个
-;; git 进程**（`eshell-git-prompt--branch-name' 在它函数体里被调了三遍，每遍都
-;; 真的 spawn 一次，再加一次 `git status --porcelain'）。本机 `benchmark-run'
-;; 实测：整条提示符 945ms、单次 `git symbolic-ref' 225ms、`git status
-;; --porcelain' 255ms——Windows 上创建进程本来就贵，于是每敲一条命令回车后固定
-;; 卡约 1 秒；连非仓库目录也要 422ms（分支名那两处仍会调）。这是 eshell「卡」
-;; 的主因。
-;;
-;; 两处替代：
-;;   - 分支名：直接读 .git/HEAD 这个纯文本文件（一行 "ref: refs/heads/xxx" 或裸 sha），
-;;     0 次进程创建，微秒级。
-;;   - 工作区脏/净（✗ / ✔）：`git status --porcelain' 没有便宜的文件替代品，改成**异步**
-;;     跑，结果按仓库根缓存。画提示符时只读缓存、不阻塞；进程返回后再就地把提示符里那
-;;     两个字符替换掉。所以最坏情况是 ✗/✔ 晚几百毫秒出现，而不是让你等它。
 
 (defface my/eshell-prompt-secondary '((t :foreground "#51afef" :weight ultra-bold))
   "提示符的 ┌─/└─ 前缀与括号。" :group 'eshell-prompt)
@@ -127,13 +106,13 @@ field / read-only / front-sticky 等属性原样搬过去（丢了会破坏 C-a 
                           (puthash root state my/eshell-prompt--dirty-cache)
                           (my/eshell-prompt--update-slot buffer state))))))))
       (setq my/eshell-prompt--status-proc proc)
-      (unless proc (kill-buffer out)))))   ; 机器上没有 git：静默退化成只显示 …
+      (unless proc (kill-buffer out)))))
 
 (defun my/eshell-prompt--short-dir ()
   "只显示当前目录名（跟 multiline2 一致，不显示完整路径）。"
   (let ((dir (directory-file-name (abbreviate-file-name default-directory))))
     (if (string-empty-p (file-name-nondirectory dir))
-        dir                             ; 盘符根目录，如 \"d:/\"
+        dir
       (file-name-nondirectory dir))))
 
 (defun my/eshell-prompt--success-p ()
@@ -166,8 +145,7 @@ field / read-only / front-sticky 等属性原样搬过去（丢了会破坏 C-a 
      (propertize " " 'face 'my/eshell-prompt-secondary))))
 
 (setq eshell-prompt-function #'my/eshell-prompt)
-;; `eshell-prompt-regexp' 在 30.1 起已标记 obsolete（提示符边界改用 field 属性），
-;; 但 `eshell-forward-matching-input' 等老函数还在读它，跟原主题保持一致设上。
+;; ⚠ obsolete 但仍被 eshell-forward-matching-input 等读，不能删
 (setq eshell-prompt-regexp "^[^$\n]*└─>> ")
 
 (provide 'init-eshell-prompt)

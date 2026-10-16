@@ -1,10 +1,6 @@
 ;; evil-config.el 	-*- lexical-binding: t -*-
-;; 启用 Evil 全局配置
 
-;; evil-want-* 必须在 evil 加载【前】设置。
-;; evil-want-keybinding t（默认）：让 evil 加载自带的 evil-keybindings.el，为 dired/help/
-;; ibuffer 等 special mode 提供基础 evil 键位。已移除 evil-collection，故用默认 t 而非 nil
-;; （设 nil 是给 evil-collection 接管用的，没有它时会导致 special mode 完全没有 evil 键位）。
+;; ⚠ evil-want-* 必须在 evil 加载前设好；evil-want-keybinding 用默认 t（evil-collection 已移除）
 (progn
   (setq evil-want-integration t)                ; 与 Emacs minor modes 集成
   (setq evil-want-keybinding t)
@@ -15,9 +11,7 @@
   (setq evil-undo-system 'undo-redo)            ; 使用 Emacs 的 undo-tree 或简易 undo-redo
   )
 
-;; 本文件顶层用了 `evil-define-text-object'（宏）。byte-compiler 不会执行 `(evil-mode 1)'，
-;; 故编译期需顶层 require 让宏可用，否则生成坏 .elc（加载报 void-variable evil-a-between）。
-;; 放在 evil-want-* 之后，保证运行时这些变量先于 evil 设好（避免 issue #60）。
+;; ⚠ 编译期必须 require evil：下面用了 evil-define-text-object 宏
 (require 'evil)
 
 (evil-mode 1)
@@ -30,11 +24,7 @@
   (evil-commentary-mode)
   )
 
-;; 输入法切换（跨平台）已挪到 user-lisp/evil-plugins/ime.el（`my/switch-to-english-input-method'
-;; + C-SPC 绑定），early-init.el 阶段就加载好了，这里不用再定义。
 
-
-;; evil-textobj-between
 (defgroup evil-textobj-between nil
   "Text object between for Evil"
   :prefix "evil-textobj-between-"
@@ -84,20 +74,7 @@
             'evil-inner-between)
 
 ;; ---- 词运动 / 分词（word motion & subwords）----
-;; 口径（最终）：w/b/e 与 iw/aw 按「整词」（identifier 级 [[:word:]_-]+，即
-;; fooBarBaz / foo-bar-baz / foo_bar_baz 各算一个）；i SPC w / a SPC w 按「subword」。
-;;
-;; 实现整词：把 evil 的 `evil-word' 词运动换成整词运动。`w/b/e` 走 `forward-thing 'evil-word'，
-;; `iw/aw` 走 `bounds-of-thing-at-point 'evil-word'`（thingatpt 通用算法再经 forward-thing），
-;; 两条路都解析到 `forward-evil-word'——所以 defalias 这一个函数，词运动与 iw/aw 一起变整词。
-;;
-;; ⚠ 字符类写死 [[:word:]_-] 而不用语法表：'-' 在 basic 模式是标点、在 lisp 模式是符号，
-;; 写死才能跨 mode 一致；[:word:] 含 CJK，故中文整段也算一个整词。
-;;
-;; 启用 `global-subword-mode'：让 Emacs 自身的词命令 M-f/M-b/M-d… 也按 subword 切。
-;; （Emacs 31 的 subword-mode 经 `find-word-boundary-function-table' 让 `forward-word' 认
-;; camelCase 边界——不是改键、不是 advice，所以绑在 `forward-word' 上的 M-f/M-b/M-d 一并生效。）
-;; evil 侧不依赖它：w/b/e 走 skip-chars 整词运动，i␣w/a␣w 直接调 subword-forward，开不开都不影响。
+;; 口径：w/b/e 与 iw/aw 按整词 [[:word:]_-]+；i SPC w / a SPC w 按 subword
 (require 'subword)
 (global-subword-mode t)
 
@@ -123,24 +100,11 @@ wrong-type-argument（曾导致 aw/b 报错、w 落点错位）。"
       (setq n (1- n)))
     n))
 
-;; 让 `evil-word'（w/b/e、iw/aw、双击选词…）都按整词。
-;; `forward-thing 'evil-word' 解析到 (intern-soft "forward-evil-word")，即下面这个 defalias。
-;; ⚠ `*' / `#' 不在此列：evil-search 模块下它们被 `evil-select-search-module' 改绑到
-;;   evil-ex-*-word-*，取词用 Emacs `word'（不含 -）而非 `evil-word'，故单独处理——
-;;   见下面「搜索光标下的整词」一节。
+;; forward-thing 'evil-word' 解析到 (intern-soft "forward-evil-word")，defalias 这一个函数就够
 (defalias #'forward-evil-word #'forward-evil-whole-word)
 
 ;; ---- 搜索光标下的整词：`*' / `#' ----
-;; 背景：`evil-search-module' 的 :set（`evil-select-search-module'）会把 `*' 从
-;; `evil-search-word-forward' 换成 `evil-ex-search-word-forward'，后者经
-;; `evil-ex-start-word-search' 用 Emacs `word'（[[:word:]]，不含 `-'）取词
-;; → `foo-bar' 只搜到 `foo'，不吃上面的整词 alias。这里改绑成自建命令：取词走
-;; `evil-word'（整词），搜索仍走 evil-ex（故 `gn' / `cgn' 照常可用）。
-;;
-;; ⚠ 词边界 `\<' / `\>' 基于语法表，`-' 不是 word 字符 → 取到 `-foo' / `foo-' /
-;;   `--flag' 这类首尾带 `-' 的整词时，直接套 `\<...\>' 会**匹配不到**（实测
-;;   `\<-foo\>' 匹配 `-foo' 得 nil）。故先去掉首尾的 `-'（`_' 是 word 字符，不动），
-;;   退化成搜内部词——等价 Vim 的 `*'（Vim 的 iskeyword 也不含 `-'）。
+;; ⚠ evil-search 会把 `*' 改绑到取词用 Emacs `word' 的版本，故自建：取词走 evil-word、搜索仍走 evil-ex
 (defun my/evil-ex-search-word-regex (string)
   "整词 STRING 的搜索正则。词边界处理见上方说明。"
   (let ((w (replace-regexp-in-string "\\`-+\\|-+\\'" "" string)))
@@ -179,13 +143,10 @@ wrong-type-argument（曾导致 aw/b 报错、w 落点错位）。"
 
 (define-key evil-motion-state-map "*" #'my/evil-ex-search-word-forward)
 (define-key evil-motion-state-map "#" #'my/evil-ex-search-word-backward)
-;; `g*' / `g#' 不要（无边界版用不上；visual 态的 `*'/`#' 已由 evil-visualstar 提供）：
-;; 显式解绑 evil 自带的 unbounded word 搜索，否则会退回它（取词用 Emacs `word'、不吃整词）。
+;; `g*'/`g#' 无边界版用不上，显式解绑
 (define-key evil-motion-state-map "g*" nil)
 (define-key evil-motion-state-map "g#" nil)
 
-;; ---- i SPC w / a SPC w：subword ----
-;; thing `evil-subword' 的 forward-op 用 `subword-forward'（按 camelCase/大小写边界切）。
 (defun forward-evil-subword (&optional count)
   "Move forward COUNT subwords；返回未能移动的个数（0 = 成功），同 evil forward-op 约定。"
   (let* ((count (or count 1))

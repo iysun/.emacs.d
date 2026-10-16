@@ -1,17 +1,4 @@
 ;; mc-evil.el   -*- lexical-binding: t -*-
-;;
-;; multiple-cursors 与 evil 联动：mc 激活时切到 evil 的 emacs-state（这样输入/命令会被
-;; mc 广播到所有光标），mc 关闭时恢复**进入前**的 evil 状态。
-;;
-;; 状态切换靠 mc 自己的 `multiple-cursors-mode-enabled/disabled-hook'——它覆盖**所有**
-;; 起手路径（任何 mc 命令、乃至 `M-x'），不必再维护一份"哪些命令要 advice"的清单：
-;; 旧版硬编码 13 个命令，漏了 20 个（mc/mark-all-dwim、mc/mark-more-like-this(-extended)、
-;; mc/mark-next/previous-word-like-this、mc/mark-all-words/symbols-like-this、mc/mark-lines、
-;; mc/unmark-*、mc/edit-beginnings/ends-of-lines ……），从这些起手时联动直接失效。
-;;
-;; 例外：**吃选区**的那批命令要在**执行前**就把 visual 选区换算好——mc 是在首个命令
-;; **之后**才 enable 的，等 enabled-hook 触发就来不及了。故只给它们加 :before（只列语义
-;; 明确的"吃选区"命令，不会像旧版那样漏）。
 
 (defvar-local my/mc-prev-evil-state nil
   "进入 multiple-cursors 前的 evil 状态；退出时据此恢复。
@@ -59,11 +46,10 @@ buffer-local —— 与 mc 自身的 `multiple-cursors-mode'（也是 buffer-loc
       (setq my/mc-prev-evil-state nil)
       (evil-change-state (if (eq prev 'visual) 'normal prev)))))
 
-;; 覆盖所有起手路径。
 (add-hook 'multiple-cursors-mode-enabled-hook  #'my/mc-enter)
 (add-hook 'multiple-cursors-mode-disabled-hook #'my/mc-leave)
 
-;; 「吃选区」的命令：执行前换算 visual 选区（见文件头）。
+;; ⚠「吃选区」的命令须在执行前换算 visual 选区：mc 在首个命令之后才 enable，等 hook 来不及。
 (dolist (cmd '(mc/edit-lines
                mc/mark-all-in-region
                mc/mark-all-in-region-regexp
@@ -80,10 +66,7 @@ buffer-local —— 与 mc 自身的 `multiple-cursors-mode'（也是 buffer-loc
                mc/reverse-regions
                mc/sort-regions))
   (when (fboundp cmd)
-    ;; 幂等：重复 load 本文件不会叠加 advice。
     (unless (advice-member-p #'my/mc-enter-visual cmd)
       (advice-add cmd :before #'my/mc-enter-visual))))
-
-;; 键位见 init-keymaps.el（M-j / M-k、C-M-n / C-M-p / C-M-m / C-M-a / C-M-l）。
 
 (provide 'mc-evil)

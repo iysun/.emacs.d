@@ -1,12 +1,4 @@
 ;; init-mirrors.el 	-*- lexical-binding: t -*-
-;;
-;; 包源镜像的**单一定义处**。切镜像只改本文件一处。
-;;
-;; 使用方（在 `package-initialize' 之前）：
-;;   init.el     (require 'init-mirrors)
-;;
-;; 注意：本文件只设 `package-archives'，不调用 `package-initialize'，
-;; 由各使用方自行决定初始化时机。
 
 (require 'package)
 
@@ -31,7 +23,6 @@
     ("org"    . "https://orgmode.org/elpa/"))
   "官方源。走代理或在境外机器时可用。")
 
-;; ↓↓↓ 换镜像只改这一行 ↓↓↓
 (setq package-archives my/package-archives-ustc)
 
 (provide 'init-mirrors)

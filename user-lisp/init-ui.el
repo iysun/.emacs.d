@@ -1,34 +1,16 @@
 ;; init-ui.el   -*- lexical-binding: t -*-
 
-;; `cl-loop' 是宏，字节编译期必须先加载 cl-lib，否则被当函数编译成坏 .elc
-;; （同 evil-plugins/evil-config.el 顶层 require evil 的道理）。
+;; ⚠ cl-loop 是宏，须顶层 require cl-lib，否则 .elc 报 Invalid function
 (require 'cl-lib)
 
 (defvar my-ui-default-font-family nil
   "实际选中的默认字体族名。供 nerd-icons 复用，见下方图标字体一节。")
 
-;; ---- 字体 ----
-;; 每类字符集各给一串候选，取第一个**系统真装了**的；都没有就沉默跳过，用 Emacs 默认。
-;; 用 `find-font' 而非 `(member f (font-family-list))'：后者只比家族名字符串，
-;; 对同一字体的不同注册名（Windows 上 "JetBrainsMono Nerd Font" vs "JetBrainsMono NFM"）
-;; 容易漏判；`find-font' 走真正的字体匹配。
-;; 只在图形界面下做——tty 里 set-fontset-font 无意义且可能报错。
 (defun my-ui--setup-fonts ()
   "选择并应用默认/中文/符号/emoji 字体。延迟到 `after-init-hook'，让首帧先出来。"
   (when (display-graphic-p)
-  ;; 默认（英文/等宽）。**不写死字号**——`:height 150' 这种绝对磅值是 zdn 那台机器的
-  ;; 合适值，换一台 DPI/缩放不同的机器就会明显偏大或偏小。这里跟随系统/frame 默认，
-  ;; 由 mode-line 那边用**相对比例**去贴合，缩放才跨机器一致。
-  ;; 真要固定字号，在 custom.el 里设 default 的 :height，别写死在这里。
-  ;; 候选表第一项 "JetBrainsMonoNL NFM" 是 assets/fonts/ 里 vendor 的字体
-  ;; （JetBrainsMono Nerd Font Mono，NoLigatures 变体，装法见
-  ;; scripts/install-fonts.py），优先于系统装的 JetBrainsMono/FiraCode 各变体——
-  ;; 跑过 install-fonts.py 的机器由此落在一个可控、可复现的字体上，不用管系统上
-  ;; 恰好装了哪个版本。系统变体、以及没打图标补丁的 Cascadia Code 仍留在候选表
-  ;; 垫底，供还没跑安装脚本的机器兜底。
-  ;; 名字里的 "NL" 是这个变体在字体自身 name table 里的真实 family 名（不是
-  ;; "JetBrainsMono NFM"，实测过，见 install-fonts.py 头部注释），系统装的官方
-  ;; Ligatures 版才叫 "JetBrainsMono NFM"，两者不是一回事，候选表里都留着。
+  ;; ⚠ 别写死 :height：换 DPI 机器走形
+  ;; "NL" 才是该 vendor 字体的真 family 名
   (cl-loop for f in '("JetBrainsMonoNL NFM" "JetBrainsMono Nerd Font" "JetBrainsMono NFM"
                       "FiraCode Nerd Font" "FiraCode NFM" "Cascadia Code")
            for spec = (font-spec :family f)
@@ -36,59 +18,28 @@
            return (progn
                     (set-frame-font f nil t)
                     (setq my-ui-default-font-family f)))
-  ;; 中文。不写死 :size——固定字号会比英文小，导致中英不等高；跟随默认字号才对齐。
-  ;; prepend：插到该字符集候选表最前，优先于 Emacs 自带的回退链。
-  ;; 候选表前两项 "更纱终端书呆黑体-简"/"思源黑体" 是 assets/fonts/ 里 vendor 的
-  ;; 两个字体（Sarasa Term SC Nerd 的实际 family 名、Source Han Sans SC 的实际
-  ;; family 名——都是中文名，不是候选表里 "Sarasa Term SC Nerd" 那个英文名，
-  ;; 实测过），优先于系统装的微软雅黑/DengXian，装法见 scripts/install-fonts.py；
-  ;; "Sarasa Term SC Nerd" 是历史遗留的错误英文名，实测不会真的命中，留着无害。
+  ;; ⚠ 中文别写 :size；须 prepend 且前两项用中文 family 名
   (cl-loop for f in '("更纱终端书呆黑体-简" "思源黑体" "微软雅黑" "Microsoft YaHei"
                       "Sarasa Term SC Nerd" "DengXian")
            for spec = (font-spec :family f)
            when (find-font spec)
            return (set-fontset-font t 'han spec nil 'prepend))
-  ;; 符号（制表符、箭头、几何图形等；dired 等的框线字符会用到）。
-  ;; "Symbola" 是 assets/fonts/ 里 vendor 的字体（候选名不用改，字体名本来就叫这个），
-  ;; 排第一优先于系统的 Segoe UI Symbol。
   (cl-loop for f in '("Symbola" "Segoe UI Symbol" "Symbol")
            for spec = (font-spec :family f)
            when (find-font spec)
            return (set-fontset-font t 'symbol spec nil 'prepend))
-  ;; Emoji。"Noto Color Emoji" 同样是 vendor 的字体，候选名本来就对得上，排第一位——
-  ;; 系统自带的 Segoe UI Emoji 只在没装 vendor 字体时才会用到。
   (cl-loop for f in '("Noto Color Emoji" "Segoe UI Emoji")
            for spec = (font-spec :family f)
            when (find-font spec)
            return (set-fontset-font t 'emoji spec nil 'prepend)))
-  ;; 字体确定后同步给 nerd-icons（若它已加载；未加载则交给下面的 with-eval-after-load）。
   (when (and my-ui-default-font-family
              (member my-ui-default-font-family my-ui--nerd-patched-font-families))
     (setq nerd-icons-font-family my-ui-default-font-family)))
 
 (add-hook 'after-init-hook #'my-ui--setup-fonts -95)
 
-;; 若想微调中文相对英文的大小（或解决中英行高不齐），用 rescale：>1 放大中文，<1 缩小。
-;; (setq face-font-rescale-alist '(("微软雅黑" . 1.1)))
-
-;; ---- 图标字体 ----
-;; nerd-icons 默认把所有图标**硬绑**在字体族 "Symbols Nerd Font Mono" 上
-;; （它给图标字符串加的是 face `(:family "Symbols Nerd Font Mono")'）。
-;; 本机没装这个族，于是 mode-line/tab-line 的图标全渲染成豆腐块 □。
-;;
-;; 但本机装的 JetBrainsMono NFM / FiraCode Nerd Font **本身就是打过 Nerd 补丁的字体**，
-;; 私用区码位（分支 U+E0A0、诊断 U+EA87 等）都在里面。所以不必再下载字体，
-;; 直接把 nerd-icons 指向上面选中的默认字体即可——顺带让图标和正文字体完全一致。
-;;
-;; 只在 `my-ui-default-font-family' **确实是打过 Nerd 补丁的那几个**里挑时才这么改：
-;; 上面英文字体候选表最后一项 "Cascadia Code" 是没打过 Nerd 补丁的兜底项，本机若连
-;; JetBrainsMono/FiraCode 的 Nerd 变体都没装、落到 Cascadia Code，把 nerd-icons 指过去
-;; 反而必现豆腐块（之前就是这样：豆腐块换了张脸，还是豆腐块）。这种机器不重定向，
-;; 保持 nerd-icons 找不到字体的状态，让各处图标函数走各自的 ignore-errors 回退纯文本，
-;; 好过顶着一个看着像字符实则不可读的方块。
-;;
-;; 另一条路是 `M-x nerd-icons-install-fonts' 下载安装 Symbols Nerd Font Mono；
-;; 那样 nerd-icons 的全部图标集都可用，但要联网 + 装系统字体。
+;; ⚠ nerd-icons 硬绑未装的 "Symbols Nerd Font Mono" → 豆腐块，须重定向
+;; ⚠ 只在打过 Nerd 补丁的白名单内重定向；命中即无条件改（别再加 find-font 判断，反成豆腐块）
 (defconst my-ui--nerd-patched-font-families
   '("JetBrainsMono Nerd Font" "JetBrainsMono NFM" "FiraCode Nerd Font" "FiraCode NFM"
     "JetBrainsMonoNL NFM")
@@ -96,25 +47,12 @@
 特意不含候选表末尾的 \"Cascadia Code\"——见上方「图标字体」一节注释。
 \"JetBrainsMonoNL NFM\" 是 assets/fonts/ 里 vendor 的那个变体。")
 
-;; 只要 `my-ui-default-font-family' 在白名单里就无条件重定向，**不再**额外判断
-;; "nerd-icons-font-family 现在的值是不是已经能 find-font 到"——这个判断曾经的用意
-;; 是"用户已经手动装好默认字体 Symbols Nerd Font Mono 就别多管"，但实测踩了坑：
-;; 有台机器上确实注册了一个叫 "Symbols Nerd Font Mono" 的字体（来自某次半途而废的
-;; `nerd-icons-install-fonts'，文件名是可疑的 "NFM.ttf"），find-font 能找到它，
-;; 于是这个判断为真、跳过重定向，结果图标 face 挂着这个字体名却渲染不出实际字形
-;; （不是豆腐块，是完全空白——`char-displayable-p' 只保证*某个*已装字体能显示该码位，
-;; 不保证请求的这个 family 本身真的显示得出来）。我们自己选出来的
-;; `my-ui-default-font-family' 是刚刚原地 `find-font' 验证过、且正被当前 frame
-;; 实际使用的字体，比一个来路不明的同名字体可信得多，直接用它更稳妥。
 (with-eval-after-load 'nerd-icons
   (when (and my-ui-default-font-family
              (member my-ui-default-font-family my-ui--nerd-patched-font-families))
     (setq nerd-icons-font-family my-ui-default-font-family)))
 
-;; 连字（ligature）。原先用的 `global-prettify-symbols-mode' 其实是把 "->" 之类
-;; **替换成单个字符**（如 →），并非真连字，且会改变列宽、干扰对齐。
-;; 这里改用 `composition-function-table'：让字体自己的连字字形生效，字符本身不变。
-;; 需要字体支持（JetBrainsMono / FiraCode / Cascadia 都带）。
+;; ⚠ 用 composition-function-table，别用 global-prettify（后者改列宽）
 (dolist (chars '("::" "..." "->" "=>" "<=" ">=" "!==" "!=" "===" "==" "<!--" "-->"
                  "/*" "*/" "&&" "||" "??" "|>" "<|" "++" "--" "<<" ">>"))
   (set-char-table-range
@@ -123,34 +61,24 @@
    (nconc (char-table-range composition-function-table (aref chars 0))
           (list (vector (regexp-quote chars) 0 'font-shape-gstring)))))
 
-;; 精准像素滚动（Emacs 29+，31 更稳定）
 (pixel-scroll-precision-mode 1)
 
-;; line numbers
 (global-display-line-numbers-mode 1)
 (setq display-line-numbers-type 'relative)
 (setq display-line-numbers-width 4)
 
-;; auto pair
 (electric-pair-mode t)
 
-;; 括号显示（默认很淡 + 光标处强调）见 user-lisp/init-parens.el。
-
-;; 标题栏显示文件名，未保存时前置 ●（比默认那串 user@host 有用）
 (setq frame-title-format
       '(:eval (concat (if (and buffer-file-name (buffer-modified-p)) "● " "")
                       (buffer-name))))
 
-;; whitespace：显示 Tab（»）与空格（·）占位符。
-;; 空格显示曾在 37605ee（2026-06-25「tab 字符设置」）里被一并去掉，这里按需加回。
-;; display-table 只做字形映射，勿在 glyph 上绑独立 face，否则与 `region' 合并异常
-;; （选区发灰/断层）；颜色统一设在 `whitespace-tab' / `whitespace-space'（走 font-lock）。
-;; Tab 用 GNU 默认向量；font-lock prepend 减轻 treesit 盖住的问题。
+;; ⚠ display-table 只做字形映射，face 设在 whitespace-tab/-space（否则与 region 合并发灰）
 (setq whitespace-style '(face tabs tab-mark spaces space-mark)
       whitespace-display-mappings
       '((tab-mark   ?\t   [?» ?\t] [?\\ ?\t])
         (space-mark ?\s   [?·]     [?.])
-        (space-mark ?\xa0 [?¤]     [?_])))   ; 不换行空格，单独标出来便于发现
+        (space-mark ?\xa0 [?¤]     [?_])))
 
 (defun my-ui--fg (face fallback)
   (let ((v (face-attribute face :foreground nil t)))
@@ -191,7 +119,6 @@
   (let ((comment (my-ui--fg 'font-lock-comment-face nil))
         (base (my-ui--fg 'default "#d4d4d4")))
     (if (and comment (not (string= comment "unspecified-fg")))
-        ;; 越小越淡（越靠近背景）；0.34–0.42 在多数主题下「像注释但更轻」
         (my-ui--blend-fg comment bg 0.38)
       (my-ui--whitespace-muted-fg base bg))))
 
@@ -202,7 +129,6 @@
          (base (my-ui--fg 'default "#d4d4d4")))
     (when (or (null faded) (string= faded base))
       (setq faded (my-ui--whitespace-muted-fg base bg)))
-    ;; Tab 稍重一点（» 比 · 需要更明显），空格用常规字重，避免整片缩进太吵。
     (set-face-attribute 'whitespace-tab nil
                         :foreground faded :background 'unspecified :weight 'semi-bold)
     (dolist (sym '(whitespace-space whitespace-hspace))
@@ -218,31 +144,19 @@
     (my-ui-setup-whitespace-faces)
     (when (and (bound-and-true-p whitespace-font-lock-keywords) font-lock-mode)
       (font-lock-remove-keywords nil whitespace-font-lock-keywords)
-      ;; prepend：优先于 treesit / 其它 append 的 font-lock，Tab/空格标记才不被盖住
+      ;; ⚠ prepend 才不被 treesit 等 append 的 font-lock 盖住
       (font-lock-add-keywords nil whitespace-font-lock-keywords 'prepend)
       (font-lock-flush))))
 (add-hook 'whitespace-mode-hook #'my-ui-whitespace--after-on)
 
-;; 4. 全局开启
 (add-hook 'prog-mode-hook 'whitespace-mode)
 
-;; diredfl-mode 的 hook 已随 2026-07-28 dired 简化移除（参照 zdn 精简掉 diredfl 包，
-;; 见 user-lisp/init-dired.el）。
-
-;; dashboard 首屏已禁用以提速启动（启动直接进 scratch/文件；inhibit-startup-screen 见 early-init.el）。
-
-;; 本仓库自维护的主题目录（不依赖任何主题包）：themes/ 下全是 `*-theme.el`。
-;; `nn-world` 是模板（借自 zdn/.emacs.d），其余（crafters/gits/matrix/catppuccin、
-;; gruvbox-dark/nord/dracula/monokai-pro）都是照它的结构换 24 槽调色板得到的变体——
-;; 加新变体 = 复制一份改那段 `let` 里的颜色。放这个目录即可被 switch-emacs-theme
-;; （custom-available-themes 现场扫这条 load-path）发现；Emacs 自带的 modus-* 等同样可选。
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
 
 (defun set-bigger-spacing ()                                               
   (interactive)
   (setq-local default-text-properties '(line-spacing 0.2 line-height 1.2)))
 
-;; 保存主题
 (defun switch-emacs-theme(theme)
   "switch emacs theme"
   (interactive
@@ -252,13 +166,10 @@
              (mapcar #'symbol-name
                      (custom-available-themes))))))
   
-  ;; 禁用所有已启用的主题
   (mapc #'disable-theme custom-enabled-themes)
   
-  ;; 加载新主题
   (load-theme theme t)
   
-  ;; 使用customize保存到配置文件
   (customize-save-variable 'custom-emacs-theme theme)
   )
 
@@ -271,21 +182,7 @@
   )
 (add-hook 'after-init-hook 'use-emacs-theme)
 
-;; ---- fringe 位图窄位图兜底放大（不做 HiDPI 整体放大）----
-;; 目标宽度定成 8——即 Emacs 各包给 fringe 位图约定俗成的
-;; 默认宽度。这条 advice 因此只会碰真正异常窄（<8px）的位图，把它们兜底放大到
-;; 可正常辨认的 8px；bookmark-mark 这类本来就是标准 8px 位图，不会被这条 advice
-;; 碰到，原样使用包自带的形状/尺寸。
-;; 之前这里试过把目标宽度定成 16 做「HiDPI 放大」，副作用是所有图标（包括
-;; bookmark 的旗子、各包的展开箭头）都比行号数字/正文字符明显大一圈，观感突兀，
-;; 用户明确要求撤回——所以这里只保留「防止极端窄位图糊成一团」这一件事，
-;; 不再整体放大。放大到 16px 那版同时还得把 frame 的 fringe 列宽也撑宽到
-;; 16px（否则被裁切）；目标宽度改回 8 之后，fringe 列宽维持 Emacs 默认即可，
-;; 不用再额外调用 `fringe-mode'。
-;; 必须在这些包**定义**自己的位图之前就挂上，故用 `after-init-hook'——此时
-;; flymake 还没因为打开文件而加载（首次开文件才 require）。
-;; 算法照搬 https://github.com/blahgeek/emacs-fringe-scale（经由 zdn/.emacs.d 的
-;; nn-fringe-scale 转手），逻辑不变，仅去掉 nn- 前缀。
+;; ⚠ 必须早于各包定义位图，故挂 after-init-hook
 (defconst my/fringe-scale-width 8
   "fringe 位图缩放的目标宽度（像素）。等于包定义位图的标准宽度，
 只用来兜底放大异常窄的位图，不做整体 HiDPI 放大——见上面的说明。")
@@ -329,12 +226,7 @@ HEIGHT 参数分两种情况，不能一视同仁地跟宽度同比放大：
          (align (or (nth 4 r) 'center)))
     (when (< width my/fringe-scale-width)
       (let* ((new-width my/fringe-scale-width)
-             ;; `mapcar' 不管输入是不是 vector，返回值一律是 list——`define-fringe-bitmap'
-             ;; 要求 BITS 是数组（vector/bool-vector/string），直接把 list 传回去会在
-             ;; 原生实现里炸 `wrong-type-argument arrayp'。旧代码从没露馅，是因为不管
-             ;; 哪条分支最终都会过一遍 `my/fringe-scale--scale-height'——它内部用
-             ;; `make-vector' + `aset' 重新攒了一个真正的 vector 再返回；这里
-             ;; explicit-height 分支跳过了那一步，所以必须自己用 `vconcat' 转回 vector。
+             ;; ⚠ mapcar 返回 list，须 vconcat 成 vector
              (bits-w-scaled (vconcat (mapcar (lambda (x) (my/fringe-scale--scale-width x width new-width)) bits))))
         (if explicit-height
             (setq bits bits-w-scaled

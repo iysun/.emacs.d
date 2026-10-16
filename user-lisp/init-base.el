@@ -1,19 +1,11 @@
 ;; init-base.el 	-*- lexical-binding: t -*-
 
-;; `cl-remove-if-not' / `cl-loop' 来自 cl-lib；顶层 require 保证编译期宏可用。
 (require 'cl-lib)
 
-;; gcmh：平时把 gc-cons-threshold 设很大（几乎不GC），只在真正空闲时才触发一次
-;; 真正的收集。替代 early-init.el 里原来固定 20MB 的静态阈值——20MB 在
-;; eglot/jsonrpc/tree-sitter 频繁产生垃圾的场景下偏低，profiler 里能看到明显的
-;; Automatic GC 占比、敲字卡一下。
 (require 'gcmh)
-(setq gcmh-high-cons-threshold (* 128 1024 1024)) ; 128MB
+(setq gcmh-high-cons-threshold (* 128 1024 1024))
 (gcmh-mode 1)
 
-;; setup
-
-;; 启动不自动最大化（如需恢复，取消下面这行注释）
 ;; (add-hook 'after-init-hook 'toggle-frame-maximized)
 (progn
   (global-auto-revert-mode t)
@@ -21,24 +13,16 @@
   (setq use-short-answers t)
   (setq select-enable-clipboard nil)
 
-  ;;; And I have tried
   (setq-default indent-tabs-mode nil)
 
-  ;; 自定义项目标识
   (setq project-vc-extra-root-markers '(".project"))
 
   (global-hl-line-mode t)
 
-  ;; jit-lock 默认跟 redisplay 同步做语法高亮（tree-sitter 的 font-lock 查询也走
-  ;; 这条路径），每敲一个字都要等高亮重算完才刷新画面。设个小延迟让它退化成
-  ;; "敲字停顿 0.1s 后才补高亮"，肉眼看不出高亮变慢，但敲字本身不再被它卡住。
   (setq jit-lock-defer-time 0.1)
   )
 
-
-;; eldoc 延迟（`eldoc-idle-delay'）见 `init-lsp.el'（那里才是它的动机：减少 LSP hover 请求）。
-;; 这里只管「显示」：自动的 eldoc 仍然只在 echo area 出一行，要看完整文档靠 `gh' 手动触发。
-(setq eldoc-echo-area-prefer-doc-buffer t)   ; 文档窗口开着时不再往 echo area 重复一遍
+(setq eldoc-echo-area-prefer-doc-buffer t)
 
 (defun my/doc-at-point ()
   "看光标处符号的文档。第一次按弹出 eldoc 文档窗口，窗口已开时再按一次跳进去（便于翻页/复制）。
@@ -51,15 +35,13 @@
 就会显示上一个符号的陈旧内容，而且从没算过时直接 `user-error'。
 另：`eldoc' 不要求 `eldoc-mode' 开着，只要 buffer 里 `eldoc-documentation-functions' 非空。"
   (interactive)
-  ;; `eldoc--doc-buffer' 是 eldoc 的内部变量（没有公开等价物），但比按 `*eldoc' 猜名字准：
-  ;; 那个 buffer 显示时会被改名成 `*eldoc for <符号名>*'，名字随光标位置变。
+  ;; ⚠ 显示时被改名为 *eldoc for <sym>*，只能靠此内部变量定位
   (let ((win (and (buffer-live-p eldoc--doc-buffer)
                   (get-buffer-window eldoc--doc-buffer))))
     (if (and win (not (eq win (selected-window))))
         (select-window win)
       (call-interactively #'eldoc))))
 
-;; 记录 M-x 历史
 (add-hook 'after-init-hook 'savehist-mode)
 (progn
   (setq enable-recursive-minibuffers t)
@@ -74,9 +56,7 @@
   (setq savehist-autosave-interval 300)
   )
 
-;; 存盘前把文本属性剥掉。kill-ring / register 里的字符串常带一整套 face、
-;; 甚至 overlay 引用，直接序列化会让 savehist 文件膨胀好几倍，个别不可打印
-;; 的对象还会让整次保存失败（于是历史悄悄丢了）。
+;; ⚠ 不剥属性会让 savehist 膨胀，不可打印对象则整次保存失败
 (defun my/savehist-unpropertize ()
   (setq kill-ring
         (mapcar #'substring-no-properties
@@ -94,7 +74,6 @@
   (add-hook 'savehist-save-hook #'my/savehist-unpropertize)
   (add-hook 'savehist-save-hook #'my/savehist-drop-unprintable-registers))
 
-;; 文件历史
 (add-hook 'after-init-hook 'recentf-mode)
 (progn
   (setq recentf-max-saved-items 300)
@@ -102,11 +81,7 @@
   (setq recentf-filename-handlers '(abbreviate-file-name))
   )
 
-;; kill 当前 buffer 后 Emacs 自动切到的下一个 buffer（`other-buffer' 的候选逻辑）
-;; 默认会翻到 *Messages*/*Help* 这类内部 buffer。把它们从候选里过滤掉。
-;; 注意：这条影响的是 `other-buffer'/`next-buffer' 这类走原生 buffer-predicate
-;; 的路径；`C-x b' 已经绑成 `consult-buffer'（见 init-keymaps.el），consult 有
-;; 自己独立的过滤逻辑，不读这个 frame 参数，故看不出变化，属预期。
+;; ⚠ C-x b 已绑 consult-buffer、不读此 frame 参数，看不到变化属预期
 (defvar my/buffer-allow-names '("*compilation*" "*eshell*")
   "即使以 * 开头，也允许出现在 `other-buffer' 候选里的 buffer 名。")
 
@@ -118,11 +93,10 @@
   (set-frame-parameter frame 'buffer-predicate #'my/buffer-predicate))
 
 (add-hook 'after-init-hook #'my/set-buffer-predicate)
-;; 新建 frame（如 `emacsclient -c'）默认不继承这个参数，需要单独设。
+;; ⚠ 新 frame 不继承 frame 参数，须单独再设
 (add-hook 'after-make-frame-functions #'my/set-buffer-predicate)
 
-;; 网络代理：同时设 `url-proxy-services`（package / url 库）和
-;; `http(s)_proxy` 环境变量（git / curl / LSP 等子进程）。默认本机 Clash 端口。
+;; ⚠ 两套都要设：环境变量给 git/curl/LSP 子进程，变量给 url 库
 (defvar my/proxy-address "127.0.0.1:7897"
   "HTTP(S) 代理地址，格式 host:port。")
 

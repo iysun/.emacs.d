@@ -1,36 +1,10 @@
 ;; evil-extra.el 	-*- lexical-binding: t -*-
-;;
-;; 自 evil-collection 提取的常用 special mode 的 evil 键位。
-;; （VC 见 evil-vc.el；dired 见 evil-dired.el；ibuffer 见 evil-ibuffer.el。）
-;; 来源（evil-collection 20260623.308，GPLv3）：
-;;   modes/compile      -> evil-collection-compile.el
-;;   modes/embark       -> evil-collection-embark.el
-;;   modes/help         -> evil-collection-help.el
-;;   modes/xref         -> evil-collection-xref.el
-;;   modes/package-menu -> evil-collection-package-menu.el
-;;   modes/grep         -> evil-collection-grep.el
-;;   modes/wgrep        -> evil-collection-wgrep.el
-;;   modes/proced       -> evil-collection-proced.el
-;;
-;; 另：occur-mode 只做了最小绑定（本地补充，非 evil-collection）。
-;;
-;; `evil-define-key' 是宏，编译期需 evil；运行时整体包在 `with-eval-after-load 'evil'；
-;; 目标 map 未建好时由 `evil-define-key' 自动推迟。
-;;
-;; evil-collection 的语义名（`evil-collection-bind'）已按
-;; `evil-collection-binding-defaults' 展开成真实按键：
-;;   mark=m  unmark=u  unmark-all=U  mark-toggle-all=~  mark-delete=d  execute-marks=x
-;;   next-item=gj  prev-item=gk  next-section=]]  prev-section=[[
-;;   next-section-2=C-j  prev-section-2=C-k
-;;   action=RET/<return>  action-other=S-<return>/S-RET/go  action-stay=M-<return>/M-RET/gO
-;;   find-file=gf  refresh=gr  quit=q  quit-save=ZZ  quit-cancel=ZQ
-;;   scroll-down=SPC  scroll-up=S-SPC/S-<space>  describe-mode=g?  browse-url=gx
+;; 内联自 evil-collection（20260623.308，GPLv3）的 special mode 键位：compile/embark/help/xref/package-menu/grep/wgrep/proced（occur 是本仓库补的）；VC 见 evil-vc.el、dired 见 evil-dired.el、ibuffer 见 evil-ibuffer.el
+;; `evil-define-key' 是宏（编译期需 evil，故 eval-when-compile）；目标 map 未建好时它会自动推迟。
 
 (eval-when-compile (require 'evil))
 
-;; 只读收尾用（对应 evil-collection-inhibit-insert-state）。
-;; `eval-and-compile'：下面 `evil-extra--readonly-bindings' 宏在**编译期**展开、
-;; 需要读到这个列表，故必须让它编译期也有值。
+;; 只读收尾（对应 evil-collection-inhibit-insert-state）；eval-and-compile：宏编译期要读它
 (eval-and-compile
   (defconst evil-extra--readonly-commands
     '(evil-append evil-append-line evil-insert evil-insert-line
@@ -40,11 +14,7 @@
       evil-paste-after evil-paste-before evil-join evil-indent
       evil-shift-left evil-shift-right evil-invert-char)))
 
-;; 只读类 mode 的公共收尾：q/ZZ/ZQ + 禁用插入/修改类命令。
-;; 必须是宏、且传入**字面量** keymap 符号，`evil-define-key' 才能对尚未建立的
-;; keymap 自动推迟（传变量符号会退化成检查名为 `map' 的变量，永远不触发）。
-;; remap 项在**编译期**全部拼进同一次 `evil-define-key' 调用，这样每个 mode 只
-;; 注册 1 个 after-load 延迟项（若运行期循环调用 evil-define-key，会注册 23 个）。
+;; 必须传字面量 map 符号，evil-define-key 才能推迟注册
 (defmacro evil-extra--readonly-bindings (map)
   "Apply evil-collection's read-only bindings to literal keymap MAP."
   `(evil-define-key 'normal ,map
@@ -55,12 +25,10 @@
               (mapcar (lambda (c) `((vector 'remap ',c) #'ignore))
                       evil-extra--readonly-commands))))
 
-;; 编译相关两个 keymap 共用同一套绑定（用宏传入字面量 map 符号，
-;; 这样 `evil-define-key' 才能对尚未建立的 keymap 自动推迟）。
 (defmacro evil-extra--compile-map (map)
   "Bind evil keys for compilation keymap MAP."
   `(progn
-     ;; 把 g 前缀让给 evil（编译 map 里若有 g 前缀会挡住 evil 的 g）。
+     ;; 把 g 前缀让给 evil（编译 map 里若有 g 前缀会挡住 evil 的 g）
      (evil-define-key nil ,map (kbd "g") nil)
      (evil-define-key 'normal ,map
        (kbd "TAB")        'compilation-next-error
@@ -83,13 +51,11 @@
 
 (with-eval-after-load 'evil
 
-  ;; ---------------------------------------------------------------- compile
   (evil-set-initial-state 'compilation-mode 'normal)
   (evil-extra--readonly-bindings compilation-mode-map)
   (evil-extra--compile-map compilation-mode-map)
   (evil-extra--compile-map compilation-minor-mode-map)
 
-  ;; ----------------------------------------------------------------- embark
   (evil-set-initial-state 'embark-collect-mode 'normal)
   (evil-define-key 'normal embark-collect-mode-map
     "a"        'embark-act
@@ -99,7 +65,6 @@
     "m"        'embark-select
     "gr"       'revert-buffer)
 
-  ;; ------------------------------------------------------------------- help
   (evil-set-initial-state 'help-mode 'normal)
   (evil-extra--readonly-bindings help-mode-map)
   (evil-define-key 'normal help-mode-map
@@ -115,7 +80,6 @@
     "<"              'help-go-back
     ">"              'help-go-forward
     "r"              'help-follow
-    ;; 语义名展开
     (kbd "SPC")      'scroll-up-command
     (kbd "S-SPC")    'scroll-down-command
     (kbd "S-<space>") 'scroll-down-command
@@ -127,12 +91,10 @@
     (kbd "gO")       'push-button
     (kbd "g?")       'describe-mode
     (kbd "gr")       'revert-buffer
-    ;; Emacs 28+
     "s"              'help-view-source
     "i"              'help-goto-info
     "c"              'help-customize)
 
-  ;; ------------------------------------------------------------------- xref
   (evil-set-initial-state 'xref--xref-buffer-mode 'normal)
   (evil-extra--readonly-bindings xref--xref-buffer-mode-map)
   (evil-define-key 'normal xref--xref-buffer-mode-map
@@ -141,7 +103,6 @@
     "r"         'xref-query-replace-in-results
     "Q"         'xref-query-replace-in-results
     "o"         'xref-show-location-at-point
-    ;; 语义名展开
     (kbd "RET")       'xref-goto-xref
     (kbd "<return>")  'xref-goto-xref
     (kbd "S-<return>") 'xref-quit-and-goto-xref
@@ -162,13 +123,11 @@
     (kbd "RET")      'xref-quit-and-goto-xref
     (kbd "<return>") 'xref-quit-and-goto-xref)
 
-  ;; ----------------------------------------------------------- package-menu
   (evil-set-initial-state 'package-menu-mode 'normal)
   (evil-extra--readonly-bindings package-menu-mode-map)
   (evil-define-key 'normal package-menu-mode-map
     "i"   'package-menu-mark-install
     "U"   'package-menu-mark-upgrades
-    ;; 语义名展开
     "u"   'package-menu-mark-unmark
     "d"   'package-menu-mark-delete
     "x"   'package-menu-execute
@@ -177,7 +136,6 @@
   (when (fboundp 'package-browse-url)
     (evil-define-key 'normal package-menu-mode-map "gx" 'package-browse-url))
 
-  ;; ------------------------------------------------------------------ grep
   (evil-set-initial-state 'grep-mode 'normal)
   (evil-define-key 'normal grep-mode-map
     "n"        'evil-search-next
@@ -187,27 +145,13 @@
   (with-eval-after-load 'wgrep
     (evil-define-key 'normal grep-mode-map "i" 'wgrep-change-to-wgrep-mode))
 
-  ;; ------------------------------------------------------------------ occur
-  ;; occur 不在 evil-collection 里，这里补一个最小绑定：q 走 my/quit-window。
   (evil-set-initial-state 'occur-mode 'normal)
   (evil-define-key 'normal occur-mode-map (kbd "q") #'my/quit-window)
 
-  ;; ---------------------------------------------------- command-line window
-  ;; Vim 的 `q:' / `q/' / `q?' 在 evil 里没有绑定。进这个窗口的路子是：在 `:' /
-  ;; `/' / `?' 命令行里按 `C-f'（`evil-command-line-map' 的 C-f =
-  ;; `evil-command-window'）。
-  ;; 窗口 buffer 叫 `*Command Line*'，major-mode 是 `evil-command-window-mode'——
-  ;; 它派生自 **fundamental-mode** 而非 special-mode（故 evil-vc.el 里挂在
-  ;; special-mode-map 上的 q 覆盖不到），evil 自己又只绑了 RET
-  ;; （`evil-command-window-execute'）。于是 normal 态的 q 落到全局的
-  ;; `evil-record-macro'，按下去变成"开始录宏"、关不掉。这里按本仓库约定补 q。
-  ;; ⚠ 只补 q：这个 buffer 是要正常编辑命令行历史的，不能套
-  ;; `evil-extra--readonly-bindings'（那条 remap 会把 insert/change/delete 一并禁掉）。
-  ;; q 关窗后由 evil 装在窗口上的 `delete-window' 参数送回仍在编辑的命令行长。
+;; ⚠ 该窗口的 major-mode 派生自 fundamental-mode，special-mode-map 那条覆盖不到，q 会落到 evil-record-macro
   (evil-define-key 'normal evil-command-window-mode-map
     (kbd "q") #'my/quit-window)
 
-  ;; ----------------------------------------------------------------- wgrep
   (evil-define-key nil wgrep-mode-map
     [remap evil-write] 'wgrep-finish-edit)
   (evil-define-key 'normal wgrep-mode-map
@@ -215,7 +159,6 @@
     "ZZ"             'wgrep-finish-edit
     "ZQ"             'wgrep-abort-changes)
 
-  ;; ----------------------------------------------------------------- proced
   (evil-set-initial-state 'proced-mode 'normal)
   (evil-extra--readonly-bindings proced-mode-map)
   (evil-define-key 'normal proced-mode-map
@@ -240,7 +183,6 @@
     "ot"           'proced-sort-time
     "ou"           'proced-sort-user
     "r"            'proced-renice
-    ;; 语义名展开
     (kbd "SPC")    'evil-scroll-down
     (kbd "S-SPC")  'evil-scroll-up
     (kbd "S-<space>") 'evil-scroll-up
@@ -252,4 +194,4 @@
     "gr"           'revert-buffer))
 
 (provide 'evil-extra)
-;;; evil-extra.el ends here
+

@@ -1,6 +1,5 @@
 ;; init-project.el 	-*- lexical-binding: t -*-
 
-;; 内置 project.el（Emacs 28+）：`C-c p` 与默认的 `C-x p` 相同前缀命令
 (require 'project)
 
 (defun my/find-project-root (&optional directory)

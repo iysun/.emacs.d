@@ -1,25 +1,11 @@
 ;; evil-ibuffer.el 	-*- lexical-binding: t -*-
-;;
-;; 自 evil-collection 提取的 ibuffer evil 键位。
-;; 来源（evil-collection 20260623.308，GPLv3）：modes/ibuffer -> evil-collection-ibuffer.el
-;;
-;; ibuffer 默认是 emacs 态，这里改为 normal 态并套上完整键位。
-;;
-;; `evil-define-key' 是宏，编译期需 evil；运行时整体包在 `with-eval-after-load 'evil'；
-;; 目标 map 未建好时由 `evil-define-key' 自动推迟。
-;;
-;; evil-collection 语义名（`evil-collection-bind'）已按
-;; `evil-collection-binding-defaults' 展开成真实按键：
-;;   mark=m  unmark=u  unmark-all=U  mark-toggle-all=~  mark-delete=d  execute-marks=x
-;;   next-item=gj  prev-item=gk  next-section=]]  prev-section=[[
-;;   action=RET/<return>  action-other=S-<return>/S-RET/go  action-stay=M-<return>/M-RET/gO
-;;   rename=r/R  jump=J  refresh=gr  quit=q/ZZ/ZQ
 
+;; ibuffer 的 evil 键位，自 evil-collection 20260623.308 提取（GPLv3）。
+;; evil-define-key 是宏，须编译期有 evil。
 (eval-when-compile (require 'evil))
 
 (with-eval-after-load 'evil
 
-  ;; ---------------------------------------------------------------- ibuffer
   (evil-set-initial-state 'ibuffer-mode 'normal)
   (evil-define-key 'normal ibuffer-mode-map
     "R"                'ibuffer-do-rename-uniquely
@@ -33,7 +19,6 @@
     (kbd "M-s a C-s")   'ibuffer-do-isearch
     (kbd "M-s a M-C-s") 'ibuffer-do-isearch-regexp
     (kbd "M-s a C-o")   'ibuffer-do-occur
-    ;; mark
     (kbd "DEL")        'ibuffer-unmark-backward
     (kbd "M-DEL")      'ibuffer-unmark-all
     (kbd "* *")        'ibuffer-mark-special-buffers
@@ -48,7 +33,6 @@
     (kbd "* h")        'ibuffer-mark-help-buffers
     (kbd "* z")        'ibuffer-mark-compressed-file-buffers
     (kbd ".")          'ibuffer-mark-old-buffers
-    ;; immediate operations
     (kbd "}")          'ibuffer-forward-next-marked
     (kbd "{")          'ibuffer-backwards-next-marked
     (kbd "M-}")        'ibuffer-forward-next-marked
@@ -66,7 +50,6 @@
     (kbd "o s")        'ibuffer-do-sort-by-size
     (kbd "o f")        'ibuffer-do-sort-by-filename/process
     (kbd "o m")        'ibuffer-do-sort-by-major-mode
-    ;; filter
     (kbd "s RET")      'ibuffer-filter-by-mode
     (kbd "s m")        'ibuffer-filter-by-used-mode
     (kbd "s M")        'ibuffer-filter-by-derived-mode
@@ -118,7 +101,6 @@
     (kbd "C-t")        'ibuffer-visit-tags-table
     (kbd "|")          'ibuffer-do-shell-command-pipe
     (kbd "!")          'ibuffer-do-shell-command-file
-    ;; marked operations
     (kbd "A")          'ibuffer-do-view
     (kbd "D")          'ibuffer-do-delete
     (kbd "E")          'ibuffer-do-eval
@@ -140,7 +122,6 @@
     (kbd "yb")         'ibuffer-copy-buffername-as-kill
     (kbd "gv")         'ibuffer-do-view
     (kbd "gV")         'ibuffer-do-view-horizontally
-    ;; 语义名展开
     "m"                'ibuffer-mark-forward
     "u"                'ibuffer-unmark-forward
     "U"                'ibuffer-unmark-all-marks
@@ -164,4 +145,3 @@
     "ZQ"               'quit-window))
 
 (provide 'evil-ibuffer)
-;;; evil-ibuffer.el ends here

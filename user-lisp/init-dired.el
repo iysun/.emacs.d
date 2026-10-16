@@ -1,23 +1,15 @@
 ;; init-dired.el 	-*- lexical-binding: t -*-
-;;
-;; 参照 zdn/.emacs.d 简化：不用任何第三方包，纯靠内置 dired/dired-aux/dired-x/image-dired。
-
 (setq dired-dwim-target t
       dired-auto-revert-buffer #'dired-buffer-stale-p
       dired-recursive-deletes 'always
       dired-recursive-copies 'always
       dired-listing-switches "-alh --group-directories-first")
 
-;; 排序（s）、原地展开子目录（i / dired-kill-subdir）都是 dired 内置默认绑定，
-;; 不用再自己 define-key。
-
 (with-eval-after-load 'dired
-  ;; 不在 dired-virtual buffer 里自动 revert（虚拟 buffer 没有真实目录可 revert）。
+  ;; ⚠ 虚拟 buffer 无真实目录可 revert，须跳过自动 revert
   (define-advice dired-buffer-stale-p (:before-while (&rest args) my/dired-no-revert-in-virtual-a)
     (not (eq revert-buffer-function #'dired-virtual-revert)))
 
-  ;; git-ignore 高亮：把被 git 忽略的文件用 dired-ignored 脸色标出来（视觉提示，
-  ;; 不是 dired-git-info 那种逐文件 commit 信息，改靠内置 VC（`C-x v d`）看完整改动）。
   (defun my/dired-vc-ignore-list ()
     (when-let* ((backend (and (vc-root-dir) (vc-responsible-backend default-directory)))
                 (ignores (vc-call-backend backend 'ignore-completion-table default-directory)))
@@ -33,7 +25,6 @@
       (font-lock-add-keywords nil keywords 'add-to-end)))
   (add-hook 'dired-mode-hook #'my/dired-vc-ignores-setup)
 
-  ;; dired-x：omit-files（按 OS 隐藏系统文件）+ 按扩展名关联系统默认程序打开。
   (require 'dired-x)
   (setq dired-omit-files
         (concat "\\`[.]\\|[#~]\\'"
@@ -56,7 +47,6 @@
             ("\\.\\(?:mp3\\|flac\\)\\'" ,cmd)
             ("\\.html?\\'" ,cmd)))))
 
-;; dired-aux：Z/z 压缩解压统一用 7z（需要本机 7z.exe 在 PATH，scoop 装的常见）。
 (setq dired-compress-file-alist
       '(("\\.7z\\'" . "7z a -r %o %i")
         ("\\.zip\\'" . "7z a -r %o %i"))
@@ -64,7 +54,6 @@
       '(("\\.7z\\'" . "7z a -r %o %i")
         ("\\.zip\\'" . "7z a -r %o %i")))
 
-;; image-dired：缩略图预览开在底部侧边窗口，不占主窗口。
 (with-eval-after-load 'image-dired
   (setq image-dired-thumb-size 150)
   (add-to-list 'display-buffer-alist

@@ -1,106 +1,65 @@
 ;; early-init.el   -*- lexical-binding: t -*-
 
-;; Defer garbage collection further back in the startup process
 (setq gc-cons-threshold most-positive-fixnum)
-(setq gc-cons-percentage 0.6) ; 可选：当内存使用达到此百分比时也触发GC
+(setq gc-cons-percentage 0.6)
 
-;; 启动完成后 gc-cons-threshold 交给 gcmh 动态管理（见 user-lisp/init-base.el），
-;; 这里不再手动收紧到固定值：固定 20MB 在 eglot/jsonrpc/tree-sitter 频繁产生
-;; 垃圾的场景下偏低，profiler 里能看到明显的 Automatic GC 占比、敲字卡顿。
+;; ⚠ 启动后交给 gcmh 动态管；不手动收窄成固定值（固定 20MB 在 eglot/jsonrpc/tree-sitter 下偏低，Automatic GC 明显）
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq gc-cons-percentage 0.1)))
 
-;; native-comp：本机 Emacs 由 msys2/mingw64 提供，是带 native-comp 的 AOT 构建
-;; （旧的 scoop 版没有 native-comp，这里曾设成 nil，在那台构建上纯属空操作）。
-;; 开着 JIT，elpa 里的包会在后台逐步编译进 `eln-cache/'，之后运行更快；
-;; 首次启动/装包后会有一段后台 CPU 占用，属正常。
-;; 编译告警只写 *Warnings*，不自动弹缓冲区（第三方包的告警干扰太多）。
+;; native-comp：本机是带 native-comp 的 AOT 构建，开 JIT（首次/装包后有后台 CPU 属正常）；告警只写 *Warnings*
 (setq native-comp-jit-compilation t)
 (setq native-comp-async-report-warnings-errors 'silent)
 
-;; 自己初始化包，而不是让 Emacs 自动激活：放这里只做一次，且必须早于 user-lisp 的
-;; 自动字节编译——否则编译时 evil / gcmh 等未激活，会失败并把错误刷进 *Compile-Log*。
-;;
-;; 用 `package-quickstart'：把「激活所有已装包」预计算成 var/package-quickstart.el(.elc)，
-;; 启动时 `package-activate-all' 只 `load' 这一个文件，省掉逐包读描述符/找目录/load
-;; autoloads（实测启动约 −0.3s）。⚠ 只有 `package-activate-all' 走 quickstart，且要求
-;; `package-activated-list' 为空——所以这里**不能**再调 `(package-initialize)'（那会做
-;; 全量 load-all-descriptors + read-archive-contents，把 quickstart 的收益抵消）。
+;; ⚠ 必须在 user-lisp 自动字节编译之前激活包，否则编译时 evil/gcmh 未激活、*Compile-Log* 报错
+;; ⚠ 只用 package-activate-all 走 quickstart；不能再调 package-initialize（会抵消 quickstart 收益）
 (setq package-enable-at-startup nil)
 (require 'package)
 (setq package-quickstart t
-      ;; 放 var/：已 gitignore，且避开「根目录过期 quickstart 被当激活清单读走」的坑。
+      ;; 放 var/（避开根目录旧快照被当激活清单读走）
       package-quickstart-file (expand-file-name "var/package-quickstart.el" user-emacs-directory))
-;; 缺失兜底：快照不存在（新机器/换目录）时先生成一次，避免一直走慢路径。
-;; （refresh 内部会 package-initialize 'no-activate 读描述符，够自足。）
 (unless (or (file-exists-p package-quickstart-file)
             (file-exists-p (concat package-quickstart-file "c")))
   (make-directory (file-name-directory package-quickstart-file) t)
   (package-quickstart-refresh))
 (package-activate-all)
 
-;; user-lisp 会自动字节编译 user-lisp/ 下所有文件。本配置大量「先 setq 包变量、
-;; 包用的时候才加载」以及调用 autoload 函数，编译期必然产生成片
-;; free-vars（赋值自由变量）/ unresolved（调用未知函数）等告警——都是延迟加载的
-;; 正常现象，不是错误。收窄编译告警类别，避免 *Compile-Log* 每次启动刷屏；
-;; 真正的语法错误、宏用错（Invalid function）等仍会暴露（运行时也会立刻报）。
+;; ⚠ 收窄编译告警：延迟加载必然产生成片 free-vars/unresolved（真错误仍会暴露）
 (setq byte-compile-warnings '(not free-vars unresolved obsolete interactive-only lexical))
 
-;; init 期间不重绘、不回显，首帧出来更快；`window-setup-hook' 时恢复（zdn 同款做法）。
 (setq inhibit-redisplay t)
 (setq inhibit-message t)
 (add-hook 'window-setup-hook
           (lambda () (setq inhibit-redisplay nil inhibit-message nil))
           100)
 
-;; 新机器首次装包时本地还没有 GnuPG keyring，GNU ELPA 的签名校验会因
-;; "No public key" 失败，导致 compat / eglot 等已签名包无法安装，并连累
-;; 所有依赖它们的包（consult/vertico/corfu ...）。
-;; 仅当本地没有 keyring 时关闭签名校验；一旦机器有了 keyring（如 Linux
-;; 机器已导入 GNU ELPA 公钥），仍按默认进行校验。
+;; ⚠ 本地还没 keyring 时关签名校验（否则 GNU ELPA 已签名包装不上、连累依赖它们的包）
 (when (not (file-exists-p
             (expand-file-name "elpa/gnupg/pubring.kbx" user-emacs-directory)))
   (setq package-check-signature nil))
 
-;; `use-package' is builtin since 29; set before loading `use-package'.
+;; 先 defvar 再 set，避免编译告警
 (defvar use-package-enable-imenu-support)
 (setq use-package-enable-imenu-support t)
 
-;; In noninteractive sessions, prioritize non-byte-compiled source files to
-;; prevent the use of stale byte-code. Otherwise, it saves us a little IO time
-;; to skip the mtime checks on every *.elc file.
+;; 交互会话优先 .elc；--batch 下用源码（避免陈旧字节码）
 (setq load-prefer-newer noninteractive)
 
-;; Explicitly set the prefered coding systems to avoid annoying prompt
-;; from emacs (especially on Microsoft Windows)
 (prefer-coding-system 'utf-8)
 
-;; 子进程输出统一按 UTF-8 解码（读取侧原来是 `undecided'，Windows 上是
-;; `undecided-dos'，靠内容探测猜编码）。
-;; 为什么必须钉死：consult-ripgrep / consult-grep / consult-git-grep 必须传
-;; `--null'（输出用 NUL 分隔「文件名 / 行号 / 内容」），流里一出现 NUL 字节，
-;; `undecided' 的探测就把整段判成二进制 → 选中 `no-conversion'，中文不再被
-;; 解码、以原始字节存进候选串，界面上显示成 `\345\240...' 这种八进制转义
-;; （症状：M-s r 搜索中文结果乱码）。设成 utf-8 后不再依赖探测。
-;; 写侧原为 `undecided-unix'，一并设成 utf-8（保持 LF）。
-;; 注意：这会覆盖其它子进程的默认解码；仍需按 GBK 解读的程序可另在
-;; `process-coding-system-alist' 里加条目（如已有的 ping/cmdproxy）。
+;; ⚠ 子进程输出钉死 utf-8：consult-*grep 的 --null 输出含 NUL，undecided 探测会判成二进制、中文变八进制转义
 (setq default-process-coding-system '(utf-8 . utf-8))
 
-;; Windows: avoid GC pauses caused by compacting font caches (Nerd Fonts etc.)
+;; Windows：避免压缩字体缓存引起 GC 停顿
 (setq inhibit-compacting-font-caches t)
 
-;; Windows 专项设置（user-lisp/init-windows.el，非 Windows 平台空操作）+ 跨平台
-;; 输入法切换（user-lisp/evil-plugins/ime.el）。这两个要在最早期加载，而 user-lisp 的
-;; load-path 由 `prepare-user-lisp' 在更晚的启动阶段才建立，故这里仍用绝对路径 `load'。
+;; ⚠ 必须用绝对路径 load：user-lisp 的 load-path 要到更晚的启动阶段才建立
 (load (expand-file-name "user-lisp/init-windows" user-emacs-directory))
 (load (expand-file-name "user-lisp/evil-plugins/ime" user-emacs-directory))
 
-;; Inhibit resizing frame
 (setq frame-inhibit-implied-resize t)
 
-;; Faster to disable these here (before they've been initialized)
 (push '(menu-bar-lines . 0) default-frame-alist)
 (push '(tool-bar-lines . 0) default-frame-alist)
 (push '(vertical-scroll-bars) default-frame-alist)
@@ -108,6 +67,5 @@
   (push '(ns-transparent-titlebar . t) default-frame-alist))
 (setq-default mode-line-format nil)
 
-;; 禁用 GNU 启动屏（dashboard 首屏已关，避免回退到默认 splash）
 (setq inhibit-startup-screen t)
 

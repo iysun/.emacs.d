@@ -1,38 +1,10 @@
 ;; evil-vc.el 	-*- lexical-binding: t -*-
-;;
-;; 自 evil-collection 提取的 VC 相关 evil 键位。
-;;
-;; 背景：本配置已弃用 evil-collection（见 evil-config.el 顶部说明），但 VC 系列
-;; special mode 的 evil 键位原本由它提供。这里把这部分**内联**进来，去掉对
-;; evil-collection 的依赖。来源（evil-collection 20260623.308，GPLv3）：
-;;   modes/vc-dir      -> evil-collection-vc-dir.el
-;;   modes/vc-annotate -> evil-collection-vc-annotate.el
-;;   modes/vc-git      -> evil-collection-vc-git.el
-;;   modes/log-view    -> evil-collection-log-view.el
-;;   modes/log-edit    -> evil-collection-log-edit.el
-;;   modes/diff-mode   -> evil-collection-diff-mode.el
-;;
-;; diff-mode 用 g- 前缀变体（evil-collection-want-g-bindings 默认为 t）。
-;;
-;; evil-collection 用语义名（`evil-collection-bind'）绑定键位，语义名→按键的
-;; 映射取自 `evil-collection-binding-defaults'，下面已展开成真实按键：
-;;   mark=m  mark-all=M  unmark=u  unmark-all=U
-;;   next-item=gj  prev-item=gk  next-section=]]  prev-section=[[
-;;   next-section-2=C-j  prev-section-2=C-k
-;;   action=RET/<return>  action-other=S-<return>/S-RET/go  action-stay=M-<return>/M-RET/gO
-;;   find-file=gf  refresh=gr  quit=q  quit-save=ZZ  quit-cancel=ZQ
-;;   section-toggle=<tab>/TAB  describe-mode=g?
-;;
-;; `evil-define-key' 是宏，编译期需要 evil；运行时 evil 延迟到 after-init 加载，
-;; 故整体包在 `with-eval-after-load 'evil'。目标 map 若尚未建好，`evil-define-key'
-;; 会经 `after-load-functions' 自动推迟，无需再套 `with-eval-after-load'。
+;; 内联自 evil-collection（20260623.308，GPLv3）的 VC 键位：vc-dir / diff-mode / vc-annotate / log-view / log-edit / special-mode
+;; 展开成真实按键；`evil-define-key' 是宏（编译期 require evil）、目标 map 未建好时它会自己推迟。
 
 (eval-when-compile (require 'evil))
 
-;; 只读模式里把插入/修改类命令 remap 成 `ignore'（对应
-;; evil-collection-inhibit-insert-state），避免在 vc-dir 里误改。
-;; `eval-and-compile'：下面 `evil-vc--readonly-bindings' 宏在**编译期**展开、
-;; 需要读到这个列表，故必须让它编译期也有值。
+;; 只读模式把插入/修改类命令 remap 成 ignore（对应 evil-collection-inhibit-insert-state）；eval-and-compile：宏编译期要读它
 (eval-and-compile
   (defconst evil-vc--readonly-commands
     '(evil-append evil-append-line evil-insert evil-insert-line
@@ -42,10 +14,7 @@
       evil-paste-after evil-paste-before evil-join evil-indent
       evil-shift-left evil-shift-right evil-invert-char)))
 
-;; 只读收尾（对应 evil-collection-set-readonly-bindings）：q/ZZ/ZQ + 把插入/修改
-;; 类命令 remap 成 ignore。必须是宏、且传**字面量** keymap 符号，evil-define-key
-;; 才能对尚未建立的 keymap 自动推迟；remap 项在编译期拼进同一次调用，使每个 mode
-;; 只注册 1 个 after-load 延迟项。
+;; 只读收尾 q/ZZ/ZQ + remap；必须传字面量 map 符号
 (defmacro evil-vc--readonly-bindings (map)
   "Apply evil-collection's read-only bindings to literal keymap MAP."
   `(evil-define-key 'normal ,map
@@ -56,14 +25,13 @@
               (mapcar (lambda (c) `((vector 'remap ',c) #'ignore))
                       evil-vc--readonly-commands))))
 
-;; diff-mode 的两个 toggle 辅助（原 evil-collection-diff-mode.el 里的同名函数）。
 (defun my/diff-toggle-context-unified (start end)
   "Toggle between context and unified diff views.
 START and END are either taken from the region or cover the whole buffer."
   (interactive (if (or current-prefix-arg (use-region-p))
                    (list (region-beginning) (region-end))
                  (list (point-min) (point-max))))
-  ;; 没有直接办法判断当前是 context 还是 unified，用 point-max 是否变化来猜。
+;; 没有直接办法判断 context/unified，用 point-max 是否变化来猜
   (let ((old-point-max (point-max)))
     (diff-unified->context start end)
     (when (= old-point-max (point-max))
@@ -79,18 +47,11 @@ With prefix ARG, restrict to the current file instead."
 
 (with-eval-after-load 'evil
 
-  ;; VC 命令的**输出** buffer（`*vc-git : <仓库根>*` 之类）没有专用 major-mode，是
-  ;; `special-mode`（vc-dispatcher.el 里显式设的，注释写着"让 q 一致工作"）。但 evil 给
-  ;; special-mode 的初始态是 **normal**，normal 态的 `q' 被 `evil-record-macro' 占了 ——
-  ;; 于是那个 buffer 里按 q 变成"开始录宏"，关不掉。这里按本仓库既有的约定
-  ;; （只读临时 buffer 的 q = `my/quit-window'，见 init-window.el）统一补上；
-  ;; help/xref 等其它 special-mode buffer 一并受益。
+;; ⚠ VC 输出 buffer 是 special-mode，evil 给它 normal 态、q 被 evil-record-macro 占了，故补 q = my/quit-window
   (evil-define-key 'normal special-mode-map (kbd "q") 'my/quit-window)
 
-  ;; ------------------------------------------------------------------ vc-dir
   (evil-set-initial-state 'vc-dir-mode 'normal)
   (evil-define-key 'normal vc-dir-mode-map
-    ;; VC 命令
     (kbd "c")         'vc-next-action
     (kbd "d")         'vc-diff
     (kbd "D")         'vc-root-diff
@@ -120,11 +81,9 @@ With prefix ARG, restrict to the current file instead."
     (kbd "M-s a C-s")   'vc-dir-isearch
     (kbd "M-s a M-C-s") 'vc-dir-isearch-regexp
     (kbd "i")         'vc-dir-ignore
-    ;; 分支
     (kbd "Bc")        'vc-create-tag
     (kbd "Bl")        'vc-print-branch-log
     (kbd "Bs")        'vc-retrieve-tag
-    ;; 标记 / 移动 / 动作（原 `evil-collection-bind'）
     (kbd "m")         'vc-dir-mark
     (kbd "M")         'vc-dir-mark-all-files
     (kbd "u")         'vc-dir-unmark
@@ -143,15 +102,12 @@ With prefix ARG, restrict to the current file instead."
     (kbd "gO")        'vc-dir-display-file
     (kbd "gf")        'vc-dir-find-file
     (kbd "gr")        'revert-buffer)
-  ;; 只读收尾：q/ZZ/ZQ + 禁用插入/修改类命令（1 次调用 = 1 个 after-load 延迟项）
   (evil-vc--readonly-bindings vc-dir-mode-map)
 
-  ;; --------------------------------------------------------------- diff-mode
   (evil-set-initial-state 'diff-mode 'normal)
   (evil-define-key 'normal diff-mode-map
     (kbd "ge")  'diff-ediff-patch
     (kbd "\\")  'read-only-mode
-    ;; g- 前缀动作（evil-collection-want-g-bindings 默认 t）
     (kbd "gA")  'diff-add-change-log-entries-other-window
     (kbd "ga")  'diff-apply-hunk
     (kbd "g*")  'diff-refine-hunk
@@ -164,7 +120,6 @@ With prefix ARG, restrict to the current file instead."
     (kbd "gc")  'diff-test-hunk
     (kbd "g%")  'my/diff-toggle-context-unified
     (kbd "g#")  'diff-ignore-whitespace-hunk
-    ;; 语义名展开
     (kbd "RET")       'diff-goto-source
     (kbd "<return>")  'diff-goto-source
     (kbd "gj")        'diff-hunk-next
@@ -176,7 +131,6 @@ With prefix ARG, restrict to the current file instead."
     (kbd "gr")        'revert-buffer
     (kbd "q")         'my/quit-window)
 
-  ;; ------------------------------------------------------------- vc-annotate
   (evil-set-initial-state 'vc-annotate-mode 'normal)
   (evil-define-key 'normal vc-annotate-mode-map
     (kbd "q")         'my/quit-window
@@ -196,23 +150,14 @@ With prefix ARG, restrict to the current file instead."
     (kbd "]]")        'vc-annotate-next-revision
     (kbd "[[")        'vc-annotate-prev-revision)
 
-  ;; --------------------------------------------------------------- log-view
-  ;; 目前 VC 的各 log-view 模式
   (evil-set-initial-state 'vc-hg-log-view-mode 'normal)
   (evil-set-initial-state 'vc-git-log-view-mode 'normal)
   (evil-set-initial-state 'vc-svn-log-view-mode 'normal)
   (evil-define-key 'normal log-view-mode-map
     (kbd "q")         'my/quit-window
     (kbd "c")         'log-view-modify-change-comment
-    ;; ---- commit 级操作 ----
-    ;; 这 5 个 log-view 自带（默认 R/x/X/e/C），但 evil normal 态把对应单字母占了
-    ;; （evil-replace / evil-delete-char / evil-delete-backward-char / evil-forward-word-end /
-    ;; evil-change-to-eol），所以显式补回。
-    ;; ⚠ x/X 改写历史（Emacs 侧自带确认；已推送的历史默认被
-    ;;   `vc-allow-rewriting-published-history' 拦住）：
-    ;;   R = 生成反向提交（= git revert，安全）
-    ;;   x = 回退分支到该提交，改动留工作区（= reset --mixed）
-    ;;   X = 回退分支并丢弃改动（= reset --hard）
+    ;; R/x/X/e/C 是 log-view 自带键位，被 evil normal 态的单字母命令占了，故显式补回
+    ;; ⚠ x/X 改写历史（Emacs 侧自带确认；已推送历史默认被 vc-allow-rewriting-published-history 拦住）
     (kbd "R")         'log-view-revert-or-delete-revisions
     (kbd "x")         'log-view-uncommit-revisions-from-end
     (kbd "X")         'log-view-delete-revisions-from-end
@@ -235,7 +180,6 @@ With prefix ARG, restrict to the current file instead."
     (kbd "C-j")       'log-view-file-next
     (kbd "C-k")       'log-view-file-prev
     (kbd "gr")        'revert-buffer)
-  ;; vc-git 的 log-view 绑定（vc-git-log-view-mode 派生自 log-view-mode）
   (evil-define-key 'normal vc-git-log-view-mode-map
     (kbd "q")         'my/quit-window
     (kbd "d")         'log-view-diff
@@ -247,13 +191,12 @@ With prefix ARG, restrict to the current file instead."
     (kbd "[[")        'log-view-msg-prev
     (kbd "gr")        'revert-buffer)
 
-  ;; --------------------------------------------------------------- log-edit
   (evil-define-key nil log-edit-mode-map
     [remap evil-save-and-close]          #'log-edit-done
     [remap evil-save-modified-and-close] #'log-edit-done
     [remap evil-quit]                    #'log-edit-kill-buffer)
   (evil-define-key 'normal log-edit-mode-map
-    (kbd "q")         'my/quit-window           ; 与其它 VC buffer 一致；log-edit 里 = 放弃本次提交
+    (kbd "q")         'my/quit-window           ; log-edit 里 = 放弃本次提交
     (kbd "g?")        'log-edit-mode-help
     (kbd "ZZ")        'quit-window
     (kbd "ZQ")        'quit-window
@@ -263,4 +206,4 @@ With prefix ARG, restrict to the current file instead."
     (kbd "[[")        'log-edit-previous-comment))
 
 (provide 'evil-vc)
-;;; evil-vc.el ends here
+

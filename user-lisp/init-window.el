@@ -1,13 +1,8 @@
 ;; init-window.el 	-*- lexical-binding: t -*-
 (add-hook 'after-init-hook 'winner-mode)
 
-;; 内置 windmove：S-<方向> 按方向切窗。Emacs 31 下 `windmove-default-keybindings'
-;; 会启用 `windmove-mode'，其 keymap 优先于 shift-select，S-箭头不冲突。
 (windmove-default-keybindings)
 
-;; 窗口分隔线：比默认的 `vertical-border' 干净（它会和 fringe 挤在一起）。
-;; 底部分隔线宽度置 0，只在真的有上下分屏时才由下面的钩子临时给 1，
-;; 避免单窗口时 mode-line 底下多出一条没用的线。
 (setq window-divider-default-places t
       window-divider-default-right-width 1
       window-divider-default-bottom-width 0)
@@ -19,11 +14,7 @@
                        (if (eq (next-window) (selected-window)) 0 1)))
 (add-hook 'window-configuration-change-hook #'my/update-bottom-divider)
 
-;; 关闭当前窗口：有分屏就删掉该窗口（分屏消失），单一窗口时退回 bury；
-;; 带前缀 C-u 时额外 kill 该窗口的 buffer。临时只读 buffer（VC/help/xref…）的 q 用它。
-;; 例外：VC 提交 buffer（log-edit）的 q 应是"放弃本次提交"——提交只在 `log-edit-done'
-;; 里发生，所以 kill 掉该 buffer 即取消；交给 `log-edit-kill-buffer'（= C-c C-k，
-;; 会顺手关窗口/hide 文件列表）。这样各处 q 都走同一个 `my/quit-window'。
+;; ⚠ q 在 log-edit buffer 里须走 log-edit-kill-buffer 放弃提交
 (defun my/quit-window (arg)
   "关闭当前窗口：分屏时直接删窗，否则 bury。ARG 非 nil 时再 kill buffer。
 在 VC 提交 buffer（`log-edit-mode'）里则放弃本次提交并关掉它。"
@@ -37,8 +28,7 @@
         (quit-window nil))
       (when arg (kill-buffer buf)))))
 
-;; defhydra 来自 hydra 包；显式 require，确保宏在此处可用（否则 fresh 机器
-;; 上 hydra 未被自动加载时会报 void-function defhydra）。
+;; ⚠ 显式 require：不取 defhydra 宏会 void-function
 (require 'hydra)
 
 (defhydra hydra-window-size (:color red)
@@ -55,7 +45,6 @@
   ("r" winner-redo "前进布局")
   ("q" nil "退出"))
 
-
 (with-eval-after-load 'popper
   (setq popper-window-height 20)
   (setq popper-reference-buffers
@@ -63,25 +52,16 @@
           "Output\\*$"
           "\\*Async Shell Command\\*"
           "^\\*Copilot"
-          "^\\*.*eshell.*\\*$" eshell-mode ;eshell as a popup
-          "^\\*.*shell.*\\*$"  shell-mode  ;shell as a popup
-          "^\\*.*term.*\\*$"   term-mode   ;term as a popup
-          "^\\*.*vterm.*\\*$"  vterm-mode  ;vterm as a popup
-          ;; eldoc 文档窗口（`gh' = my/doc-at-point 弹出）。⚠ 必须写成前缀匹配：
-          ;; 这个 buffer 显示时会被 `eldoc--format-doc-buffer' 改名成 `*eldoc for xxx*'，
-          ;; 名字随光标下的符号变，写死 "^\\*eldoc\\*$" 一条都匹配不上。
+          "^\\*.*eshell.*\\*$" eshell-mode
+          "^\\*.*shell.*\\*$"  shell-mode
+          "^\\*.*term.*\\*$"   term-mode
+          "^\\*.*vterm.*\\*$"  vterm-mode
+          ;; ⚠ 须前缀匹配：eldoc 文档 buffer 显示时被改名
           "^\\*eldoc"
           "^\\*Buffer List.*\\*$"
-          "\\*Ibuffer.*\\*" ibuffer-mode ;ibuffer-mode
+          "\\*Ibuffer.*\\*" ibuffer-mode
           help-mode
-          ;; VC 提交 buffer（`C-x v v' 弹出的 *vc-log*）也走弹窗。
-          ;; 原 `COMMIT_EDITMSG' / `git-commit-ts-mode' 是 magit 时代的，已随 magit 移除。
-          ;; buffer 名固定是 *vc-log*（vc-start-logentry），用名字正则最稳——popper 对 mode 项
-          ;; 是按 major-mode **精确**匹配，而它是 vc-git-log-edit-mode，写 log-edit-mode 不中。
           "^\\*vc-log\\*$"
-          ;; VC 命令的输出 buffer（`*vc-git : <仓库根>*`、`*vc-hg : …*` 等，格式见
-          ;; vc-git.el 的 `(format "*vc-%s : %s*" …)`）——没有专用 major-mode，是
-          ;; `special-mode`（vc-dispatcher.el 里显式设的）。一行收全部后端。
           "^\\*vc-[a-z0-9]+ : "
           compilation-mode))
   )

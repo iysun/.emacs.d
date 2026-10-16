@@ -1,38 +1,20 @@
 ;; evil-dired.el 	-*- lexical-binding: t -*-
-;;
-;; 自 evil-collection 提取的 dired evil 键位。
-;; 来源（evil-collection 20260623.308，GPLv3）：modes/dired -> evil-collection-dired.el
-;;
-;; 说明：`evil-want-keybinding t` 已给 dired 一套基础键（j/k 等），本文件在其上
-;; 叠加 evil-collection 的完整绑定（同名键以本文件为准）。dired 本身可编辑，
-;; 故不做只读收尾。
-;;
-;; `evil-define-key' 是宏，编译期需 evil；运行时整体包在 `with-eval-after-load 'evil'；
-;; 目标 map 未建好时由 `evil-define-key' 自动推迟。
-;;
-;; evil-collection 语义名（`evil-collection-bind'）已按
-;; `evil-collection-binding-defaults' 展开成真实按键：
-;;   mark=m  unmark=u  unmark-all=U  mark-toggle-all=~  mark-delete=d  execute-marks=x
-;;   next-item=gj  prev-item=gk  next-section=]]  prev-section=[[
-;;   action=RET/<return>  action-other=S-<return>/S-RET/go  action-stay=M-<return>/M-RET/gO
-;;   find-file=gf  refresh=gr  quit=q  describe-mode=g?  jump=J  browse-url=gx
 
+;; dired 的 evil 键位，自 evil-collection 20260623.308 提取（GPLv3）。
+;; evil-define-key 是宏，须编译期有 evil（目标 map 未建好时自动推迟）。
 (eval-when-compile (require 'evil))
 
 (with-eval-after-load 'evil
 
-  ;; ------------------------------------------------------------------ dired
   (evil-define-key 'normal dired-mode-map
     "j" 'dired-next-line
     "k" 'dired-previous-line
     "q" 'quit-window
     [mouse-2] 'dired-mouse-find-file-other-window
     [follow-link] 'mouse-face
-    ;; 标记 / flag 各类文件
     "#" 'dired-flag-auto-save-files
     "." 'dired-clean-directory
     "~" 'dired-flag-backup-files
-    ;; 大写键：对标记文件操作
     "A" 'dired-do-find-regexp
     "C" 'dired-do-copy
     "B" 'dired-do-byte-compile
@@ -52,7 +34,6 @@
     "!" 'dired-do-shell-command
     "&" 'dired-do-async-shell-command
     "=" 'dired-diff
-    ;; tree dired
     (kbd "M-C-?") 'dired-unmark-all-files
     (kbd "M-C-d") 'dired-tree-down
     (kbd "M-C-u") 'dired-tree-up
@@ -60,7 +41,6 @@
     (kbd "M-C-p") 'dired-prev-subdir
     (kbd "M-{") 'dired-prev-marked-file
     (kbd "M-}") 'dired-next-marked-file
-    ;; % 前缀：正则类命令
     "%" nil
     "%u" 'dired-upcase
     "%l" 'dired-downcase
@@ -73,7 +53,6 @@
     "%R" 'dired-do-rename-regexp
     "%S" 'dired-do-symlink-regexp
     "%&" 'dired-flag-garbage-files
-    ;; * 前缀：标记类命令
     "*" nil
     "**" 'dired-mark-executables
     "*/" 'dired-mark-directories
@@ -89,7 +68,6 @@
     (kbd "* C-n") 'dired-next-marked-file
     (kbd "* C-p") 'dired-prev-marked-file
     "*t" 'dired-toggle-marks
-    ;; 小写键：非「全部标记文件」类
     "a" 'dired-find-alternate-file
     "i" 'dired-toggle-read-only
     "I" 'dired-maybe-insert-subdir
@@ -118,7 +96,6 @@
     [remap read-only-mode] 'dired-toggle-read-only
     [remap toggle-read-only] 'dired-toggle-read-only
     (kbd "<delete>") 'dired-unmark-backward
-    ;; 语义名展开
     "m"   'dired-mark
     "u"   'dired-unmark
     "U"   'dired-unmark-all-marks
@@ -144,7 +121,6 @@
     (kbd "gx")       'browse-url-of-dired-file
     [remap undo] 'dired-undo
     [remap advertised-undo] 'dired-undo
-    ;; image-dired
     (kbd "C-t d") 'image-dired-display-thumbs
     (kbd "C-t t") 'image-dired-tag-files
     (kbd "C-t r") 'image-dired-delete-tag
@@ -157,14 +133,13 @@
     (kbd "C-t f") 'image-dired-mark-tagged-files
     (kbd "C-t C-t") 'image-dired-dired-toggle-marked-thumbs
     (kbd "C-t e") 'image-dired-dired-edit-comment-and-tags
-    ;; epa-dired
     ";d" 'epa-dired-do-decrypt
     ";v" 'epa-dired-do-verify
     ";s" 'epa-dired-do-sign
     ";e" 'epa-dired-do-encrypt
     ;; Emacs 30+
     "E"   'dired-do-open)
-  ;; 可选扩展包（未装则永不触发）
+  ;; 可选扩展包，未装则永不触发
   (with-eval-after-load 'dired-x
     (evil-define-key 'normal dired-mode-map
       "*(" 'dired-mark-sexp
@@ -182,4 +157,3 @@
       (kbd "M-k") 'dired-subtree-previous-sibling)))
 
 (provide 'evil-dired)
-;;; evil-dired.el ends here
