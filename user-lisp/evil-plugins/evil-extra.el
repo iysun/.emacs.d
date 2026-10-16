@@ -4,6 +4,29 @@
 
 (eval-when-compile (require 'evil))
 
+;; ---- q 退出的统一名单：名单里的 mode，normal 态 q 都走 `my/quit-window'；加/删 buffer 只改这张表 ----
+;; 展开成字面量 map 符号，evil-define-key 才能对尚未建立的 keymap 自动推迟
+(eval-and-compile
+  (defconst my/quit-window-modes
+    '(special-mode                  ; 直接派生的都靠它：*Messages*、*vc-* 输出、tabulated-list 等
+      help-mode occur-mode xref--xref-buffer-mode
+      compilation-mode grep-mode
+      tabulated-list-mode buffer-menu-mode package-menu-mode process-menu-mode
+      proced-mode ibuffer-mode
+      vc-dir-mode vc-annotate-mode diff-mode log-view-mode vc-git-log-view-mode
+      log-edit-mode dired-mode
+      eshell-mode comint-mode        ; comint 派生的 shell 等一并受益
+      term-mode vterm-mode           ; 这两个的 keymap 没有父链，必须显式列
+      evil-command-window-mode)))   ; ⚠ 派生自 fundamental-mode，special-mode-map 覆盖不到
+
+(defmacro my/define-quit-keys ()
+  "给 `my/quit-window-modes' 里每个 mode 绑 normal 态 q = `my/quit-window'。"
+  `(progn
+     ,@(mapcar (lambda (mode)
+                 `(evil-define-key 'normal ,(intern (format "%s-map" mode))
+                    (kbd "q") #'my/quit-window))
+               my/quit-window-modes)))
+
 ;; 只读收尾（对应 evil-collection-inhibit-insert-state）；eval-and-compile：宏编译期要读它
 (eval-and-compile
   (defconst evil-extra--readonly-commands
@@ -18,7 +41,6 @@
 (defmacro evil-extra--readonly-bindings (map)
   "Apply evil-collection's read-only bindings to literal keymap MAP."
   `(evil-define-key 'normal ,map
-     (kbd "q")  'my/quit-window
      (kbd "ZZ") 'quit-window
      (kbd "ZQ") 'evil-quit
      ,@(apply #'append
@@ -50,6 +72,8 @@
        (kbd "gr")         'recompile)))
 
 (with-eval-after-load 'evil
+
+  (my/define-quit-keys)
 
   (evil-set-initial-state 'compilation-mode 'normal)
   (evil-extra--readonly-bindings compilation-mode-map)
@@ -140,17 +164,12 @@
   (evil-define-key 'normal grep-mode-map
     "n"        'evil-search-next
     (kbd "C-j") 'next-error-no-select
-    (kbd "C-k") 'previous-error-no-select
-    (kbd "q")   #'my/quit-window)
+    (kbd "C-k") 'previous-error-no-select)
   (with-eval-after-load 'wgrep
     (evil-define-key 'normal grep-mode-map "i" 'wgrep-change-to-wgrep-mode))
 
   (evil-set-initial-state 'occur-mode 'normal)
-  (evil-define-key 'normal occur-mode-map (kbd "q") #'my/quit-window)
 
-;; ⚠ 该窗口的 major-mode 派生自 fundamental-mode，special-mode-map 那条覆盖不到，q 会落到 evil-record-macro
-  (evil-define-key 'normal evil-command-window-mode-map
-    (kbd "q") #'my/quit-window)
 
   (evil-define-key nil wgrep-mode-map
     [remap evil-write] 'wgrep-finish-edit)

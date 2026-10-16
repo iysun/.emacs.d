@@ -9,7 +9,6 @@
   (evil-define-key 'normal dired-mode-map
     "j" 'dired-next-line
     "k" 'dired-previous-line
-    "q" 'quit-window
     [mouse-2] 'dired-mouse-find-file-other-window
     [follow-link] 'mouse-face
     "#" 'dired-flag-auto-save-files

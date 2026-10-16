@@ -167,6 +167,9 @@ emacs                          # 真实 GUI，看 *Messages* / *Warnings*
 ## 维护约定（判断式，非强制）
 
 - **注释一律按上面的「注释规范」写**：默认不写，只在 WHY 不显然时留最短一条；评审代码时先看这条。
+- **`q` 退出统一名单**：normal 态 `q = my/quit-window` 的 buffer 全部来自
+  `user-lisp/evil-plugins/evil-extra.el` 的 `my/quit-window-modes`（宏 `my/define-quit-keys` 展开）；
+  加/删 buffer 只改这一个列表，别再去各 mode 的 keymap 里单独绑 `q`。
 - **改了行为/加了模块** → 同步更新本文件相关小节（结构表、启用模块列表、命令）。纯重构 / 小修可不动文档。
 - **新增模块**：在 `user-lisp/` 下建 `init-xxx.el`，文件末 `(provide 'init-xxx)`，并在 `init.el` 末尾 `(require 'init-xxx)`。
 - **改完怎么验证**：批处理加载见 [.agent/run.md](.agent/run.md)；再启动真实 GUI 看 `*Messages*` / `*Warnings*`。

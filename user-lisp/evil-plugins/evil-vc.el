@@ -18,7 +18,6 @@
 (defmacro evil-vc--readonly-bindings (map)
   "Apply evil-collection's read-only bindings to literal keymap MAP."
   `(evil-define-key 'normal ,map
-     (kbd "q")  'my/quit-window
      (kbd "ZZ") 'quit-window
      (kbd "ZQ") 'evil-quit
      ,@(apply #'append
@@ -47,8 +46,6 @@ With prefix ARG, restrict to the current file instead."
 
 (with-eval-after-load 'evil
 
-;; ⚠ VC 输出 buffer 是 special-mode，evil 给它 normal 态、q 被 evil-record-macro 占了，故补 q = my/quit-window
-  (evil-define-key 'normal special-mode-map (kbd "q") 'my/quit-window)
 
   (evil-set-initial-state 'vc-dir-mode 'normal)
   (evil-define-key 'normal vc-dir-mode-map
@@ -128,12 +125,10 @@ With prefix ARG, restrict to the current file instead."
     (kbd "[[")        'diff-file-prev
     (kbd "C-j")       'diff-hunk-next
     (kbd "C-k")       'diff-hunk-prev
-    (kbd "gr")        'revert-buffer
-    (kbd "q")         'my/quit-window)
+    (kbd "gr")        'revert-buffer)
 
   (evil-set-initial-state 'vc-annotate-mode 'normal)
   (evil-define-key 'normal vc-annotate-mode-map
-    (kbd "q")         'my/quit-window
     (kbd "a")         'vc-annotate-revision-previous-to-line
     (kbd "d")         'vc-annotate-show-diff-revision-at-line
     (kbd "=")         'vc-annotate-show-diff-revision-at-line
@@ -154,7 +149,6 @@ With prefix ARG, restrict to the current file instead."
   (evil-set-initial-state 'vc-git-log-view-mode 'normal)
   (evil-set-initial-state 'vc-svn-log-view-mode 'normal)
   (evil-define-key 'normal log-view-mode-map
-    (kbd "q")         'my/quit-window
     (kbd "c")         'log-view-modify-change-comment
     ;; R/x/X/e/C 是 log-view 自带键位，被 evil normal 态的单字母命令占了，故显式补回
     ;; ⚠ x/X 改写历史（Emacs 侧自带确认；已推送历史默认被 vc-allow-rewriting-published-history 拦住）
@@ -181,7 +175,6 @@ With prefix ARG, restrict to the current file instead."
     (kbd "C-k")       'log-view-file-prev
     (kbd "gr")        'revert-buffer)
   (evil-define-key 'normal vc-git-log-view-mode-map
-    (kbd "q")         'my/quit-window
     (kbd "d")         'log-view-diff
     (kbd "D")         'log-view-diff-changeset
     (kbd "<tab>")     'log-view-toggle-entry-display
@@ -196,7 +189,6 @@ With prefix ARG, restrict to the current file instead."
     [remap evil-save-modified-and-close] #'log-edit-done
     [remap evil-quit]                    #'log-edit-kill-buffer)
   (evil-define-key 'normal log-edit-mode-map
-    (kbd "q")         'my/quit-window           ; log-edit 里 = 放弃本次提交
     (kbd "g?")        'log-edit-mode-help
     (kbd "ZZ")        'quit-window
     (kbd "ZQ")        'quit-window
