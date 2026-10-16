@@ -42,7 +42,7 @@
     (go-mod-ts-mode     go-dot-mod-mode)
     (go-work-ts-mode    go-dot-work-mode)
     (rust-ts-mode       rust-mode)     ; rust-analyzer
-    (html-ts-mode       html-mode)     ; rass 聚合 html+css+ts
+    (mhtml-ts-mode      mhtml-mode)    ; rass 聚合 html+css+ts（.html 落 mhtml-ts-mode）
     (css-ts-mode        css-mode))     ; vscode-css-language-server
   "每个元素是 (TS-MODE 原生-MODE …)，nil 表示无对应 mode。")
 
@@ -79,7 +79,7 @@
                  "typescript-language-server" "--stdio"))
   ;; 一个 buffer 只能连一个 server：rass 聚合 html+css+ts（scripts/rass/html.py），缺 rass 回退纯 html
   (add-to-list 'eglot-server-programs
-               `((html-mode html-ts-mode)
+               `((html-mode html-ts-mode mhtml-mode mhtml-ts-mode)
                  . ,(eglot-alternatives
                      (list (list "rass"
                                  (expand-file-name "scripts/rass/html.py" user-emacs-directory))
