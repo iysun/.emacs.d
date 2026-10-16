@@ -56,6 +56,7 @@
 | `scripts/bench-startup.py` | 跨平台测速脚本：采集机器信息 + 真实 GUI 启动耗时，输出/追加基准块 |
 | `scripts/make-shortcuts.py` | Windows：在开始菜单建 Emacs 快捷方式（指向 `runemacs.exe`）。需 `pip install pywin32` |
 | `scripts/install-fonts.py` | Windows：把 `assets/fonts/` 里 vendor 的字体装进当前用户（不需要管理员）。只用标准库 |
+| `scripts/rass/` | rass（LSP 多路复用器）的用户预设：`html.py` 把 vscode-html+css+ts 聚合成一个 server 给 eglot。需 `pip install rassumfrassum` + 对应 npm 语言服务器 |
 
 当前启用的模块（见 `init.el` 末尾）：`init-base` `init-ui` `init-parens` `init-bars` `init-window`
 `init-completion` `init-dired` `init-git` `init-term` `init-project` `init-keymaps`

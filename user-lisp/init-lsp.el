@@ -41,7 +41,9 @@
     (go-ts-mode         go-mode)       ; gopls
     (go-mod-ts-mode     go-dot-mod-mode)
     (go-work-ts-mode    go-dot-work-mode)
-    (rust-ts-mode       rust-mode))    ; rust-analyzer
+    (rust-ts-mode       rust-mode)     ; rust-analyzer
+    (html-ts-mode       html-mode)     ; rass 聚合 html+css+ts
+    (css-ts-mode        css-mode))     ; vscode-css-language-server
   "每个元素是 (TS-MODE 原生-MODE …)，nil 表示无对应 mode。")
 
 (dolist (modes my/lsp-modes)
@@ -75,6 +77,13 @@
                   (typescript-ts-mode :language-id "typescript")
                   (typescript-mode    :language-id "typescript"))
                  "typescript-language-server" "--stdio"))
+  ;; 一个 buffer 只能连一个 server：rass 聚合 html+css+ts（scripts/rass/html.py），缺 rass 回退纯 html
+  (add-to-list 'eglot-server-programs
+               `((html-mode html-ts-mode)
+                 . ,(eglot-alternatives
+                     (list (list "rass"
+                                 (expand-file-name "scripts/rass/html.py" user-emacs-directory))
+                           '("vscode-html-language-server" "--stdio")))))
   (require 'consult-eglot)
 
   (defun my/lsp-complete ()
