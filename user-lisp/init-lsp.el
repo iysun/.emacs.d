@@ -14,9 +14,13 @@
 ;; 缺 grammar 的语言留在原生 mode，安静且可预期。
 ;; （Windows 上 grammar DLL 常因 ABI 不匹配加载失败，这一点尤其重要。）
 ;;
-;; 下面这份是「仓库 tree-sitter/ 下实际可用的 grammar」∩「31 能 remap 的 ts-mode」，
+;; 下面这份是「`~/.emacs.d/tree-sitter/` 下实际可用的 grammar」∩「31 能 remap 的 ts-mode」，
 ;; 用 `treesit-language-available-p' 逐个验过。装了新 grammar 后记得往这里加。
-;; 当前缺 grammar 而被排除的：c / c-or-c++（缺 c）、typescript、tsx、bash、csharp、cmake。
+;; ⚠ 这份白名单只对**非 maybe 路由**的语言是硬开关（C/C++/Python/JS/Java/Ruby/Lua/CSS/
+;; TOML/JSON/HTML 靠它生成的 remap 才会走 ts-mode）；maybe 路由的语言（go/go.mod/go.work/
+;; rust/typescript/tsx/yaml/php/elixir/heex/dockerfile…）由 `<x>-ts-mode-maybe' 自己看
+;; grammar——grammar 在就直接选 ts-mode，所以 typescript/tsx 装完 grammar 后不必写进来。
+;; 当前仍缺 grammar 故未进的：bash、csharp、cmake。
 ;; `setopt' 会自动 require treesit，无需手动 require。
 ;; 延迟到启动后设置：treesit 是内置但未预载，`setopt' 会加载它并生成一批 remap，
 ;; 这一步占 init 的可观时间。放到 `emacs-startup-hook'（首帧/用户输入之前）既让 init
@@ -33,8 +37,13 @@
                       elixir-ts-mode heex-ts-mode)))
           -90)
 
-;; 补充 Emacs 31 尚未内置 grammar 源的语言（TypeScript/Rust/TOML/YAML/Dockerfile 已内置）。
-;; 缺 grammar 时执行 M-x treesit-install-language-grammar 即可按此列表拉取。
+;; 补充 ts-mode 不自带 grammar 源的语言。31 里大多数语言的 recipe 直接写在对应
+;; `*-ts-mode.el' 里（带 `:commit' pin：typescript/tsx 见 typescript-ts-mode.el、
+;; php/phpdoc 见 php-ts-mode.el、rust/toml/yaml/dockerfile/go/c/cpp/json… 同理），
+;; 只有下面的 python / javascript 这类要在这里补。缺 grammar 时
+;; `M-x treesit-install-language-grammar' 按 recipe 拉取即可（typescript/tsx/phpdoc 已装）。
+;; ⚠ `add-to-list' 是**头插**，而自带 recipe 都用 append 插到尾部：下面与自带 recipe 同名的
+;; 语言（go/gomod/c/cpp）会盖掉 Emacs 那条带 pin 的，装到的是默认分支而非验过的版本。
 (setq treesit-language-source-alist
       '((go         "https://github.com/tree-sitter/tree-sitter-go")
         (gomod      "https://github.com/camdencheek/tree-sitter-go-mod")
@@ -53,18 +62,40 @@
 
 ;; 不再 eager (require 'eglot)（省 ~1.1s 启动）。
 ;; 下面的 eglot-ensure 钩子会在打开对应代码文件时自动加载 eglot。
-(add-hook 'go-ts-mode-hook 'eglot-ensure)
-(add-hook 'python-ts-mode-hook 'eglot-ensure)
-(add-hook 'js-ts-mode-hook 'eglot-ensure)
-(add-hook 'typescript-ts-mode-hook 'eglot-ensure)
-(add-hook 'tsx-ts-mode-hook 'eglot-ensure)
-(add-hook 'c-ts-mode-hook 'eglot-ensure)
-(add-hook 'c++-ts-mode-hook 'eglot-ensure)
-;; C 的 ts grammar 本机缺失（`treesit-language-available-p 'c` = nil），.c/.h 会落在**原生**
-;; `c-mode`；而 `c-ts-mode` 不在上面的白名单里、也不会 remap，故原生 mode 必须也挂，
-;; 否则 C 文件（如 d:/projects/cjson）根本不会起 eglot。c++ 一并挂，保持一致。
-(add-hook 'c-mode-hook 'eglot-ensure)
-(add-hook 'c++-mode-hook 'eglot-ensure)
+;;
+;; ⚠ **每个语言两条 hook 都挂**：`<x>-ts-mode' 与它的原生 mode。只挂 ts-mode 那条必漏——
+;; 文件最终落到哪个 mode 由「grammar 是否可用」+上面的 `treesit-enabled-modes' 白名单
+;; 共同决定，同一个语言有三种落点：
+;;   1. 原生 mode：Emacs 31 只给部分语言装了 `<x>-ts-mode-maybe' 路由（C/C++/Python/JS/
+;;      Java/Ruby/Lua/CSS/TOML/JSON/HTML… 都没有），这些语言的 ts-mode 只能靠白名单生成的
+;;      remap；不在白名单就落原生 mode——实测 c-ts-mode 不在白名单、.c 落 c-mode（e6ee817）。
+;;   2. `fundamental-mode'：有 maybe 路由的语言在 grammar 缺失、又不在白名单时，兜底是
+;;      fundamental-mode 而**不是**原生 mode（实测 .ts/.tsx 现在就是这样：typescript
+;;      grammar 本机没装）。这种落点没有任何 mode hook 能兜，只能把 grammar 装上。
+;;   3. 第三方原生 mode：go-mode / rust-mode / typescript-mode…（装了对应包才会走到）。
+;; 故按语言成对列在下面这张表里，两条都挂；加语言只加一行。
+;; （java/ruby/lua/css/toml/yaml/php/elixir/dockerfile/json/html 故意没列：本机没装对应
+;;   server（jdtls/solargraph/lua-language-server/…），挂上只会在打开文件时报
+;;   "None of … are valid executables"；装了 server 再往表里加行即可。）
+(defconst my/lsp-modes
+  '((c-ts-mode          c-mode)        ; clangd（.h 走 c-or-c++-mode，内部会调 c/c++-mode）
+    (c++-ts-mode        c++-mode)
+    (python-ts-mode     python-mode)   ; pyright
+    (js-ts-mode         js-mode)       ; typescript-language-server
+    (typescript-ts-mode typescript-mode)
+    (tsx-ts-mode        nil)           ; 无原生对应 mode
+    (go-ts-mode         go-mode)       ; gopls
+    (go-mod-ts-mode     go-dot-mod-mode)
+    (go-work-ts-mode    go-dot-work-mode)
+    (rust-ts-mode       rust-mode))    ; rust-analyzer
+  "开了 eglot 的语言，每个元素是 (TS-MODE 原生-MODE)；原生-MODE 为 nil 表示没有对应 mode。
+
+同一语言可能落到哪个 mode 取决于 grammar 与 `treesit-enabled-modes'，故两条都要挂
+`eglot-ensure'——只挂 ts-mode 那条会在 grammar 缺失或未 remap 时完全不起 LSP。")
+
+(dolist (modes my/lsp-modes)
+  (dolist (m modes)
+    (when m (add-hook (intern (format "%s-hook" m)) 'eglot-ensure))))
 
 ;; eglot 专属设置移进 with-eval-after-load，避免 setq 早于 defcustom 定义的不确定性。
 (with-eval-after-load 'eglot
@@ -92,7 +123,20 @@
 
   (add-to-list 'eglot-server-programs '((c++-ts-mode c++-mode c-ts-mode c-mode) "clangd"))
   (add-to-list 'eglot-server-programs '((python-ts-mode python-mode) "pyright-langserver" "--stdio"))
-  (add-to-list 'eglot-server-programs '((typescript-ts-mode tsx-ts-mode js-ts-mode) "typescript-language-server" "--stdio"))
+  ;; TS/JS 这条必须**把每个可能落到的 mode 都列上**（同 clangd 那条的理由），否则
+  ;; js-mode / typescript-mode 在 grammar 缺失时会退回 eglot 内置 entry。
+  ;; 另外这里**必须显式写 :language-id**：内置那条（(js-mode :language-id "javascript") …）
+  ;; 本来是齐的，但被本 entry 头插顶掉了，而 eglot 的默认 language-id 是从 mode 名剥掉
+  ;; `-mode'/`-ts-mode' 推出来的（js-ts-mode→"js"、tsx-ts-mode→"tsx"），tsserver 只认
+  ;; javascript/javascriptreact/typescript/typescriptreact，故照内置的写法抄全。
+  ;; （钉死 typescript-language-server，不走内置 eglot-alternatives 的 rass 选择。）
+  (add-to-list 'eglot-server-programs
+               '(((js-mode            :language-id "javascript")
+                  (js-ts-mode         :language-id "javascript")
+                  (tsx-ts-mode        :language-id "typescriptreact")
+                  (typescript-ts-mode :language-id "typescript")
+                  (typescript-mode    :language-id "typescript"))
+                 "typescript-language-server" "--stdio"))
   (require 'consult-eglot)
 
   (defun my/lsp-complete ()
