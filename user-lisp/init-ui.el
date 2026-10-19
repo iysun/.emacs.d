@@ -45,7 +45,7 @@
     "JetBrainsMonoNL NFM")
   "英文字体候选表里真正打过 Nerd Font 补丁（含图标私用区码位）的族名子集。
 特意不含候选表末尾的 \"Cascadia Code\"——见上方「图标字体」一节注释。
-\"JetBrainsMonoNL NFM\" 是 assets/fonts/ 里 vendor 的那个变体。")
+\"JetBrainsMonoNL NFM\" 由 dotfiles 仓库 fonts/ 提供（scripts/install-fonts.py 安装）。")
 
 (with-eval-after-load 'nerd-icons
   (when (and my-ui-default-font-family

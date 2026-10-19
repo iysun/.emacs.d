@@ -46,7 +46,7 @@
 | `user-lisp/evil-plugins/` | evil 相关插件合集：**内联**的 `evil-surround` / `evil-commentary`(+integration) / `evil-visualstar`（GPLv3），以及本仓库的 `evil-config.el` / `evil-keymaps.el` / `evil-vc.el` / `evil-dired.el` / `evil-ibuffer.el` / `evil-extra.el` / `mc-evil.el` / `ime.el`。见其 `README.md` |
 | `user-lisp/gcmh/gcmh.el` | **内联**的 `gcmh`（GC 调优，GPLv3），由 `init-base.el` `require`。见其 `README.md` |
 | `themes/` | 本仓库自维护的主题文件（`*-theme.el`），由 `custom-theme-load-path` 接入（`user-lisp/init-ui.el`），新增主题放进去即可被 `switch-emacs-theme` 自动发现。共 13 个：`nn-world`（借自 zdn/.emacs.d，GPLv3，**模板**）、`catppuccin`/`crafters`/`gits`/`matrix`，深色 `gruvbox-dark`/`nord`/`dracula`/`monokai-pro`，浅色 `gruvbox-light`/`catppuccin-latte`/`solarized-light`/`one-light`（后 8 个都照 nn-world 模板换 24 槽调色板生成，结构与 face 表一致）。Emacs 自带的 `modus-vivendi`/`modus-operandi` 等也在候选里 |
-| `assets/fonts/` | vendor 进仓库的字体文件（OFL 等自由许可），配 `scripts/install-fonts.py` 装进当前用户。见 [docs/notes/vendored-fonts.md](docs/notes/vendored-fonts.md) |
+| （迁出）字体 | vendor 字体与安装脚本已迁到 dotfiles 仓库（`iysun/dotfiles` 的 `fonts/` 与 `scripts/install-fonts.py`），本仓库不再跟踪字体文件。见 [docs/notes/vendored-fonts.md](docs/notes/vendored-fonts.md) |
 | `custom.el` | Customize 自动生成，**已 gitignore，勿手改** |
 | `elpa/` | 第三方包，**已 gitignore，勿编辑/勿提交** |
 | `var/` `etc/` | no-littering 收编的运行期文件，**已 gitignore，勿手改** |
@@ -55,7 +55,6 @@
 | `docs/startup-benchmark.md` | 多机启动速度基准记录 + 测法 |
 | `scripts/bench-startup.py` | 跨平台测速脚本：采集机器信息 + 真实 GUI 启动耗时，输出/追加基准块 |
 | `scripts/make-shortcuts.py` | Windows：在开始菜单建 Emacs 快捷方式（指向 `runemacs.exe`）。需 `pip install pywin32` |
-| `scripts/install-fonts.py` | Windows：把 `assets/fonts/` 里 vendor 的字体装进当前用户（不需要管理员）。只用标准库 |
 | `scripts/rass/` | rass（LSP 多路复用器）的用户预设：`html.py` 把 vscode-html+css+ts 聚合成一个 server 给 eglot。需 `pip install rassumfrassum` + 对应 npm 语言服务器 |
 
 当前启用的模块（见 `init.el` 末尾）：`init-base` `init-ui` `init-parens` `init-bars` `init-window`

@@ -1,4 +1,8 @@
-# Vendor 字体：assets/fonts/ 里为什么放了这几个字体文件
+# Vendor 字体（已迁移到 dotfiles 仓库）
+
+> 2026-10-19：字体文件和安装脚本已迁移到 dotfiles 仓库
+> （`iysun/dotfiles` 的 `fonts/` 与 `scripts/install-fonts.py`）。
+> 本仓库不再跟踪 `assets/fonts/`；`user-lisp/init-ui.el` 仍按 family 选择已安装字体。
 
 2026-07-28 起，`assets/fonts/` 收了 6 个字体文件，随仓库一起 `git clone`；配 Windows 专用的
 `scripts/install-fonts.py` 装进当前用户（不需要管理员）。
@@ -37,10 +41,10 @@ Symbola。这些字体的许可证文本本身就是为"随软件/仓库分发"�
 
 ## 文件清单与来源
 
-见 [`assets/fonts/README.md`](../../assets/fonts/README.md)——每个文件对应哪个上游仓库/
+见 [`fonts/README.md`](https://github.com/iysun/dotfiles/blob/main/fonts/README.md)——每个文件对应哪个上游仓库/
 commit/tag/子路径，那边有表格，这里不重复。
 
-## Windows 装字体的机制（为什么不能只把文件扔进 assets/ 就完事）
+## Windows 装字体的机制（为什么不能只把文件扔进 fonts/ 就完事）
 
 Emacs 在 Windows 上走 GDI/HarfBuzz 字体后端，没有 fontconfig 那种"直接指一个文件路径"的
 机制——`find-font`/`font-family-list` 只认 Windows 自己知道的字体，文件本身放在哪都没用，
@@ -61,7 +65,7 @@ Emacs 在 Windows 上走 GDI/HarfBuzz 字体后端，没有 fontconfig 那种"�
 
 ### 踩过的坑：文件名撞车
 
-`assets/fonts/` 里的 JetBrainsMono 文件名特意保留了上游原名（含 `NL` 标记，即
+`fonts/` 里的 JetBrainsMono 文件名特意保留了上游原名（含 `NL` 标记，即
 `JetBrainsMonoNLNerdFontMono-Regular.ttf`），不能改短成
 `JetBrainsMonoNerdFontMono-Regular.ttf`——本机实测过：这个"去掉 NL"的短名字，跟官方
 nerd-fonts 安装器/官网下载包会用的 Ligatures 变体文件同名。如果两者都装在同一个每用户
@@ -93,20 +97,20 @@ $pfc.Families | ForEach-Object { $_.Name }
 
 ## 重新 vendor（上游更新时）
 
-1. 从对应上游仓库拉新文件（具体路径见 `assets/fonts/README.md`），替换掉
-   `assets/fonts/` 下的同名文件；如果上游重新组织过目录结构，文件名可能变，参照
+1. 从对应上游仓库拉新文件（具体路径见 `fonts/README.md`），替换掉
+   `fonts/` 下的同名文件；如果上游重新组织过目录结构，文件名可能变，参照
    README 表格重新核对。
 2. 用上面那段 PowerShell 重新探测 family 名，跟 `user-lisp/init-ui.el` 候选表 /
    `scripts/install-fonts.py` 的 `MANIFEST` 里写的对一下，不一致就同步改。
-3. 跑一次 `scripts/install-fonts.py --force` 强制重装，重启 Emacs 确认字体生效。
+3. 在 dotfiles 仓库根目录跑一次 `python scripts\install-fonts.py --force` 强制重装，重启 Emacs 确认字体生效。
 
-## 调用
+在 dotfiles 仓库根目录执行：
 
 ```powershell
 python scripts\install-fonts.py
 ```
 
-幂等：装过的会跳过。想强制重装（比如更新了 `assets/fonts/` 里的文件）加 `--force`。
+幂等：装过的会跳过。想强制重装（比如更新了 `fonts/` 里的文件）加 `--force`。
 
 ## 本机的坑：重启后 Emacs 又看不到字体了（文件/注册表都还在）
 
