@@ -78,27 +78,32 @@
 (require 'subword)
 (global-subword-mode t)
 
+(defun my/forward-whole-word (count)
+  "`forward-word'，但 `_' 与 `-' 也算词内字符。"
+  (let ((table (make-syntax-table (syntax-table)))
+        (word-separating-categories evil-cjk-word-separating-categories)
+        (word-combining-categories evil-cjk-word-combining-categories))
+    (modify-syntax-entry ?_ "w" table)
+    (modify-syntax-entry ?- "w" table)
+    (with-syntax-table table (forward-word count))))
+
 (defun forward-evil-whole-word (&optional count)
-  "整词运动：前移 COUNT 个整词的末尾；COUNT 为负则回退到词首。
-整词 = [[:word:]_-]+（字母数字/CJK + 下划线 + 连字符）。
+  "整词运动：词 = [[:word:]_-]+；标点串各自成段，不并入词。
+故 `Node {' 上 `dw' 只删 `Node '、`{' 保留；而 `foo-bar'/`foo_bar'/`fooBar' 各算一个词。
 
 返回**未能移动的整词数**（0 = 成功）——这是 evil `forward-op'/`forward-thing' 的约定：
 `evil-forward-beginning'/`evil-forward-nearest' 内部用 `(zerop (forward-thing ...))' 判断成功。
 ⚠ 必须返回数字；返回 nil 会让 `evil-bounds-of-not-thing-at-point' 的 `(zerop ...)' 报
 wrong-type-argument（曾导致 aw/b 报错、w 落点错位）。"
-  (let* ((count (or count 1))
-         (n (abs count))
-         (dir (if (> count 0) 1 -1)))
-    (while (and (> n 0)
-                (let ((start (point)))
-                  (if (> dir 0)
-                      (progn (skip-chars-forward "^[:word:]_-")
-                             (skip-chars-forward "[:word:]_-"))
-                    (skip-chars-backward "^[:word:]_-")
-                    (skip-chars-backward "[:word:]_-"))
-                  (/= start (point))))
-      (setq n (1- n)))
-    n))
+  (evil-forward-nearest
+   count
+   (lambda (&optional cnt)
+     (let ((pnt (point)))
+       (my/forward-whole-word cnt)
+       (if (= pnt (point)) cnt 0)))
+   ;; ⚠ `-' 必须写在集合开头；写成 `[:word:]_-' 会被解析成 `_' 到 `-' 的区间
+   (lambda (&optional cnt) (evil-forward-chars "^-[:word:]_\t\n\r\f " cnt))
+   #'forward-evil-empty-line))
 
 ;; forward-thing 'evil-word' 解析到 (intern-soft "forward-evil-word")，defalias 这一个函数就够
 (defalias #'forward-evil-word #'forward-evil-whole-word)
