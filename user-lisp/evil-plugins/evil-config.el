@@ -74,35 +74,100 @@
             'evil-inner-between)
 
 ;; ---- 词运动 / 分词（word motion & subwords）----
-;; 口径：w/b/e 与 iw/aw 按整词 [[:word:]_-]+；i SPC w / a SPC w 按 subword
+;; w/b/e、iw/aw：Vim 词（`_' 算词内，不切 camelCase，标点串自成一段）
+;; 再并入两侧都是词字符的 `-'（foo-bar）；前导/末尾/连续的 `-' 仍是标点。
+;; M-f/M-b 与 i SPC w 仍是 subword。evil 不用 `forward-word'：那会被 subword-mode 改写。
 (require 'subword)
 (global-subword-mode t)
 
-(defun my/forward-whole-word (count)
-  "`forward-word'，但 `_' 与 `-' 也算词内字符。"
+(defun my/with-vim-word-syntax (fn)
+  "临时把 `_' 当成词字符后调用 FN。不改 `-'，也不动 `subword-mode'。"
   (let ((table (make-syntax-table (syntax-table)))
         (word-separating-categories evil-cjk-word-separating-categories)
         (word-combining-categories evil-cjk-word-combining-categories))
     (modify-syntax-entry ?_ "w" table)
-    (modify-syntax-entry ?- "w" table)
-    (with-syntax-table table (forward-word count))))
+    (with-syntax-table table (funcall fn))))
+
+(defun my/vim-word-char-p (char)
+  (and char (eq (char-syntax char) ?w)))
+
+(defun my/at-middle-hyphen-p ()
+  "当前字符是 `-'，且左右都是词字符（`foo-bar' 的那个横线）。"
+  (and (eq (char-after) ?-)
+       (my/vim-word-char-p (char-before))
+       (my/vim-word-char-p (char-after (1+ (point))))))
+
+(defun my/vim-punct-char-p ()
+  "Vim 标点：非词、非空白。两侧夹着词的 `-' 不算。"
+  (let ((char (char-after)))
+    (and char
+         (not (memq char '(?\s ?\t ?\n ?\r ?\f)))
+         (not (my/vim-word-char-p char))
+         (not (my/at-middle-hyphen-p)))))
+
+(defun my/skip-pred-forward (pred)
+  (while (and (not (eobp)) (funcall pred))
+    (forward-char)))
+
+(defun my/skip-pred-backward (pred)
+  (while (and (not (bobp))
+              (save-excursion (backward-char) (funcall pred)))
+    (backward-char)))
+
+(defun my/forward-whole-word (count)
+  "前进一个 Vim 词，并吃掉后面的 `-<词>'。COUNT 为负则退到词首。"
+  (my/with-vim-word-syntax
+   (lambda ()
+     (let (stuck)
+       (if (and count (< count 0))
+           (progn
+             (forward-word-strictly -1)
+             (while (and (not stuck)
+                         (eq (char-before) ?-)
+                         (my/vim-word-char-p (char-before (1- (point)))))
+               (let ((origin (point)))
+                 (backward-char 1)
+                 (forward-word-strictly -1)
+                 (unless (< (point) origin)
+                   (goto-char origin)
+                   (setq stuck t)))))
+         (forward-word-strictly 1)
+         (while (and (not stuck) (my/at-middle-hyphen-p))
+           (let ((origin (point)))
+             (forward-char 1)
+             (forward-word-strictly 1)
+             (unless (> (point) origin)
+               (goto-char origin)
+               (setq stuck t)))))))))
+
+(defun my/forward-vim-punct (count)
+  "前进一段 Vim 标点。中间短横线视作词的一部分，不在这里停。"
+  (my/with-vim-word-syntax
+   (lambda ()
+     (let ((start (point)))
+       (if (and count (< count 0))
+           (progn
+             (my/skip-pred-backward (lambda () (not (my/vim-punct-char-p))))
+             (my/skip-pred-backward #'my/vim-punct-char-p))
+         (my/skip-pred-forward (lambda () (not (my/vim-punct-char-p))))
+         (my/skip-pred-forward #'my/vim-punct-char-p))
+       (if (= (point) start) count 0)))))
 
 (defun forward-evil-whole-word (&optional count)
-  "整词运动：词 = [[:word:]_-]+；标点串各自成段，不并入词。
-故 `Node {' 上 `dw' 只删 `Node '、`{' 保留；而 `foo-bar'/`foo_bar'/`fooBar' 各算一个词。
+  "Vim 词运动，外加中间短横线。
+`fooBar' / `foo_bar' / `foo-bar' 各算一个词；`foo.bar'、`-foo'、`--flag' 按标点切开。
+`Node {' 上 `dw' 只删到 `{' 之前。
 
-返回**未能移动的整词数**（0 = 成功）——这是 evil `forward-op'/`forward-thing' 的约定：
-`evil-forward-beginning'/`evil-forward-nearest' 内部用 `(zerop (forward-thing ...))' 判断成功。
-⚠ 必须返回数字；返回 nil 会让 `evil-bounds-of-not-thing-at-point' 的 `(zerop ...)' 报
-wrong-type-argument（曾导致 aw/b 报错、w 落点错位）。"
+返回**未能移动的次数**（0 = 成功）——evil `forward-op' 的约定：
+`evil-forward-nearest' 用 `(zerop ...)' 判断成功。返回 nil 会让 aw/b 报
+wrong-type-argument。"
   (evil-forward-nearest
    count
    (lambda (&optional cnt)
      (let ((pnt (point)))
        (my/forward-whole-word cnt)
        (if (= pnt (point)) cnt 0)))
-   ;; ⚠ `-' 必须写在集合开头；写成 `[:word:]_-' 会被解析成 `_' 到 `-' 的区间
-   (lambda (&optional cnt) (evil-forward-chars "^-[:word:]_\t\n\r\f " cnt))
+   #'my/forward-vim-punct
    #'forward-evil-empty-line))
 
 ;; forward-thing 'evil-word' 解析到 (intern-soft "forward-evil-word")，defalias 这一个函数就够

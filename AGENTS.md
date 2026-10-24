@@ -64,10 +64,13 @@
 其中 **`evil-config` 由 `init.el` 在 `after-init-hook`（depth -99）才 `require`**，让 evil 的加载
 不计入 `emacs-init-time`；故 `evil-keymaps`/`init-completion` 取 `evil-define-key` 宏改用
 `eval-when-compile`。
-**分词口径**（`evil-config.el`）：`w`/`b`/`e` 与 `iw`/`aw` 按**整词**（`[[:word:]_-]+`，
-即 `fooBarBaz`/`foo-bar-baz`/`foo_bar_baz` 各算一个；实现为把 `forward-evil-word` alias 成整词运动，
-`forward-thing 'evil-word` 与 `iw/aw` 的 thingatpt bounds 都走它）；`i SPC w` / `a SPC w` 按
-**subword**（camelCase 边界）；`W`/`iW`/`aW` 仍是空白分隔大词。
+**分词口径**（`evil-config.el`）：`w`/`b`/`e` 与 `iw`/`aw` 按 **Vim 词**
+（`_` 算词内，不切 camelCase，标点串自成一段），再把两侧都是词字符的 `-`
+并进同一个词。故 `fooBar`/`foo_bar`/`foo-bar`/`foo-bar-baz` 各算一个；
+`foo.bar`、`-foo`、`foo-`、`--flag` 仍切开。实现为把 `forward-evil-word` alias 成该运动，
+`forward-thing 'evil-word` 与 `iw/aw` 的 thingatpt bounds 都走它。
+`i SPC w` / `a SPC w` 按 **subword**（camelCase 边界）；`W`/`iW`/`aW` 仍是空白分隔大词。
+Emacs 的 `M-f`/`M-b`/`M-d` 走 `global-subword-mode`；evil 用 `forward-word-strictly`，避开它。
 `*`/`#` 也按整词：evil-search 模块会把 `*` 从 `evil-search-word-forward` 改绑到
 `evil-ex-search-word-forward`，后者取词用 Emacs `word`（不含 `-`/`_`），故本仓库重绑为自建的
 `my/evil-ex-search-word-{forward,backward}`——取词走 `evil-word`、搜索仍走 evil-ex（`gn`/`cgn` 可用）。
@@ -75,7 +78,6 @@
 的词边界、不含 `-`。`g*`/`g#` 已显式解绑（无边界版用不上；visual 态的 `*`/`#` 由 evil-visualstar 提供）。
 ⚠ 自定义 forward-op 必须返回
 「未移动数」（0=成功），否则 `evil-forward-nearest` 的 `(zerop ...)` 会报 wrong-type-argument。
-另开 `global-subword-mode`，让 Emacs 自身的 M-f/M-b/M-d 也按 subword 切（evil 侧不依赖它）。
 
 `init-format`（apheleia，非 LSP 场景的格式化；`SPC f` = `my/format-buffer` 统一入口，按 buffer
 是否有 eglot 托管自动分流到 eglot-format 或 apheleia-format-buffer）与
