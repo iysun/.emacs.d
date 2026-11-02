@@ -24,7 +24,14 @@
   ;; 覆盖 evil 默认的 C-w w 循环切窗，改用自写窗口缩放 hydra（定义见 init-window.el）。
   (define-key evil-window-map (kbd "w") #'hydra-window-size/body)
 
-  (evil-define-key 'visual 'global (kbd "Y") 'clipboard-kill-ring-save)
+  ;; ⚠ clipboard-kill-ring-save 不带 yank-handler，按行选区按 Y 会退化成字符级粘贴
+  (evil-define-operator my/evil-visual-yank-clipboard (beg end type)
+    "可视态 Y：复制到系统剪贴板，保留行/块类型。"
+    :move-point nil
+    :repeat nil
+    (let ((select-enable-clipboard t))
+      (evil-yank beg end type)))
+  (evil-define-key 'visual 'global (kbd "Y") #'my/evil-visual-yank-clipboard)
 
   (evil-define-key 'insert 'global (kbd "C-v") 'clipboard-yank)
   (evil-define-key 'insert 'global (kbd "C-a") 'beginning-of-line)
