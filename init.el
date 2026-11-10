@@ -38,7 +38,8 @@
            corfu
            corfu-terminal
            cape
-           apheleia))
+           apheleia
+           ghostel))
   (eval `(use-package ,package :ensure t :defer t)))
 ;; evil-surround / visualstar / commentary / gcmh 已内联进仓库，不从 elpa 装
 

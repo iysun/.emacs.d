@@ -25,6 +25,7 @@
 (global-set-key (kbd "C-x 5 b") 'consult-buffer-other-frame)
 (global-set-key (kbd "C-x t b") 'consult-buffer-other-tab)
 (global-set-key (kbd "C-x p b") 'consult-project-buffer)
+(global-set-key (kbd "C-x p t") 'ghostel-project)
 (global-set-key (kbd "C-x C-k") 'my/tab-line-kill-group-buffers)
 (global-set-key (kbd "C-x C-o") 'my/tab-line-kill-other-group-buffers)
 (global-set-key (kbd "M-#") 'consult-register-load)
@@ -37,6 +38,7 @@
 (global-set-key (kbd "C-c m") 'consult-man)
 (global-set-key (kbd "C-c i") 'consult-info)
 (global-set-key (kbd "C-c e") 'eshell)
+(global-set-key (kbd "C-c t") 'ghostel)
 (global-set-key (kbd "C-c u") 'hydra-winner/winner-undo)
 (global-set-key (kbd "C-c r") 'hydra-winner/winner-redo)
 

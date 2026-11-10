@@ -57,4 +57,13 @@
             (setq-local truncate-lines -1)
             ))
 
+;; ⚠ 原生模块默认在包目录，MELPA 升级整目录替换会删掉 → 放 var/
+(setq ghostel-module-directory (expand-file-name "var/ghostel/" user-emacs-directory))
+(when (eq system-type 'windows-nt)
+  (setq ghostel-shell "pwsh"))
+
+;; ⚠ ghostel-mode 派生自 fundamental，evil 默认开 normal 态，敲字母会变 vim 命令
+(with-eval-after-load 'evil
+  (evil-set-initial-state 'ghostel-mode 'insert))
+
 (provide 'init-term)
