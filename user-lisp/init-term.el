@@ -67,8 +67,10 @@
 ;; ⚠ 用 Hook 不用 ghostel-comint-global-mode：后者 init 期就 eager 加载 ghostel + 原生模块
 (add-hook 'comint-mode-hook #'ghostel-comint-mode)
 
-;; ⚠ ghostel-mode 派生自 fundamental，evil 默认开 normal 态，敲字母会变 vim 命令
+;; ⚠ 用 emacs 态：evil 的 insert/normal 键位会抢 C-a/C-e/C-k/C-p/C-n 和 ESC，
+;;   emacs 态下这些键与 copy/line 模式各自的键位才能到 ghostel
+(setq ghostel-keymap-exceptions '("C-c" "C-x" "C-h" "M-x" "M-:" "C-\\"))
 (with-eval-after-load 'evil
-  (evil-set-initial-state 'ghostel-mode 'insert))
+  (evil-set-initial-state 'ghostel-mode 'emacs))
 
 (provide 'init-term)
