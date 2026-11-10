@@ -13,7 +13,7 @@
       (expand-file-name "etc/eshell/alias" user-emacs-directory))
 
 (setq eshell-banner-message "")
-(setq eshell-visual-commands '("bat" "less" "more" "htop" "man" "vim" "fish"))
+(setq eshell-visual-commands '("less" "more" "htop" "man" "vim" "fish"))
 (setq eshell-destroy-buffer-when-process-dies t)
 (setq eshell-cmpl-autolist t)
 (setq eshell-where-to-jump 'begin)
@@ -61,6 +61,11 @@
 (setq ghostel-module-directory (expand-file-name "var/ghostel/" user-emacs-directory))
 (when (eq system-type 'windows-nt)
   (setq ghostel-shell "pwsh"))
+
+(add-hook 'eshell-load-hook #'ghostel-eshell-visual-command-mode)
+(defalias 'eshell/v #'eshell/ghostel)
+;; ⚠ 用 Hook 不用 ghostel-comint-global-mode：后者 init 期就 eager 加载 ghostel + 原生模块
+(add-hook 'comint-mode-hook #'ghostel-comint-mode)
 
 ;; ⚠ ghostel-mode 派生自 fundamental，evil 默认开 normal 态，敲字母会变 vim 命令
 (with-eval-after-load 'evil
