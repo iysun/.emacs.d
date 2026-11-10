@@ -43,7 +43,7 @@
 (global-set-key (kbd "C-c r") 'hydra-winner/winner-redo)
 
 (global-set-key (kbd "M-y") 'consult-yank-pop)
-(global-set-key (kbd "C-:") 'shell-command)
+(global-set-key (kbd "C-:") 'my/ghostel-run)
 
 (global-set-key (kbd "M-g b") 'consult-bookmark)
 (global-set-key (kbd "M-g e") 'consult-compile-error)

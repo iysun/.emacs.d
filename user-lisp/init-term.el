@@ -62,10 +62,41 @@
 (when (eq system-type 'windows-nt)
   (setq ghostel-shell "pwsh"))
 
+;; ⚠ global-display-line-numbers-mode 在 mode hook 之后才生效，只能用 after-change-major-mode-hook 关
+(defun my/ghostel-no-line-numbers ()
+  (when (derived-mode-p 'ghostel-mode)
+    (display-line-numbers-mode -1)))
+(add-hook 'after-change-major-mode-hook #'my/ghostel-no-line-numbers t)
+
 (add-hook 'eshell-load-hook #'ghostel-eshell-visual-command-mode)
 (defalias 'eshell/v #'eshell/ghostel)
 ;; ⚠ 用 Hook 不用 ghostel-comint-global-mode：后者 init 期就 eager 加载 ghostel + 原生模块
 (add-hook 'comint-mode-hook #'ghostel-comint-mode)
+
+;; ⚠ 走 shell 且 -NoExit：命令跑完要留在同一个终端里；Windows 上 npm/lazygit 是 .cmd，argv 起不来
+(defun my/ghostel-run--command (command)
+  "Return (PROGRAM . ARGS) that runs COMMAND and then keeps a shell in the buffer."
+  (if (eq system-type 'windows-nt)
+      (cons "pwsh" (list "-NoLogo" "-NoExit" "-Command" command))
+    (let ((shell (or (getenv "SHELL") "/bin/sh")))
+      (cons shell (list "-c" (format "%s; exec %s -i" command shell))))))
+
+(defun my/ghostel-run (command)
+  "Run COMMAND in a fresh ghostel buffer at `default-directory'.
+The shell stays alive afterwards, so the buffer is usable as a terminal."
+  (interactive (list (read-shell-command "Ghostel: ")))
+  (when (string-blank-p command)
+    (user-error "Empty command"))
+  (require 'ghostel)
+  (let* ((dir default-directory)
+         (spec (my/ghostel-run--command command))
+         (buffer (generate-new-buffer (format "*ghostel: %s*" (string-trim command)))))
+    (switch-to-buffer buffer)
+    (setq default-directory dir)
+    (condition-case err
+        (ghostel-exec buffer (car spec) (cdr spec))
+      (error (kill-buffer buffer)
+             (signal (car err) (cdr err))))))
 
 ;; ⚠ 用 emacs 态：evil 的 insert/normal 键位会抢 C-a/C-e/C-k/C-p/C-n 和 ESC，
 ;;   emacs 态下这些键与 copy/line 模式各自的键位才能到 ghostel
