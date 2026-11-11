@@ -1,5 +1,7 @@
 ;;; init-lsp.el --- tree-sitter 模式路由 + eglot 挂载与调优  -*- lexical-binding: t; -*-
 
+(require 'init-lsp-symbols)
+
 ;; ⚠ 必须 setopt（setq 不触发 defcustom 的 :set）；只有没有 maybe 路由的语言靠它才走 ts-mode
 ;; ⚠ 延迟到 startup hook：setopt 会载入 treesit 并生成 remap，占 init 时间
 (add-hook 'emacs-startup-hook
@@ -84,7 +86,6 @@
                      (list (list "rass"
                                  (expand-file-name "scripts/rass/html.py" user-emacs-directory))
                            '("vscode-html-language-server" "--stdio")))))
-  (require 'consult-eglot)
 
   (defun my/lsp-complete ()
     "手动触发补全（C-M-i）。

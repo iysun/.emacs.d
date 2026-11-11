@@ -42,6 +42,7 @@
 | `user-lisp/mode-line/init-mode-line.el` | mode-line 实现本体，`(provide 'init-mode-line)`，由 `init-bars.el` `require` |
 | `user-lisp/tab-line/init-tab-line.el` | tab-line 实现本体，`(provide 'init-tab-line)`。⚠ 特意不叫 `tab-line.el`：user-lisp 会把子目录**前置**到 load-path，叫 `tab-line.el` 会盖住内置库 |
 | `user-lisp/eshell-prompt/init-eshell-prompt.el` | eshell 提示符实现本体，由 `init-term.el` `require` |
+| `user-lisp/lsp-symbols/init-lsp-symbols.el` | LSP `workspace/symbol` 搜索（consult 界面、按 SymbolKind 窄化、预览跳转），由 `init-lsp.el` `require`，命令 `my/lsp-symbols` 绑在 `M-s s`；没有 eglot 后端时退化为 `xref-find-apropos` |
 | `user-lisp/init-term.el` | 终端：eshell 全套（含语法高亮的 `executable-find` 缓存）+ ghostel（libghostty 终端，`C-c t` = `ghostel`、`C-x p t` = `ghostel-project`，shell 在 Windows 下为 `pwsh`，其余平台沿用 `$SHELL`）。⚠ Windows 走 ConPTY，原生模块与 `conpty.dll`/`OpenConsole.exe` 放 `var/ghostel/`（留包目录会被 MELPA 升级整目录替换删掉）；eshell 可视命令与 comint 输出解析也接 ghostel（`eshell-load-hook` / `comint-mode-hook` 上挂 mode，另有 `eshell/v` 内置命令）；evil 状态定为 `emacs`（insert/normal 键位会抢 C-a/C-e/C-k/C-u/C-p/C-n 和 ESC），semi-char 下这些键直通 shell，copy/line 模式各用自己键位，buffer 内关行号；`C-:` = `my/ghostel-run`（当前目录新开 ghostel 跑命令，命令结束仍留在同一终端）；`consult-buffer` 里 ghostel 单独成组（窄化键 `t`） |
 | `user-lisp/init-parens.el` | **括号显示**：默认很淡（`my-paren-face`）+ 光标处强调（`show-paren` 反显加粗）。机制**改编自 rainbow-delimiters**（GPLv3），只保留"走括号 + 跳过字符串/注释/转义/双字符 opener"的必要代码、砍掉深度配色机器，故不再依赖 `rainbow-delimiters`；淡色按主题 fg/bg 现场混合（用 `init-ui` 的 `my-ui--*`，须在其后 `require`） |
 | `user-lisp/evil-plugins/` | evil 相关插件合集：**内联**的 `evil-surround` / `evil-commentary`(+integration) / `evil-visualstar`（GPLv3），以及本仓库的 `evil-config.el` / `evil-keymaps.el` / `evil-vc.el` / `evil-dired.el` / `evil-ibuffer.el` / `evil-extra.el` / `mc-evil.el` / `ime.el`。见其 `README.md` |
@@ -137,7 +138,7 @@ Emacs 31 的 user-lisp 机制在启动时会：
 ```powershell
 emacs --batch `
   --init-directory "$PWD" `
-  --eval '(dolist (d (list "user-lisp" "user-lisp/evil-plugins" "user-lisp/gcmh" "user-lisp/mode-line" "user-lisp/tab-line" "user-lisp/eshell-prompt")) (add-to-list (quote load-path) (expand-file-name d user-emacs-directory)))' `
+  --eval '(dolist (d (list "user-lisp" "user-lisp/evil-plugins" "user-lisp/gcmh" "user-lisp/mode-line" "user-lisp/tab-line" "user-lisp/eshell-prompt" "user-lisp/lsp-symbols")) (add-to-list (quote load-path) (expand-file-name d user-emacs-directory)))' `
   -l "$PWD\early-init.el" -l "$PWD\init.el" `
   --eval '(princ "== CONFIG LOADED OK ==\n")' 2>&1 | Select-Object -Last 12
 ```
