@@ -63,6 +63,96 @@
 
 (add-hook 'embark-collect-mode-hook 'consult-preview-at-point-mode)
 
+;; ---- 搜索种子：单行选区优先，否则取光标处内容 ----
+(defun my/search-seed (&optional thing)
+  "单行选区 → 选区文本；否则 → 光标处的 THING（默认 symbol）。"
+  (cond
+   ((use-region-p)
+    (let ((beg (region-beginning)) (end (region-end)))
+      (when (= (line-number-at-pos beg) (line-number-at-pos end))
+        (string-trim (buffer-substring-no-properties beg end)))))
+   (t (thing-at-point (or thing 'symbol) t))))
+
+(defun my/search--delete-seed ()
+  "种子仍整段选中时，DEL/Delete 删掉整段而不是一个字符。"
+  (when (and (use-region-p)
+             (memq this-command '(delete-backward-char delete-char
+                                  backward-delete-char-untabify))
+             (= (region-beginning) (minibuffer-prompt-end))
+             (= (region-end) (point-max)))
+    (delete-region (region-beginning) (region-end))
+    (deactivate-mark)
+    (setq this-command 'ignore)))
+
+(defun my/search--select-seed ()
+  "选中 minibuffer 里的初始输入，并让 DEL/Delete 能一次清空。"
+  (when (and (minibufferp) (> (point-max) (minibuffer-prompt-end)))
+    (push-mark (minibuffer-prompt-end) nil t)
+    (goto-char (point-max))
+    (add-hook 'pre-command-hook #'my/search--delete-seed nil t)))
+
+;; 下面每个 wrapper 都让 M-s 开头的搜索带上光标处内容，并在 minibuffer 里全选
+(defun my/consult-line (&optional arg)
+  "`consult-line'，带光标处内容作为初始输入。"
+  (interactive "P")
+  (minibuffer-with-setup-hook #'my/search--select-seed
+    (consult-line (my/search-seed) (and arg t))))
+
+(defun my/consult-line-multi (&optional query)
+  "`consult-line-multi'，带光标处内容作为初始输入。"
+  (interactive "P")
+  (minibuffer-with-setup-hook #'my/search--select-seed
+    (consult-line-multi query (my/search-seed))))
+
+(defun my/consult-ripgrep (&optional dir)
+  "`consult-ripgrep'，带光标处内容作为初始输入。"
+  (interactive "P")
+  (minibuffer-with-setup-hook #'my/search--select-seed
+    (consult-ripgrep dir (my/search-seed))))
+
+(defun my/consult-grep (&optional dir)
+  "`consult-grep'，带光标处内容作为初始输入。"
+  (interactive "P")
+  (minibuffer-with-setup-hook #'my/search--select-seed
+    (consult-grep dir (my/search-seed))))
+
+(defun my/consult-git-grep (&optional dir)
+  "`consult-git-grep'，带光标处内容作为初始输入。"
+  (interactive "P")
+  (minibuffer-with-setup-hook #'my/search--select-seed
+    (consult-git-grep dir (my/search-seed))))
+
+(defun my/consult-fd (&optional dir)
+  "`consult-fd'，优先用光标处的文件名作为初始输入。"
+  (interactive "P")
+  (minibuffer-with-setup-hook #'my/search--select-seed
+    (consult-fd dir (or (my/search-seed 'filename) (my/search-seed)))))
+
+(defun my/consult-locate (&optional initial)
+  "`consult-locate'，优先用光标处的文件名作为初始输入。"
+  (interactive)
+  (minibuffer-with-setup-hook #'my/search--select-seed
+    (consult-locate (or initial (my/search-seed 'filename) (my/search-seed)))))
+
+(defun my/consult-keep-lines ()
+  "`consult-keep-lines'，带光标处内容作为初始输入。"
+  (interactive)
+  (minibuffer-with-setup-hook #'my/search--select-seed
+    (consult-keep-lines
+     (lambda (pattern cands)
+       (consult--completion-filter-dispatch pattern cands 'consult-location 'highlight))
+     (my/search-seed))))
+
+(defun my/consult-focus-lines ()
+  "`consult-focus-lines'，带光标处内容作为初始输入。"
+  (interactive)
+  (minibuffer-with-setup-hook #'my/search--select-seed
+    (consult-focus-lines
+     (lambda (pattern cands)
+       (consult--completion-filter-dispatch pattern cands 'consult-location 'highlight))
+     nil
+     (my/search-seed))))
+
 (progn
   ;; ⚠ 必须 3：2 会让 gopls 扫全 module 返回上千条
   (setq corfu-auto-prefix 3)
