@@ -73,6 +73,40 @@
 ;; ⚠ 用 Hook 不用 ghostel-comint-global-mode：后者 init 期就 eager 加载 ghostel + 原生模块
 (add-hook 'comint-mode-hook #'ghostel-comint-mode)
 
+;; ghostel buffer 在 consult-buffer 里单独成组（窄化键 t，与 tab-line 分组的 g 区分开）
+(defvar my/consult--source-ghostel
+  `( :name     "Ghostel"
+     :narrow   ?t
+     :category buffer
+     :face     consult-buffer
+     :history  buffer-name-history
+     :state    ,#'consult--buffer-state
+     :items ,(lambda ()
+               (consult--buffer-query
+                :sort 'visibility
+                :mode 'ghostel-mode
+                :as #'consult--buffer-pair)))
+  "consult-buffer 的 ghostel 终端分组。")
+
+(with-eval-after-load 'consult
+  (add-to-list 'consult-buffer-sources 'my/consult--source-ghostel 'append)
+  ;; ⚠ 不排掉的话 ghostel buffer 会在 Buffer 组里再出现一份
+  (setq consult-source-buffer
+        `( :name     "Buffer"
+           :narrow   ?b
+           :category buffer
+           :face     consult-buffer
+           :history  buffer-name-history
+           :state    ,#'consult--buffer-state
+           :default  t
+           :items ,(lambda ()
+                     (consult--buffer-query
+                      :sort 'visibility
+                      :predicate (lambda (buf)
+                                   (not (with-current-buffer buf
+                                          (derived-mode-p 'ghostel-mode))))
+                      :as #'consult--buffer-pair)))))
+
 ;; ⚠ 走 shell 且 -NoExit：命令跑完要留在同一个终端里；Windows 上 npm/lazygit 是 .cmd，argv 起不来
 (defun my/ghostel-run--command (command)
   "Return (PROGRAM . ARGS) that runs COMMAND and then keeps a shell in the buffer."
