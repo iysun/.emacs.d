@@ -240,5 +240,20 @@ HEIGHT 参数分两种情况，不能一视同仁地跟宽度同比放大：
 (add-hook 'after-init-hook
           (lambda () (advice-add 'define-fringe-bitmap :around #'my/fringe-scale-advice)))
 
+;; 按 cursor-type 发 DECSCUSR，TTY 下 evil 切状态才看得见光标形状
+(setq xterm-update-cursor 'type)
+
+;; ⚠ Windows 终端类型是 w32console，跑不到 `terminal-init-xterm'；VTP 可用时手动装同一套钩子
+(defun my/ui--tty-cursor-init ()
+  "TTY 下让光标形状跟随 `cursor-type'（即 evil 状态）。"
+  (when (and (eq system-type 'windows-nt)
+             (not (display-graphic-p))
+             (fboundp 'w32-use-virtual-terminal-p)
+             (w32-use-virtual-terminal-p))
+    (require 'term/xterm)
+    (xterm--init-update-cursor)))
+
+(add-hook 'window-setup-hook #'my/ui--tty-cursor-init)
+
 (provide 'init-ui)
 
