@@ -35,7 +35,6 @@
            orderless
            vertico
            corfu
-           corfu-terminal
            cape
            apheleia
            ghostel))

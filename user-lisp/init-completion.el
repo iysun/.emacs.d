@@ -297,12 +297,10 @@ preview-only 完全关闭 corfu 弹窗，只保留行内预览。")
         (completion-preview-mode (if enable 1 -1))))))
 
 (defun my/completion--set-corfu (enable)
-  "联动 global-corfu-mode 及其 popupinfo/terminal 全局子模式。三者都是 :global t，
+  "联动 global-corfu-mode 与 corfu-popupinfo-mode。两者都是 :global t，
 用显式 1/-1 而非 hook 里的隐式 toggle，避免反复切换风格后状态漂移。"
   (global-corfu-mode (if enable 1 -1))
-  (corfu-popupinfo-mode (if enable 1 -1))
-  (unless (display-graphic-p)
-    (corfu-terminal-mode (if enable 1 -1))))
+  (corfu-popupinfo-mode (if enable 1 -1)))
 
 (defun my/apply-completion-style (style)
   "按 STYLE（auto/manual/preview-only）应用补全行为，对已打开的 buffer 立即生效。"
