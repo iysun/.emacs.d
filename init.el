@@ -44,6 +44,10 @@
 (when (executable-find "fd")
   (use-package fd-dired :ensure t :defer t))
 
+;; Emacs 31 自带实验性 markdown-ts-mode，但没打 autoload 也没进 auto-mode-alist
+(autoload 'markdown-ts-mode "markdown-ts-mode" nil t)
+(add-to-list 'auto-mode-alist '("\\.\\(?:md\\|markdown\\)\\'" . markdown-ts-mode))
+
 (require 'init-base)
 ;; ⚠ evil 留到 after-init（不计入 emacs-init-time）；depth -99 保证早于字体/补全等其它 after-init 工作
 (add-hook 'after-init-hook (lambda () (require 'evil-config)) -99)
