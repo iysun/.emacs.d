@@ -9,6 +9,17 @@
   (setq completion-category-overrides '((file (styles basic partial-completion))))
   )
 
+;; 拼音首字母：z→[z中张…]，故 zw 命中「中文」；要求首字母连续
+(defun my/orderless-pinyin (component)
+  "把纯 ASCII 字母组件按拼音首字母匹配中文候选。"
+  (when (and (>= (length component) 2)
+             (string-match-p "\\`[a-zA-Z]+\\'" component))
+    (require 'pinyinlib)
+    (orderless-regexp (pinyinlib-build-regexp-string component t))))
+
+(with-eval-after-load 'orderless
+  (add-to-list 'orderless-matching-styles #'my/orderless-pinyin))
+
 ;; ⚠ marginalia 调 compat--seconds-to-string，Emacs 31 的 compat 已删 → 保留 shim
 (unless (fboundp 'compat--seconds-to-string)
   (defalias 'compat--seconds-to-string #'seconds-to-string))

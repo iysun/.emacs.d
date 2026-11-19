@@ -61,7 +61,7 @@
 
 当前启用的模块（见 `init.el` 末尾）：`init-base` `init-ui` `init-parens` `init-bars` `init-window`
 `init-completion` `init-dired` `init-git` `init-term` `init-project` `init-keymaps`
-`init-lsp` `init-format` `init-navigation`，以及 `user-lisp/evil-plugins/` 下的
+`init-lsp` `init-format` `init-navigation` `init-isearch-pinyin`（isearch 里拼音首字母搜中文，只走 `C-s`/`C-r`，用 `pinyinlib`），以及 `user-lisp/evil-plugins/` 下的
 `evil-config` `evil-keymaps` `evil-vc` `evil-dired` `evil-ibuffer` `evil-extra` `mc-evil`（`ime` 由 `early-init.el` 加载）。
 其中 **`evil-config` 由 `init.el` 在 `after-init-hook`（depth -99）才 `require`**，让 evil 的加载
 不计入 `emacs-init-time`；故 `evil-keymaps`/`init-completion` 取 `evil-define-key` 宏改用

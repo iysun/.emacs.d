@@ -36,6 +36,7 @@
            vertico
            corfu
            cape
+           pinyinlib
            apheleia
            ghostel))
   (eval `(use-package ,package :ensure t :defer t)))
@@ -71,6 +72,7 @@
 (require 'init-lsp)
 (require 'init-format)
 (require 'init-navigation)
+(require 'init-isearch-pinyin)
 
 ;; ⚠ quickstart 快照过期不报错、静默用旧包集合，故自检：快照早于 elpa/ 就告警
 (defun my/check-quickstart-freshness ()
