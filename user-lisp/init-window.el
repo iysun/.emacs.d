@@ -5,13 +5,19 @@
 
 (setq window-divider-default-places t
       window-divider-default-right-width 1
-      window-divider-default-bottom-width 0)
+      window-divider-default-bottom-width 1)
 (add-hook 'after-init-hook #'window-divider-mode)
 
 (defun my/update-bottom-divider ()
-  "只有存在上下相邻窗口时才显示底部分隔线。"
-  (set-frame-parameter nil 'bottom-divider-width
-                       (if (eq (next-window) (selected-window)) 0 1)))
+  "托盘开着时，底部分割线是 1px 亮线，下面再留和 tab-line 相同的上边距。
+宽度没变时不写 frame 参数，避免每次 :w 都触发布局。关掉托盘后只留 1px。"
+  (let* ((pad (if (and (bound-and-true-p my-ui-echo-tray-mode)
+                       (boundp 'my-ui-bar-padding))
+                  my-ui-bar-padding
+                0))
+         (width (1+ pad)))
+    (unless (eql (frame-parameter nil 'bottom-divider-width) width)
+      (set-frame-parameter nil 'bottom-divider-width width))))
 (add-hook 'window-configuration-change-hook #'my/update-bottom-divider)
 
 ;; ⚠ q 在 log-edit buffer 里须走 log-edit-kill-buffer 放弃提交

@@ -82,20 +82,41 @@ padding 为 0 则返回 nil。
       (color-lighten-name bg percent)
     (color-darken-name bg percent)))
 
+(defun my-ui--divider-color ()
+  "分割线用亮色。深色背景大幅提亮，浅色背景用浅灰。"
+  (let ((bg (or (my-ui--real-color (face-background 'default nil t)) "#1e1e1e")))
+    (if (color-dark-p (color-name-to-rgb bg))
+        (color-lighten-name bg 70)
+      "#d0d0d0")))
+
+(defun my-ui--style-window-divider ()
+  "右侧 1px 只用 first-pixel，设成亮色。
+底部更宽时，first-pixel 仍是那条亮线，其余像素用 tab-line 的背景。
+这截和 tab-line 的上内边距是同一块颜色、同一个像素数。"
+  (let ((line (my-ui--divider-color))
+        (bg (my-ui--bg-of 'tab-line)))
+    (when (facep 'window-divider-first-pixel)
+      (set-face-attribute 'window-divider-first-pixel nil
+                          :foreground line :background line))
+    (dolist (f '(window-divider window-divider-last-pixel))
+      (when (facep f)
+        (set-face-attribute f nil :foreground bg :background bg)))))
+
 (defun my-ui-setup-bars (&rest _)
-  "把 mode-line 与 tab-line 调成字号一致、厚度一致的一对。"
+  "把 mode-line 与 tab-line 调成字号一致、厚度一致的一对。
+托盘开着时 mode-line 不显示，分割线是 1px 的 window divider。"
   (require 'tab-line nil t)                       ; 确保 tab-line-* face 已定义
   ;; mode-line-active 是 Emacs 29+，故逐个 facep 判断
   (dolist (f '(mode-line mode-line-active mode-line-inactive))
     (when (facep f)
       (set-face-attribute f nil :height my-ui-mode-line-height
                           :box (my-ui--bar-box f))))
+  (let ((bar-bg (my-ui--bg-of 'mode-line))
+        (bar-fg (or (my-ui--real-color (face-foreground 'mode-line nil t))
+                    (my-ui--real-color (face-foreground 'default nil t))
+                    "white")))
   ;; ⚠ tab-line defface 写死 :inherit variable-pitch，不设 :family 就是比例字体
-  (let* ((bar-bg (my-ui--bg-of 'mode-line))
-         (bar-fg (or (my-ui--real-color (face-foreground 'mode-line nil t))
-                     (my-ui--real-color (face-foreground 'default nil t))
-                     "white"))
-         (bar-box (my-ui--v-box bar-bg))
+  (let* ((bar-box (my-ui--v-box bar-bg))
          (bar-family (face-attribute 'default :family)))
     (dolist (f '(tab-line tab-line-active tab-line-inactive))
       (when (facep f)
@@ -118,8 +139,7 @@ padding 为 0 则返回 nil。
             "#4c9eff"))
   ;; ⚠ :box 颜色须跟背景同色，否则 padding 边缘露出旧背景缝
   ;; ⚠ set-face-attribute 不清空旧值；换主题重跑须显式 :underline nil
-  (let* ((bar-bg (my-ui--bg-of 'mode-line))
-         (tab-current-bg (my-ui--tab-block-bg bar-bg my-ui-tab-current-tint)))
+  (let* ((tab-current-bg (my-ui--tab-block-bg bar-bg my-ui-tab-current-tint)))
     (when (facep 'tab-line-tab-current)
       (set-face-attribute 'tab-line-tab-current nil
                           :weight 'bold
@@ -132,8 +152,7 @@ padding 为 0 则返回 nil。
                             :background hover-bg
                             :box (my-ui--v-box hover-bg)
                             :foreground my-ui--tab-accent))))
-  (let* ((bar-bg (my-ui--bg-of 'mode-line))
-         (inactive-bg (my-ui--tab-block-bg bar-bg my-ui-tab-inactive-tint))
+  (let* ((inactive-bg (my-ui--tab-block-bg bar-bg my-ui-tab-inactive-tint))
          (inactive-box (my-ui--v-box inactive-bg))
          (dim-fg (or (my-ui--real-color (face-foreground 'shadow nil t)) 'unspecified)))
     (when (facep 'tab-line-tab-inactive)
@@ -151,7 +170,8 @@ padding 为 0 则返回 nil。
     (set-face-attribute 'tab-line-tab-modified nil
                         :foreground my-ui--tab-accent :slant 'italic))
   (when (facep 'tab-line-close-highlight)
-    (set-face-attribute 'tab-line-close-highlight nil :foreground "#e06c75")))
+    (set-face-attribute 'tab-line-close-highlight nil :foreground "#e06c75"))
+  (my-ui--style-window-divider)))
 
 (add-hook 'after-init-hook #'my-ui-setup-bars t)
 (when (boundp 'enable-theme-functions)
