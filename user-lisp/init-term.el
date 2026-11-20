@@ -108,10 +108,13 @@
                       :as #'consult--buffer-pair)))))
 
 ;; ⚠ 走 shell 且 -NoExit：命令跑完要留在同一个终端里；Windows 上 npm/lazygit 是 .cmd，argv 起不来
+;; ⚠ pwsh -Command 会把 $PSStyle.OutputRendering 设成 PlainText，-NoExit 之后也不恢复，
+;;   starship 写进提示符的颜色码会被剥掉。先改回 Ansi。
 (defun my/ghostel-run--command (command)
   "Return (PROGRAM . ARGS) that runs COMMAND and then keeps a shell in the buffer."
   (if (eq system-type 'windows-nt)
-      (cons "pwsh" (list "-NoLogo" "-NoExit" "-Command" command))
+      (cons "pwsh" (list "-NoLogo" "-NoExit" "-Command"
+                         (format "$PSStyle.OutputRendering = 'Ansi'; %s" command)))
     (let ((shell (or (getenv "SHELL") "/bin/sh")))
       (cons shell (list "-c" (format "%s; exec %s -i" command shell))))))
 
