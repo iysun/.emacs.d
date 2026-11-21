@@ -36,7 +36,14 @@
              (member my-ui-default-font-family my-ui--nerd-patched-font-families))
     (setq nerd-icons-font-family my-ui-default-font-family)))
 
+(defun my-ui--setup-new-frame-fonts (frame)
+  "给新建 GUI frame 应用字体；daemon 下 after-init 时还没有 GUI frame。"
+  (unless (frame-parameter frame 'parent-frame)
+    (with-selected-frame frame
+      (my-ui--setup-fonts))))
+
 (add-hook 'after-init-hook #'my-ui--setup-fonts -95)
+(add-hook 'after-make-frame-functions #'my-ui--setup-new-frame-fonts 95)
 
 ;; ⚠ nerd-icons 硬绑未装的 "Symbols Nerd Font Mono" → 豆腐块，须重定向
 ;; ⚠ 只在打过 Nerd 补丁的白名单内重定向；命中即无条件改（别再加 find-font 判断，反成豆腐块）

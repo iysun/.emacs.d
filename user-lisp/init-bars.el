@@ -173,7 +173,14 @@ padding 为 0 则返回 nil。
     (set-face-attribute 'tab-line-close-highlight nil :foreground "#e06c75"))
   (my-ui--style-window-divider)))
 
+(defun my-ui--setup-new-frame-bars (frame)
+  "在新建 frame 上重跑两条 bar 的设置，取该 frame 的 default face/背景。"
+  (unless (frame-parameter frame 'parent-frame)
+    (with-selected-frame frame
+      (my-ui-setup-bars))))
+
 (add-hook 'after-init-hook #'my-ui-setup-bars t)
+(add-hook 'after-make-frame-functions #'my-ui--setup-new-frame-bars 95)
 (when (boundp 'enable-theme-functions)
   (add-hook 'enable-theme-functions #'my-ui-setup-bars))
 
