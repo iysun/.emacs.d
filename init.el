@@ -95,8 +95,4 @@
          :warning)))))
 (add-hook 'emacs-startup-hook #'my/check-quickstart-freshness)
 
-;; emacsclient 支持：启动时开 server，失败不阻塞启动
-(when (fboundp 'server-start)
-  (ignore-errors (server-start)))
-
 (provide 'init)
