@@ -246,7 +246,7 @@ mode-line 挤爆。"
   "和 tab-line 那条 bar 同一个背景，上下 padding 才是同一块颜色。"
   (let ((c (cond
             ((fboundp 'my-ui--bg-of) (my-ui--bg-of 'tab-line))
-            ((facep 'tab-line) (face-background 'tab-line nil t)))))
+            ((facep 'tab-line) (ignore-errors (face-background 'tab-line nil t))))))
     (and (stringp c) (not (string-prefix-p "unspecified" c)) c)))
 
 (defun my-ui--tray-style-buffer (buf)

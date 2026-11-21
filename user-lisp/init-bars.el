@@ -51,8 +51,8 @@ tab-line（user-lisp/tab-line/init-tab-line.el）两边的图标缓存函数都�
 
 (defun my-ui--bg-of (face)
   "取 FACE 背景色（含继承）；取不到则回退 default 背景，再不行用兜底色。"
-  (or (my-ui--real-color (face-background face nil t))
-      (my-ui--real-color (face-background 'default nil t))
+  (or (my-ui--real-color (ignore-errors (face-background face nil t)))
+      (my-ui--real-color (ignore-errors (face-background 'default nil t)))
       "#1e1e1e"))
 
 (defun my-ui--v-box (color)
