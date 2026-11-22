@@ -49,6 +49,15 @@
 (autoload 'markdown-ts-mode "markdown-ts-mode" nil t)
 (add-to-list 'auto-mode-alist '("\\.\\(?:md\\|markdown\\)\\'" . markdown-ts-mode))
 
+;; ⚠ 代码块语言缺 grammar 时会在 font-lock 里弹安装提示，卡死；静默跳过
+(with-eval-after-load 'markdown-ts-mode
+  (dolist (fn '(markdown-ts--code-block-ts-language
+                markdown-ts--fontify-non-ts-collect-faces))
+    (advice-add fn :around
+                (lambda (orig &rest args)
+                  (let ((treesit-auto-install-grammar nil))
+                    (apply orig args))))))
+
 (require 'init-base)
 ;; ⚠ evil 留到 after-init（不计入 emacs-init-time）；depth -99 保证早于字体/补全等其它 after-init 工作
 (add-hook 'after-init-hook (lambda () (require 'evil-config)) -99)
