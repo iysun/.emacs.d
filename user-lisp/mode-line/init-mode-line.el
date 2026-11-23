@@ -171,8 +171,9 @@ KEEP-CLICK 非 nil 时保留 local-map/help-echo/mouse-face —— 那是
 (defvar my-ui--tray-message nil
   "接管下来的 echo 消息（原样一段，可能多行），nil 表示没有。")
 (defvar my-ui--tray-message-timer nil)
-(defvar my-ui--tray-message-duration 5
-  "消息在托盘行里停留的秒数，到点自动让位给状态段。")
+(defvar my-ui--tray-message-duration 2
+  "消息在托盘行里停留的秒数，到点自动让位给状态段。
+和 `minibuffer-message-timeout'（默认 2）保持一致。")
 
 (defun my-ui--tray-message-line ()
   "把接管的 echo 消息压成一行、去掉属性，接在左段状态后面。"
