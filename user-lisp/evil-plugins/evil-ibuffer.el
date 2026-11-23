@@ -10,9 +10,7 @@
   (evil-define-key 'normal ibuffer-mode-map
     "R"                'ibuffer-do-rename-uniquely
     "J"                'ibuffer-jump-to-buffer
-    (kbd "C-d")        (if evil-want-C-d-scroll
-                           'evil-scroll-down
-                         'ibuffer-mark-for-delete-backwards)
+    (kbd "C-d")        'evil-scroll-down
     (kbd "=")          'ibuffer-diff-with-file
     (kbd "M-g")        'ibuffer-jump-to-buffer
     (kbd "t")          'ibuffer-toggle-marks

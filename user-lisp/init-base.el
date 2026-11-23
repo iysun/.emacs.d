@@ -6,7 +6,6 @@
 (setq gcmh-high-cons-threshold (* 128 1024 1024))
 (gcmh-mode 1)
 
-;; (add-hook 'after-init-hook 'toggle-frame-maximized)
 (progn
   (global-auto-revert-mode t)
   (setq make-backup-files nil)
@@ -53,7 +52,6 @@
                                         search-ring
                                         regexp-search-ring
                                         extended-command-history))
-  (setq savehist-autosave-interval 300)
   )
 
 ;; ⚠ 不剥属性会让 savehist 膨胀，不可打印对象则整次保存失败
@@ -94,7 +92,6 @@
 (progn
   (setq recentf-max-saved-items 300)
   (setq recentf-auto-cleanup 'never)
-  (setq recentf-filename-handlers '(abbreviate-file-name))
   )
 
 ;; ⚠ C-x b 已绑 consult-buffer、不读此 frame 参数，看不到变化属预期
@@ -111,44 +108,5 @@
 (add-hook 'after-init-hook #'my/set-buffer-predicate)
 ;; ⚠ 新 frame 不继承 frame 参数，须单独再设
 (add-hook 'after-make-frame-functions #'my/set-buffer-predicate)
-
-;; ⚠ 两套都要设：环境变量给 git/curl/LSP 子进程，变量给 url 库
-(defvar my/proxy-address "127.0.0.1:7897"
-  "HTTP(S) 代理地址，格式 host:port。")
-
-(defvar my/proxy-no-proxy "^\\(localhost\\|127\\.0\\.0\\.1\\)"
-  "不走代理的主机名正则，对应 `url-proxy-services' 的 no_proxy 项。")
-
-(defun my/proxy-on ()
-  "启用网络代理（`my/proxy-address'）。"
-  (interactive)
-  (setq url-proxy-services
-        `(("http"     . ,my/proxy-address)
-          ("https"    . ,my/proxy-address)
-          ("no_proxy" . ,my/proxy-no-proxy)))
-  (let ((url (concat "http://" my/proxy-address)))
-    (setenv "http_proxy" url)
-    (setenv "https_proxy" url)
-    (setenv "HTTP_PROXY" url)
-    (setenv "HTTPS_PROXY" url))
-  (setenv "no_proxy" "localhost,127.0.0.1")
-  (setenv "NO_PROXY" "localhost,127.0.0.1")
-  (message "Proxy on: %s" my/proxy-address))
-
-(defun my/proxy-off ()
-  "关闭网络代理。"
-  (interactive)
-  (setq url-proxy-services nil)
-  (dolist (var '("http_proxy" "https_proxy" "HTTP_PROXY" "HTTPS_PROXY"
-                 "no_proxy" "NO_PROXY"))
-    (setenv var nil))
-  (message "Proxy off"))
-
-(defun my/proxy-toggle ()
-  "切换网络代理开关。"
-  (interactive)
-  (if url-proxy-services
-      (my/proxy-off)
-    (my/proxy-on)))
 
 (provide 'init-base)

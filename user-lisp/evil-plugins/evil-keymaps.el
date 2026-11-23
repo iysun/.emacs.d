@@ -3,8 +3,6 @@
 ;; evil-define-key 是宏，必须在编译期先加载 evil，否则被当函数编成坏 .elc（Invalid function）。
 (eval-when-compile (require 'evil))
 (defvar eshell-mode-map)
-(defvar dired-mode-map)
-(defvar minuet-active-mode-map)
 
 (with-eval-after-load 'evil
   (evil-define-key 'normal 'global (kbd "SPC f") 'my/format-buffer)
@@ -15,7 +13,6 @@
 
   ;; ⚠ eshell-mode-map 每次进 mode 都重建，hook 须排在 first-time 钩子之后（depth 90）。
   (defun my/eshell-evil-insert-keys ()
-    (evil-define-key 'insert eshell-mode-map (kbd "RET") 'eshell-send-input)
     (evil-define-key 'insert eshell-mode-map (kbd "<return>") 'eshell-send-input)
     (evil-define-key 'insert eshell-mode-map (kbd "C-p") 'eshell-previous-matching-input-from-input)
     (evil-define-key 'insert eshell-mode-map (kbd "C-n") 'eshell-next-matching-input-from-input)

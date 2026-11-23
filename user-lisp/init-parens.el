@@ -70,17 +70,12 @@ font-lock 关键词函数。"
     (font-lock-add-keywords nil my-paren--font-lock-keywords 'append)
     (set (make-local-variable 'jit-lock-contextually) t)
     ;; 它会破坏「ppss ≡ 从 point-min 起 parse-partial-sexp」的前提、使配对判断出错，直接禁用。
-    (when (or (bound-and-true-p syntax-begin-function)
-              (bound-and-true-p font-lock-beginning-of-syntax-function))
+    (when (bound-and-true-p syntax-begin-function)
       (syntax-ppss-flush-cache 0))
     (when (boundp 'syntax-begin-function)
-      (set (make-local-variable 'syntax-begin-function) nil))
-    (when (boundp 'font-lock-beginning-of-syntax-function)
-      (set (make-local-variable 'font-lock-beginning-of-syntax-function) nil)))
+      (set (make-local-variable 'syntax-begin-function) nil)))
   (when font-lock-mode
-    (if (fboundp 'font-lock-flush)
-        (font-lock-flush)
-      (with-no-warnings (font-lock-fontify-buffer)))))
+    (font-lock-flush)))
 
 (when my-paren-auto-mode
   (add-hook 'prog-mode-hook #'my-paren-mode))

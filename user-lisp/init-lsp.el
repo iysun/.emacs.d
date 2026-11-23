@@ -57,12 +57,10 @@
 ;; ⚠ 必须设 eglot-events-buffer-config：旧的 eglot-events-buffer-size 只在 eglot 加载那一刻被读一次
   (setq eglot-events-buffer-config '(:size 0 :format short))
   (setq eglot-sync-connect 0)               ; 异步连接，打开文件不阻塞
-  (setq eglot-send-changes-idle-time 0.5)   ; 停止输入 0.5s 后才把变更推给 LSP（= 默认值）
   (setq eglot-ignored-server-capabilities   ; 关掉这几项高频、低收益的服务端推送
         '(:inlayHintProvider
           :documentHighlightProvider
           :foldingRangeProvider))
-  (setq eldoc-idle-delay 0.5)               ; eldoc hover 延迟（= 默认值；调小会明显增加请求）
 
   (setq-default eglot-workspace-configuration
                 '(:gopls (:staticcheck       :json-false

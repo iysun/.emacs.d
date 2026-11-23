@@ -101,7 +101,6 @@ With prefix ARG, restrict to the current file instead."
     (kbd "gr")        'revert-buffer)
   (evil-vc--readonly-bindings vc-dir-mode-map)
 
-  (evil-set-initial-state 'diff-mode 'normal)
   (evil-define-key 'normal diff-mode-map
     (kbd "ge")  'diff-ediff-patch
     (kbd "\\")  'read-only-mode

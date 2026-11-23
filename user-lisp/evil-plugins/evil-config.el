@@ -1,9 +1,7 @@
 ;; evil-config.el 	-*- lexical-binding: t -*-
 
-;; ⚠ evil-want-* 必须在 evil 加载前设好；evil-want-keybinding 用默认 t（evil-collection 已移除）
+;; ⚠ evil-search-module 必须在 evil 加载前设好
 (progn
-  (setq evil-want-integration t)                ; 与 Emacs minor modes 集成
-  (setq evil-want-keybinding t)
   (setq evil-shift-width 2)
   (setq evil-search-module 'evil-search)        ; 必须！支持 gn / cgn
   (setq evil-respect-visual-line-mode t)        ; 在 visual-line-mode 中按行移动

@@ -13,8 +13,6 @@
       (smerge-mode 1))))
 (add-hook 'find-file-hook #'my/auto-smerge-mode)
 
-(require 'hydra)
-
 (defhydra hydra-smerge (:color red)
   "处理冲突"
   ("n" smerge-next "下一处冲突")

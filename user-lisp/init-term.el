@@ -1,13 +1,5 @@
 ;; init-term.el 	-*- lexical-binding: t -*-
 
-(defvar eshell-buffer-maximum-lines)
-(defun eshell-clear ()
-  (interactive)
-  (let ((eshell-buffer-maximum-lines 0))
-    (eshell-truncate-buffer)
-    (previous-line)
-    (delete-char 1)))
-
 ;; 别名须入库：etc/ 不受 gitignore，no-littering 的 var/eshell/ 会被收编。
 (setq eshell-aliases-file
       (expand-file-name "etc/eshell/alias" user-emacs-directory))
@@ -16,13 +8,8 @@
 (setq eshell-visual-commands '("less" "more" "htop" "man" "vim" "fish"))
 (setq eshell-destroy-buffer-when-process-dies t)
 (setq eshell-cmpl-autolist t)
-(setq eshell-where-to-jump 'begin)
-(setq eshell-review-quick-commands nil)
-(setq eshell-smart-space-goes-to-end t)
 (setq eshell-history-size 10000)
 
-
-(autoload 'eshell-delchar-or-maybe-eof "em-rebind")
 
 (require 'init-eshell-prompt)
 
@@ -52,7 +39,6 @@
 (add-hook 'eshell-mode-hook
           (lambda ()
             (setq eshell-prefer-lisp-functions t)
-            (setq password-cache t)
             (setq password-cache-expiry 900)
             (setq-local truncate-lines -1)
             ))

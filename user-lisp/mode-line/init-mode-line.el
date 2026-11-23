@@ -102,7 +102,6 @@ mode-line 挤爆。"
 ;; ⚠ 正在读 minibuffer / isearch 时不要改 *Minibuf-0*，输入就在这一行。
 (defvar my-ui--tray-timer nil)
 (defvar my-ui--tray-updating nil)
-(defvar my-ui-echo-tray-mode nil)
 
 (defun my-ui--tray-keep (s)
   "去掉 S 上的鼠标绑定。空白和占位 \"-\" 返回 nil。"

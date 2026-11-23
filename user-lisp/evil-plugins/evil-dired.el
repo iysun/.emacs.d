@@ -13,7 +13,6 @@
     [follow-link] 'mouse-face
     "#" 'dired-flag-auto-save-files
     "." 'dired-clean-directory
-    "~" 'dired-flag-backup-files
     "A" 'dired-do-find-regexp
     "C" 'dired-do-copy
     "B" 'dired-do-byte-compile
@@ -40,7 +39,6 @@
     (kbd "M-C-p") 'dired-prev-subdir
     (kbd "M-{") 'dired-prev-marked-file
     (kbd "M-}") 'dired-next-marked-file
-    "%" nil
     "%u" 'dired-upcase
     "%l" 'dired-downcase
     "%d" 'dired-flag-files-regexp
@@ -52,7 +50,6 @@
     "%R" 'dired-do-rename-regexp
     "%S" 'dired-do-symlink-regexp
     "%&" 'dired-flag-garbage-files
-    "*" nil
     "**" 'dired-mark-executables
     "*/" 'dired-mark-directories
     "*@" 'dired-mark-symlinks
@@ -143,16 +140,6 @@
     (evil-define-key 'normal dired-mode-map
       "*(" 'dired-mark-sexp
       "*." 'dired-mark-extension
-      "*O" 'dired-mark-omitted))
-  (with-eval-after-load 'dired-narrow
-    (evil-define-key 'normal dired-mode-map
-      "s" 'dired-narrow-regexp))
-  (with-eval-after-load 'dired-subtree
-    (evil-define-key 'normal dired-mode-map
-      (kbd "TAB") 'dired-subtree-toggle
-      "gh" 'dired-subtree-up
-      "gl" 'dired-subtree-down
-      (kbd "M-j") 'dired-subtree-next-sibling
-      (kbd "M-k") 'dired-subtree-previous-sibling)))
+      "*O" 'dired-mark-omitted)))
 
 (provide 'evil-dired)

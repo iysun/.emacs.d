@@ -134,7 +134,7 @@
   (let* ((bg (my-ui--bg))
          (faded (my-ui--comment-faded-fg bg))
          (base (my-ui--fg 'default "#d4d4d4")))
-    (when (or (null faded) (string= faded base))
+    (when (string= faded base)
       (setq faded (my-ui--whitespace-muted-fg base bg)))
     (set-face-attribute 'whitespace-tab nil
                         :foreground faded :background 'unspecified :weight 'semi-bold)
@@ -159,10 +159,6 @@
 (add-hook 'prog-mode-hook 'whitespace-mode)
 
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
-
-(defun set-bigger-spacing ()                                               
-  (interactive)
-  (setq-local default-text-properties '(line-spacing 0.2 line-height 1.2)))
 
 (defun switch-emacs-theme(theme)
   "switch emacs theme"

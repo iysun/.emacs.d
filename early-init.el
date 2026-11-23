@@ -8,8 +8,7 @@
           (lambda ()
             (setq gc-cons-percentage 0.1)))
 
-;; native-comp：本机是带 native-comp 的 AOT 构建，开 JIT（首次/装包后有后台 CPU 属正常）；告警只写 *Warnings*
-(setq native-comp-jit-compilation t)
+;; 后台 native-comp 告警只进 *Warnings*（默认会弹编译日志）
 (setq native-comp-async-report-warnings-errors 'silent)
 
 ;; ⚠ 必须在 user-lisp 自动字节编译之前激活包，否则编译时 evil/gcmh 未激活、*Compile-Log* 报错
@@ -39,8 +38,6 @@
             (expand-file-name "elpa/gnupg/pubring.kbx" user-emacs-directory)))
   (setq package-check-signature nil))
 
-;; 先 defvar 再 set，避免编译告警
-(defvar use-package-enable-imenu-support)
 (setq use-package-enable-imenu-support t)
 
 ;; 交互会话优先 .elc；--batch 下用源码（避免陈旧字节码）
@@ -50,9 +47,6 @@
 
 ;; ⚠ 子进程输出钉死 utf-8：consult-*grep 的 --null 输出含 NUL，undecided 探测会判成二进制、中文变八进制转义
 (setq default-process-coding-system '(utf-8 . utf-8))
-
-;; Windows：避免压缩字体缓存引起 GC 停顿
-(setq inhibit-compacting-font-caches t)
 
 ;; ⚠ 必须用绝对路径 load：user-lisp 的 load-path 要到更晚的启动阶段才建立
 (load (expand-file-name "user-lisp/init-windows" user-emacs-directory))

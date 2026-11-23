@@ -1,17 +1,4 @@
 ;; init-bars.el 	-*- lexical-binding: t -*-
-(defun my-ui--glyph-displayable-p (str)
-  "STR 里的字符是否都能在当前 frame 上找到字体显示。
-nerd-icons 的私用区图标即使字体族没装/没那个码位，`nerd-icons-*' 调用本身
-也不报错——只会插入一个没人认得的码位，渲染成豆腐块 □。`ignore-errors' 兜
-不住这种情况，得用 `char-displayable-p' 显式探测，探测不到就别用这个字符串，
-回退纯文本比顶着豆腐块强。mode-line（user-lisp/mode-line/init-mode-line.el）和
-tab-line（user-lisp/tab-line/init-tab-line.el）两边的图标缓存函数都用得到，故放在
-这个共享文件里。"
-  (and (stringp str)
-       (not (string-empty-p str))
-       (display-graphic-p)
-       (seq-every-p #'char-displayable-p str)))
-
 (require 'init-mode-line)
 (require 'init-tab-line)
 
@@ -118,21 +105,13 @@ padding 为 0 则返回 nil。
   ;; ⚠ tab-line defface 写死 :inherit variable-pitch，不设 :family 就是比例字体
   (let* ((bar-box (my-ui--v-box bar-bg))
          (bar-family (face-attribute 'default :family)))
-    (dolist (f '(tab-line tab-line-active tab-line-inactive))
+    (dolist (f '(tab-line tab-line-active tab-line-inactive
+                 tab-line-tab tab-line-tab-current tab-line-tab-inactive tab-line-tab-group))
       (when (facep f)
         (set-face-attribute f nil :height my-ui-mode-line-height
                             :family bar-family
                             :background bar-bg :foreground bar-fg
-                            :box bar-box)))
-    (dolist (f '(tab-line-tab tab-line-tab-current tab-line-tab-inactive tab-line-tab-group))
-      (when (facep f)
-        (set-face-attribute f nil :height my-ui-mode-line-height
-                            :family bar-family
-                            :background bar-bg :foreground bar-fg
-                            :box bar-box)))
-    (when (facep 'tab-line-highlight)
-      (set-face-attribute 'tab-line-highlight nil
-                          :background bar-bg :box bar-box)))
+                            :box bar-box))))
   (setq my-ui--tab-accent
         (or (my-ui--real-color (face-foreground 'font-lock-function-name-face nil t))
             (my-ui--real-color (face-foreground 'font-lock-keyword-face nil t))
