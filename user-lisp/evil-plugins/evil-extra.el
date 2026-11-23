@@ -1,5 +1,5 @@
 ;; evil-extra.el 	-*- lexical-binding: t -*-
-;; 内联自 evil-collection（20260623.308，GPLv3）的 special mode 键位：compile/embark/help/xref/package-menu/grep/wgrep/proced（occur 是本仓库补的）；VC 见 evil-vc.el、dired 见 evil-dired.el、ibuffer 见 evil-ibuffer.el
+;; 内联自 evil-collection（20260623.308，GPLv3）的 special mode 键位：compile/embark/help/xref/package-menu/grep/proced（occur 是本仓库补的）；VC 见 evil-vc.el、dired 见 evil-dired.el、ibuffer 见 evil-ibuffer.el
 ;; `evil-define-key' 是宏（编译期需 evil，故 eval-when-compile）；目标 map 未建好时它会自动推迟。
 
 (eval-when-compile (require 'evil))
@@ -11,7 +11,7 @@
     '(special-mode                  ; 直接派生的都靠它：*Messages*、*vc-* 输出、tabulated-list 等
       help-mode occur-mode xref--xref-buffer-mode
       compilation-mode grep-mode
-      tabulated-list-mode buffer-menu-mode package-menu-mode process-menu-mode
+      tabulated-list-mode Buffer-menu-mode package-menu-mode process-menu-mode
       proced-mode ibuffer-mode
       vc-dir-mode vc-annotate-mode diff-mode log-view-mode vc-git-log-view-mode
       log-edit-mode dired-mode
@@ -80,7 +80,6 @@
   (evil-extra--compile-map compilation-mode-map)
   (evil-extra--compile-map compilation-minor-mode-map)
 
-  (evil-set-initial-state 'embark-collect-mode 'normal)
   (evil-define-key 'normal embark-collect-mode-map
     "a"        'embark-act
     "A"        'embark-act-all
@@ -119,7 +118,6 @@
     "i"              'help-goto-info
     "c"              'help-customize)
 
-  (evil-set-initial-state 'xref--xref-buffer-mode 'normal)
   (evil-extra--readonly-bindings xref--xref-buffer-mode-map)
   (evil-define-key 'normal xref--xref-buffer-mode-map
     (kbd "C-n") 'xref-next-line
@@ -142,7 +140,6 @@
     (kbd "]]")        'xref-next-group
     (kbd "[[")        'xref-prev-group
     (kbd "gr")        'xref-revert-buffer)
-  (evil-set-initial-state 'xref--transient-buffer-mode 'normal)
   (evil-define-key 'normal xref--transient-buffer-mode-map
     (kbd "RET")      'xref-quit-and-goto-xref
     (kbd "<return>") 'xref-quit-and-goto-xref)
@@ -157,26 +154,16 @@
     "x"   'package-menu-execute
     "g?"  'package-menu-describe-package
     "gr"  'revert-buffer)
-  (when (fboundp 'package-browse-url)
-    (evil-define-key 'normal package-menu-mode-map "gx" 'package-browse-url))
+  (evil-define-key 'normal package-menu-mode-map "gx" 'package-browse-url)
 
   (evil-set-initial-state 'grep-mode 'normal)
   (evil-define-key 'normal grep-mode-map
     "n"        'evil-search-next
     (kbd "C-j") 'next-error-no-select
     (kbd "C-k") 'previous-error-no-select)
-  (with-eval-after-load 'wgrep
-    (evil-define-key 'normal grep-mode-map "i" 'wgrep-change-to-wgrep-mode))
 
   (evil-set-initial-state 'occur-mode 'normal)
 
-
-  (evil-define-key nil wgrep-mode-map
-    [remap evil-write] 'wgrep-finish-edit)
-  (evil-define-key 'normal wgrep-mode-map
-    (kbd "<escape>") 'wgrep-exit
-    "ZZ"             'wgrep-finish-edit
-    "ZQ"             'wgrep-abort-changes)
 
   (evil-set-initial-state 'proced-mode 'normal)
   (evil-extra--readonly-bindings proced-mode-map)

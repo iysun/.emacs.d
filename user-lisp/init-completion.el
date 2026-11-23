@@ -20,14 +20,9 @@
 (with-eval-after-load 'orderless
   (add-to-list 'orderless-matching-styles #'my/orderless-pinyin))
 
-;; ⚠ marginalia 调 compat--seconds-to-string，Emacs 31 的 compat 已删 → 保留 shim
-(unless (fboundp 'compat--seconds-to-string)
-  (defalias 'compat--seconds-to-string #'seconds-to-string))
-
 (add-hook 'after-init-hook 'marginalia-mode)
 
 (with-eval-after-load 'vertico
-  (setq vertico-count 10)
   (setq vertico-cycle t)
   )
 (add-hook 'after-init-hook  'vertico-mode)
@@ -69,10 +64,6 @@
         xref-show-definitions-function #'consult-xref)
   (setq consult-narrow-key ",")
   )
-
-(add-hook 'completion-list-mode-hook 'consult-preview-at-point-mode)
-
-(add-hook 'embark-collect-mode-hook 'consult-preview-at-point-mode)
 
 ;; ---- 搜索种子：单行选区优先，否则取光标处内容 ----
 (defun my/search-seed (&optional thing)
@@ -165,12 +156,9 @@
      (my/search-seed))))
 
 (progn
-  ;; ⚠ 必须 3：2 会让 gopls 扫全 module 返回上千条
-  (setq corfu-auto-prefix 3)
   ;; ⚠ "." 走同步路径，会当场阻塞一次 LSP 往返
   (setq corfu-auto-trigger ".")
   (setq corfu-preview-current nil)
-  (setq corfu-auto-delay 0.2)
   (setq corfu-popupinfo-delay '(0.4 . 0.2))
   (custom-set-faces
    '(corfu-border ((t (:inherit region :background unspecified)))))
