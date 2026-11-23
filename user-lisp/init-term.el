@@ -13,29 +13,15 @@
 
 (require 'init-eshell-prompt)
 
-(add-hook 'eshell-mode-hook 'eshell-syntax-highlighting-global-mode)
-
-;; ⚠ 语法高亮每次按键都重新 executable-find，命令未敲完必然 miss → 卡顿；只在 eshell buffer 缓存。
-(defvar my/eshell--executable-cache (make-hash-table :test #'equal)
-  "eshell 里 `executable-find' 的结果缓存：(命令 . remote) → 路径或 nil。")
+;; 语法高亮已 vendor 到 user-lisp/eshell-syntax-highlighting/；缓存也在包内。
+(add-hook 'eshell-mode-hook
+          (lambda () (eshell-syntax-highlighting-global-mode 1)))
 
 (defun my/eshell-clear-executable-cache ()
-  "清空 eshell 的 `executable-find' 缓存。装了新命令行工具后没被高亮成命令时用。"
+  "清空 vendored 高亮器的 `executable-find' 缓存。"
   (interactive)
-  (clrhash my/eshell--executable-cache)
-  (message "eshell executable 缓存已清空"))
-
-(defun my/eshell--executable-find-cached (orig command &optional remote)
-  "只在 eshell buffer 里给 `executable-find' 加缓存（见上面的说明）。"
-  (if (derived-mode-p 'eshell-mode)
-      (let* ((key (cons command remote))
-             (hit (gethash key my/eshell--executable-cache 'my/miss)))
-        (if (eq hit 'my/miss)
-            (puthash key (funcall orig command remote) my/eshell--executable-cache)
-          hit))
-    (funcall orig command remote)))
-
-(advice-add 'executable-find :around #'my/eshell--executable-find-cached)
+  (require 'eshell-syntax-highlighting)
+  (eshell-syntax-highlighting-clear-executable-cache))
 (add-hook 'eshell-mode-hook
           (lambda ()
             (setq eshell-prefer-lisp-functions t)

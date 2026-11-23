@@ -24,7 +24,6 @@
     embark-consult
     marginalia
     ;; ⚠ 别装 eshell-git-prompt：multiline2 每画一次提示符起 4 个 git 进程
-    eshell-syntax-highlighting
     orderless
     vertico
     corfu
@@ -33,7 +32,8 @@
     apheleia
     ghostel
     no-littering)
-  "本配置声明的第三方包；`custom.el' 里的 `package-selected-packages' 以这份为准。")
+  "本配置从 ELPA 声明的第三方包；vendored 包（如 eshell-syntax-highlighting）不在此列。
+`custom.el' 里的 `package-selected-packages' 以这份为准。")
 
 ;; 把各包运行期文件收进 var/ 与 etc/
 ;; ⚠ 必须早于各模块 require：它靠改 recentf-save-file / savehist-file 生效
