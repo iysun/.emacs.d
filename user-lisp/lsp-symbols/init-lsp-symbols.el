@@ -73,6 +73,15 @@
             (funcall async action))
         (funcall async action)))))
 
+(defun my/lsp--xref-find-apropos ()
+  "`xref-find-apropos'，但把光标处内容作为初始输入（原生实现只放默认值，不填进 minibuffer）。"
+  (if (not (xref-find-backend))
+      (user-error "当前 buffer 没有 LSP/xref 后端，M-s s 用不了：先 M-x eglot 或建 tags 索引")
+    (xref-find-apropos
+     (minibuffer-with-setup-hook #'my/search--select-seed
+       (read-string "Search for pattern (word list or regexp): "
+                    (my/search-seed) 'xref--read-pattern-history)))))
+
 (defun my/lsp-symbols ()
   "在 LSP 工作区符号里搜索（workspace/symbol），用光标处的符号作初始输入。
 没有 eglot 后端时退化为 `xref-find-apropos'。"
@@ -80,8 +89,7 @@
   (require 'consult)
   (let ((servers (my/lsp--servers)))
     (if (not servers)
-        (minibuffer-with-setup-hook #'my/search--select-seed
-          (call-interactively #'xref-find-apropos))
+        (my/lsp--xref-find-apropos)
       (let ((default-directory
              (or (ignore-errors (project-root (eglot--project (car servers))))
                  default-directory)))
