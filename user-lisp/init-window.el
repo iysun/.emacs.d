@@ -13,9 +13,9 @@
 宽度没变时不写 frame 参数，避免每次 :w 都触发布局。关掉托盘后只留 1px。
 ⚠ 文本终端没有像素分割线，宽度按整行算，pad 必须为 0。"
   (let* ((pad (if (and (display-graphic-p)
-                       (bound-and-true-p my-ui-echo-tray-mode)
-                       (boundp 'my-ui-bar-padding))
-                  my-ui-bar-padding
+                       (bound-and-true-p my/ui-echo-tray-mode)
+                       (boundp 'my/ui-bar-padding))
+                  my/ui-bar-padding
                 0))
          (width (1+ pad)))
     (unless (eql (frame-parameter nil 'bottom-divider-width) width)

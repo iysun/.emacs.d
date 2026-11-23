@@ -103,14 +103,14 @@ popper 未加载/`popper-mode' 未开启时 `popper-popup-p' 不存在，做特�
 水平 line-width——实测 tab-line 下 `:box' 的水平 line-width 不会用 `:color' 真正
 填充那片区域，会透出整条 tab-line bar 自己的背景色，达不到\"padding 属于标签
 自己\"的效果（同样的 `:box' 用在垂直方向撑上下 padding 则没这个问题，见
-`user-lisp/init-bars.el' 的 `my-ui--v-box'）。字面空格必然跟标签名共享同一个容器
+`user-lisp/init-bars.el' 的 `my/ui--v-box'）。字面空格必然跟标签名共享同一个容器
 face（由 `tab-line-tab-name-format-default' 统一 propertize/套用），颜色不会错，
 是更可靠的写法。
 选中/未选中标签统一用这一个值，不做宽度上的区分——\"当前调用是否在渲染选中
 标签\"这个判断在更下游的 `tab-line-tab-name-format-default' 里（依赖 window 而
 非单纯 buffer），要在这里复现同样判断只为了让选中标签的 padding 宽一点，不值得
 为宽度差异专门搭一份逻辑；选中态靠颜色块 + 加粗已经足够醒目，见 `init-bars.el'
-的 `my-ui-setup-bars'。")
+的 `my/ui-setup-bars'。")
 
 (defun my/tab-line-tab-name (buffer &optional _buffers)
   "tab 标签文本：左右 padding + buffer 名 +（文件改动未存时）● 标记。

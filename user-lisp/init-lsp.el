@@ -25,7 +25,7 @@
         (c          "https://github.com/tree-sitter/tree-sitter-c")
         (cpp        "https://github.com/tree-sitter/tree-sitter-cpp")))
 
-(setq completion-ignore-case t)                   ; capf 匹配时不区分大小写
+(setq completion-ignore-case t)
 (setq read-process-output-max (* 4 1024 1024))    ; 4MB，减少 LSP 大响应的分批 I/O
 
 (when (executable-find "rg")
@@ -119,17 +119,17 @@ eglot-managed-mode-hook 已经把 completion-at-point-functions 换成了
 ;; ⚠ 上游 bug：eglot 把 marker 混进 LSP 消息 → jsonrpc--json-encode 序列化报错
 ;; 序列化时报 "Wrong type argument: consp, #<marker>"；这里递归把 marker 换成整数位置兜底。
 (with-eval-after-load 'jsonrpc
-  (defun my/jsonrpc-sanitize-markers (obj)
+  (defun my--jsonrpc-sanitize-markers (obj)
     (cond
      ((markerp obj) (marker-position obj))
      ((consp obj)
-      (cons (my/jsonrpc-sanitize-markers (car obj))
-            (my/jsonrpc-sanitize-markers (cdr obj))))
+      (cons (my--jsonrpc-sanitize-markers (car obj))
+            (my--jsonrpc-sanitize-markers (cdr obj))))
      ((vectorp obj)
-      (cl-map 'vector #'my/jsonrpc-sanitize-markers obj))
+      (cl-map 'vector #'my--jsonrpc-sanitize-markers obj))
      (t obj)))
   (advice-add 'jsonrpc--json-encode :filter-args
-              (lambda (args) (list (my/jsonrpc-sanitize-markers (car args))))))
+              (lambda (args) (list (my--jsonrpc-sanitize-markers (car args))))))
 
 ;; ⚠ 上游 bug：gopls 在 Windows 返回大写盘符的 URI，匹配不上 → 诊断被静默丢进 flymake-list-only-diagnostics
 (with-eval-after-load 'eglot

@@ -78,7 +78,7 @@
 (require 'subword)
 (global-subword-mode t)
 
-(defun my/with-vim-word-syntax (fn)
+(defun my--with-vim-word-syntax (fn)
   "临时把 `_' 当成词字符后调用 FN。不改 `-'，也不动 `subword-mode'。"
   (let ((table (make-syntax-table (syntax-table)))
         (word-separating-categories evil-cjk-word-separating-categories)
@@ -86,35 +86,35 @@
     (modify-syntax-entry ?_ "w" table)
     (with-syntax-table table (funcall fn))))
 
-(defun my/vim-word-char-p (char)
+(defun my--vim-word-char-p (char)
   (and char (eq (char-syntax char) ?w)))
 
-(defun my/at-middle-hyphen-p ()
+(defun my--at-middle-hyphen-p ()
   "当前字符是 `-'，且左右都是词字符（`foo-bar' 的那个横线）。"
   (and (eq (char-after) ?-)
-       (my/vim-word-char-p (char-before))
-       (my/vim-word-char-p (char-after (1+ (point))))))
+       (my--vim-word-char-p (char-before))
+       (my--vim-word-char-p (char-after (1+ (point))))))
 
-(defun my/vim-punct-char-p ()
+(defun my--vim-punct-char-p ()
   "Vim 标点：非词、非空白。两侧夹着词的 `-' 不算。"
   (let ((char (char-after)))
     (and char
          (not (memq char '(?\s ?\t ?\n ?\r ?\f)))
-         (not (my/vim-word-char-p char))
-         (not (my/at-middle-hyphen-p)))))
+         (not (my--vim-word-char-p char))
+         (not (my--at-middle-hyphen-p)))))
 
-(defun my/skip-pred-forward (pred)
+(defun my--skip-pred-forward (pred)
   (while (and (not (eobp)) (funcall pred))
     (forward-char)))
 
-(defun my/skip-pred-backward (pred)
+(defun my--skip-pred-backward (pred)
   (while (and (not (bobp))
               (save-excursion (backward-char) (funcall pred)))
     (backward-char)))
 
-(defun my/forward-whole-word (count)
+(defun my--forward-whole-word (count)
   "前进一个 Vim 词，并吃掉后面的 `-<词>'。COUNT 为负则退到词首。"
-  (my/with-vim-word-syntax
+  (my--with-vim-word-syntax
    (lambda ()
      (let (stuck)
        (if (and count (< count 0))
@@ -122,7 +122,7 @@
              (forward-word-strictly -1)
              (while (and (not stuck)
                          (eq (char-before) ?-)
-                         (my/vim-word-char-p (char-before (1- (point)))))
+                         (my--vim-word-char-p (char-before (1- (point)))))
                (let ((origin (point)))
                  (backward-char 1)
                  (forward-word-strictly -1)
@@ -130,7 +130,7 @@
                    (goto-char origin)
                    (setq stuck t)))))
          (forward-word-strictly 1)
-         (while (and (not stuck) (my/at-middle-hyphen-p))
+         (while (and (not stuck) (my--at-middle-hyphen-p))
            (let ((origin (point)))
              (forward-char 1)
              (forward-word-strictly 1)
@@ -138,17 +138,17 @@
                (goto-char origin)
                (setq stuck t)))))))))
 
-(defun my/forward-vim-punct (count)
+(defun my--forward-vim-punct (count)
   "前进一段 Vim 标点。中间短横线视作词的一部分，不在这里停。"
-  (my/with-vim-word-syntax
+  (my--with-vim-word-syntax
    (lambda ()
      (let ((start (point)))
        (if (and count (< count 0))
            (progn
-             (my/skip-pred-backward (lambda () (not (my/vim-punct-char-p))))
-             (my/skip-pred-backward #'my/vim-punct-char-p))
-         (my/skip-pred-forward (lambda () (not (my/vim-punct-char-p))))
-         (my/skip-pred-forward #'my/vim-punct-char-p))
+             (my--skip-pred-backward (lambda () (not (my--vim-punct-char-p))))
+             (my--skip-pred-backward #'my--vim-punct-char-p))
+         (my--skip-pred-forward (lambda () (not (my--vim-punct-char-p))))
+         (my--skip-pred-forward #'my--vim-punct-char-p))
        (if (= (point) start) count 0)))))
 
 (defun forward-evil-whole-word (&optional count)
@@ -163,9 +163,9 @@ wrong-type-argument。"
    count
    (lambda (&optional cnt)
      (let ((pnt (point)))
-       (my/forward-whole-word cnt)
+       (my--forward-whole-word cnt)
        (if (= pnt (point)) cnt 0)))
-   #'my/forward-vim-punct
+   #'my--forward-vim-punct
    #'forward-evil-empty-line))
 
 ;; forward-thing 'evil-word' 解析到 (intern-soft "forward-evil-word")，defalias 这一个函数就够
@@ -173,18 +173,18 @@ wrong-type-argument。"
 
 ;; ---- 搜索光标下的整词：`*' / `#' ----
 ;; ⚠ evil-search 会把 `*' 改绑到取词用 Emacs `word' 的版本，故自建：取词走 evil-word、搜索仍走 evil-ex
-(defun my/evil-ex-search-word-regex (string)
+(defun my--evil-ex-search-word-regex (string)
   "整词 STRING 的搜索正则。词边界处理见上方说明。"
   (let ((w (replace-regexp-in-string "\\`-+\\|-+\\'" "" string)))
     (if (string-empty-p w)
         (regexp-quote string)           ; 整词全是 `-'，无从加边界
       (format "\\<%s\\>" (regexp-quote w)))))
 
-(defun my/evil-ex-start-word-search (direction count)
+(defun my--evil-ex-start-word-search (direction count)
   "取词用 `evil-word'（整词），搜索仍走 evil-ex；见上方说明。"
   (let* ((string (or (evil-find-thing (eq direction 'forward) 'evil-word)
                      (user-error "No word under point")))
-         (regex (my/evil-ex-search-word-regex string)))
+         (regex (my--evil-ex-search-word-regex string)))
     (setq evil-ex-search-count count
           evil-ex-search-direction direction
           evil-ex-search-pattern
@@ -202,12 +202,12 @@ wrong-type-argument。"
   "搜索光标下的整词（前向）；走 evil-ex，故 `gn' / `cgn' 可用。"
   :jump t :type exclusive
   (interactive (list (prefix-numeric-value current-prefix-arg)))
-  (my/evil-ex-start-word-search 'forward count))
+  (my--evil-ex-start-word-search 'forward count))
 (evil-define-motion my/evil-ex-search-word-backward (count &optional _symbol)
   "搜索光标下的整词（后向）；走 evil-ex，故 `gn' / `cgn' 可用。"
   :jump t :type exclusive
   (interactive (list (prefix-numeric-value current-prefix-arg)))
-  (my/evil-ex-start-word-search 'backward count))
+  (my--evil-ex-start-word-search 'backward count))
 
 (define-key evil-motion-state-map "*" #'my/evil-ex-search-word-forward)
 (define-key evil-motion-state-map "#" #'my/evil-ex-search-word-backward)

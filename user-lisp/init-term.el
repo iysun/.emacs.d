@@ -49,10 +49,10 @@
   (setq ghostel-shell "pwsh"))
 
 ;; ⚠ global-display-line-numbers-mode 在 mode hook 之后才生效，只能用 after-change-major-mode-hook 关
-(defun my/ghostel-no-line-numbers ()
+(defun my--ghostel-no-line-numbers ()
   (when (derived-mode-p 'ghostel-mode)
     (display-line-numbers-mode -1)))
-(add-hook 'after-change-major-mode-hook #'my/ghostel-no-line-numbers t)
+(add-hook 'after-change-major-mode-hook #'my--ghostel-no-line-numbers t)
 
 (add-hook 'eshell-load-hook #'ghostel-eshell-visual-command-mode)
 (defalias 'eshell/v #'eshell/ghostel)
@@ -96,7 +96,7 @@
 ;; ⚠ 走 shell 且 -NoExit：命令跑完要留在同一个终端里；Windows 上 npm/lazygit 是 .cmd，argv 起不来
 ;; ⚠ pwsh -Command 会把 $PSStyle.OutputRendering 设成 PlainText，-NoExit 之后也不恢复，
 ;;   starship 写进提示符的颜色码会被剥掉。先改回 Ansi。
-(defun my/ghostel-run--command (command)
+(defun my--ghostel-run-command (command)
   "Return (PROGRAM . ARGS) that runs COMMAND and then keeps a shell in the buffer."
   (if (eq system-type 'windows-nt)
       (cons "pwsh" (list "-NoLogo" "-NoExit" "-Command"
@@ -112,7 +112,7 @@ The shell stays alive afterwards, so the buffer is usable as a terminal."
     (user-error "Empty command"))
   (require 'ghostel)
   (let* ((dir default-directory)
-         (spec (my/ghostel-run--command command))
+         (spec (my--ghostel-run-command command))
          (buffer (generate-new-buffer (format "*ghostel: %s*" (string-trim command)))))
     (switch-to-buffer buffer)
     (setq default-directory dir)

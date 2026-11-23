@@ -7,23 +7,23 @@
 
 (with-eval-after-load 'dired
   ;; ⚠ 虚拟 buffer 无真实目录可 revert，须跳过自动 revert
-  (define-advice dired-buffer-stale-p (:before-while (&rest args) my/dired-no-revert-in-virtual-a)
+  (define-advice dired-buffer-stale-p (:before-while (&rest args) my/dired--no-revert-in-virtual-a)
     (not (eq revert-buffer-function #'dired-virtual-revert)))
 
-  (defun my/dired-vc-ignore-list ()
+  (defun my/dired--vc-ignore-list ()
     (when-let* ((backend (and (vc-root-dir) (vc-responsible-backend default-directory)))
                 (ignores (vc-call-backend backend 'ignore-completion-table default-directory)))
       ignores))
-  (defun my/dired-vc-font-lock-keywords ()
-    (when-let* ((ignores (my/dired-vc-ignore-list)))
+  (defun my/dired--vc-font-lock-keywords ()
+    (when-let* ((ignores (my/dired--vc-ignore-list)))
       (mapcar (lambda (item)
                 `(,dired-move-to-filename-regexp
                   (,(regexp-quote item) (dired-move-to-filename) nil (0 'dired-ignored t))))
               ignores)))
-  (defun my/dired-vc-ignores-setup ()
-    (when-let* ((keywords (my/dired-vc-font-lock-keywords)))
+  (defun my/dired--vc-ignores-setup ()
+    (when-let* ((keywords (my/dired--vc-font-lock-keywords)))
       (font-lock-add-keywords nil keywords 'add-to-end)))
-  (add-hook 'dired-mode-hook #'my/dired-vc-ignores-setup)
+  (add-hook 'dired-mode-hook #'my/dired--vc-ignores-setup)
 
   (require 'dired-x)
   (setq dired-omit-files

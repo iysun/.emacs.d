@@ -1,12 +1,12 @@
 ;; init-keymaps.el 	-*- lexical-binding: t -*-
 
-(defun custom/downcase-back()
+(defun my/downcase-back()
   (interactive)
   (downcase-word -1))
-(defun custom/upcase-back()
+(defun my/upcase-back()
   (interactive)
   (upcase-word -1))
-(defun custom/capitalize-back()
+(defun my/capitalize-back()
   (interactive)
   (capitalize-word -1))
 
@@ -76,7 +76,7 @@
 (global-set-key (kbd "C--") 'popper-toggle)
 (global-set-key (kbd "C-=") 'popper-cycle)
 
-;; ⚠ 必须 global-set-key：my/mc-enter 会切 emacs-state，两态都要生效
+;; ⚠ 必须 global-set-key：my--mc-enter 会切 emacs-state，两态都要生效
 (global-set-key (kbd "C-M-n") 'mc/mark-next-like-this)
 (global-set-key (kbd "C-M-p") 'mc/mark-previous-like-this)
 (global-set-key (kbd "C-M-m") 'mc/skip-to-next-like-this)

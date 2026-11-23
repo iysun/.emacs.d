@@ -3,10 +3,10 @@
 ;; ⚠ cl-loop 是宏，须顶层 require cl-lib，否则 .elc 报 Invalid function
 (require 'cl-lib)
 
-(defvar my-ui-default-font-family nil
+(defvar my/ui-default-font-family nil
   "实际选中的默认字体族名。供 nerd-icons 复用，见下方图标字体一节。")
 
-(defun my-ui--setup-fonts ()
+(defun my/ui--setup-fonts ()
   "选择并应用默认/中文/符号/emoji 字体。延迟到 `after-init-hook'，让首帧先出来。"
   (when (display-graphic-p)
   ;; ⚠ 别写死 :height：换 DPI 机器走形
@@ -17,7 +17,7 @@
            when (find-font spec)
            return (progn
                     (set-frame-font f nil t)
-                    (setq my-ui-default-font-family f)))
+                    (setq my/ui-default-font-family f)))
   ;; ⚠ 中文别写 :size；须 prepend 且前两项用中文 family 名
   (cl-loop for f in '("更纱终端书呆黑体-简" "思源黑体" "微软雅黑" "Microsoft YaHei"
                       "Sarasa Term SC Nerd" "DengXian")
@@ -32,22 +32,22 @@
            for spec = (font-spec :family f)
            when (find-font spec)
            return (set-fontset-font t 'emoji spec nil 'prepend)))
-  (when (and my-ui-default-font-family
-             (member my-ui-default-font-family my-ui--nerd-patched-font-families))
-    (setq nerd-icons-font-family my-ui-default-font-family)))
+  (when (and my/ui-default-font-family
+             (member my/ui-default-font-family my/ui--nerd-patched-font-families))
+    (setq nerd-icons-font-family my/ui-default-font-family)))
 
-(defun my-ui--setup-new-frame-fonts (frame)
+(defun my/ui--setup-new-frame-fonts (frame)
   "给新建 GUI frame 应用字体；daemon 下 after-init 时还没有 GUI frame。"
   (unless (frame-parameter frame 'parent-frame)
     (with-selected-frame frame
-      (my-ui--setup-fonts))))
+      (my/ui--setup-fonts))))
 
-(add-hook 'after-init-hook #'my-ui--setup-fonts -95)
-(add-hook 'after-make-frame-functions #'my-ui--setup-new-frame-fonts 95)
+(add-hook 'after-init-hook #'my/ui--setup-fonts -95)
+(add-hook 'after-make-frame-functions #'my/ui--setup-new-frame-fonts 95)
 
 ;; ⚠ nerd-icons 硬绑未装的 "Symbols Nerd Font Mono" → 豆腐块，须重定向
 ;; ⚠ 只在打过 Nerd 补丁的白名单内重定向；命中即无条件改（别再加 find-font 判断，反成豆腐块）
-(defconst my-ui--nerd-patched-font-families
+(defconst my/ui--nerd-patched-font-families
   '("JetBrainsMono Nerd Font" "JetBrainsMono NFM" "FiraCode Nerd Font" "FiraCode NFM"
     "JetBrainsMonoNL NFM")
   "英文字体候选表里真正打过 Nerd Font 补丁（含图标私用区码位）的族名子集。
@@ -55,9 +55,9 @@
 \"JetBrainsMonoNL NFM\" 由 dotfiles 仓库 fonts/ 提供（scripts/install-fonts.py 安装）。")
 
 (with-eval-after-load 'nerd-icons
-  (when (and my-ui-default-font-family
-             (member my-ui-default-font-family my-ui--nerd-patched-font-families))
-    (setq nerd-icons-font-family my-ui-default-font-family)))
+  (when (and my/ui-default-font-family
+             (member my/ui-default-font-family my/ui--nerd-patched-font-families))
+    (setq nerd-icons-font-family my/ui-default-font-family)))
 
 ;; ⚠ 用 composition-function-table，别用 global-prettify（后者改列宽）
 (dolist (chars '("::" "..." "->" "=>" "<=" ">=" "!==" "!=" "===" "==" "<!--" "-->"
@@ -87,15 +87,15 @@
         (space-mark ?\s   [?·]     [?.])
         (space-mark ?\xa0 [?¤]     [?_])))
 
-(defun my-ui--fg (face fallback)
+(defun my/ui--fg (face fallback)
   (let ((v (face-attribute face :foreground nil t)))
     (if (and (stringp v) (not (equal v "unspecified-fg"))) v fallback)))
 
-(defun my-ui--bg ()
+(defun my/ui--bg ()
   (let ((v (face-attribute 'default :background nil t)))
     (if (and (stringp v) (not (equal v "unspecified-bg"))) v "#1e1e1e")))
 
-(defun my-ui--whitespace-muted-fg (fg bg)
+(defun my/ui--whitespace-muted-fg (fg bg)
   "无可用注释色时，在 FG 与 BG 之间折中。"
   (require 'color)
   (condition-case nil
@@ -108,7 +108,7 @@
           (color-lighten-name fg 38)))
     (error fg)))
 
-(defun my-ui--blend-fg (color-a color-b a-ratio)
+(defun my/ui--blend-fg (color-a color-b a-ratio)
   "线性混合：A-RATIO·COLOR-A + (1-A-RATIO)·COLOR-B，均为颜色名字符串。"
   (require 'color)
   (condition-case nil
@@ -121,69 +121,68 @@
         (color-rgb-to-hex r g b))
     (error color-a)))
 
-(defun my-ui--comment-faded-fg (bg)
+(defun my/ui--comment-faded-fg (bg)
   "取主题 `font-lock-comment-face'，向背景拉淡（仍偏注释色相）。"
-  (let ((comment (my-ui--fg 'font-lock-comment-face nil))
-        (base (my-ui--fg 'default "#d4d4d4")))
+  (let ((comment (my/ui--fg 'font-lock-comment-face nil))
+        (base (my/ui--fg 'default "#d4d4d4")))
     (if (and comment (not (string= comment "unspecified-fg")))
-        (my-ui--blend-fg comment bg 0.38)
-      (my-ui--whitespace-muted-fg base bg))))
+        (my/ui--blend-fg comment bg 0.38)
+      (my/ui--whitespace-muted-fg base bg))))
 
-(defun my-ui-setup-whitespace-faces (&optional _theme _body)
+(defun my/ui-setup-whitespace-faces (&optional _theme _body)
   (require 'whitespace)
-  (let* ((bg (my-ui--bg))
-         (faded (my-ui--comment-faded-fg bg))
-         (base (my-ui--fg 'default "#d4d4d4")))
+  (let* ((bg (my/ui--bg))
+         (faded (my/ui--comment-faded-fg bg))
+         (base (my/ui--fg 'default "#d4d4d4")))
     (when (string= faded base)
-      (setq faded (my-ui--whitespace-muted-fg base bg)))
+      (setq faded (my/ui--whitespace-muted-fg base bg)))
     (set-face-attribute 'whitespace-tab nil
                         :foreground faded :background 'unspecified :weight 'semi-bold)
     (dolist (sym '(whitespace-space whitespace-hspace))
       (set-face-attribute sym nil
                           :foreground faded :background 'unspecified :weight 'normal))))
 
-(add-hook 'after-init-hook #'my-ui-setup-whitespace-faces t)
+(add-hook 'after-init-hook #'my/ui-setup-whitespace-faces t)
 (when (boundp 'enable-theme-functions)
-  (add-hook 'enable-theme-functions #'my-ui-setup-whitespace-faces))
+  (add-hook 'enable-theme-functions #'my/ui-setup-whitespace-faces))
 
-(defun my-ui-whitespace--after-on ()
+(defun my/ui--whitespace-after-on ()
   (when whitespace-mode
-    (my-ui-setup-whitespace-faces)
+    (my/ui-setup-whitespace-faces)
     (when (and (bound-and-true-p whitespace-font-lock-keywords) font-lock-mode)
       (font-lock-remove-keywords nil whitespace-font-lock-keywords)
       ;; ⚠ prepend 才不被 treesit 等 append 的 font-lock 盖住
       (font-lock-add-keywords nil whitespace-font-lock-keywords 'prepend)
       (font-lock-flush))))
-(add-hook 'whitespace-mode-hook #'my-ui-whitespace--after-on)
+(add-hook 'whitespace-mode-hook #'my/ui--whitespace-after-on)
 
 (add-hook 'prog-mode-hook 'whitespace-mode)
 
+(add-to-list 'load-path (expand-file-name "themes" user-emacs-directory))
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
 
-(defun switch-emacs-theme(theme)
-  "switch emacs theme"
+(defcustom my/emacs-theme nil
+  "启动时加载的主题名；nil 表示回退到 `nn-world'。"
+  :type 'symbol
+  :group 'faces)
+
+(defun my/switch-emacs-theme (theme)
+  "切换并持久化 Emacs 主题。"
   (interactive
    (list
-    (intern (completing-read 
+    (intern (completing-read
              "select theme: "
              (mapcar #'symbol-name
                      (custom-available-themes))))))
-  
   (mapc #'disable-theme custom-enabled-themes)
-  
   (load-theme theme t)
-  
-  (customize-save-variable 'custom-emacs-theme theme)
-  )
+  (customize-save-variable 'my/emacs-theme theme))
 
-(defun use-emacs-theme()
-  (if (and (boundp 'custom-emacs-theme)
-           (symbolp custom-emacs-theme)
-           (not (null custom-emacs-theme)))
-      (load-theme custom-emacs-theme t)
-    (load-theme 'nn-world t))
-  )
-(add-hook 'after-init-hook 'use-emacs-theme)
+(defun my/use-emacs-theme ()
+  "启动时加载 `my/emacs-theme'；未设置或不存在时回退到 `nn-world'。"
+  (let ((theme (or my/emacs-theme 'nn-world)))
+    (load-theme (if (memq theme (custom-available-themes)) theme 'nn-world) t)))
+(add-hook 'after-init-hook #'my/use-emacs-theme)
 
 ;; ⚠ 必须早于各包定义位图，故挂 after-init-hook
 (defconst my/fringe-scale-width 8
@@ -210,7 +209,7 @@
       (setq i (1+ i)))
     res))
 
-(defun my/fringe-scale-advice (orig-func &rest r)
+(defun my--fringe-scale-advice (orig-func &rest r)
   "`define-fringe-bitmap' 的 :around advice：位图窄于目标宽度时先放大再定义。
 HEIGHT 参数分两种情况，不能一视同仁地跟宽度同比放大：
 - 调用方没显式传 HEIGHT（如 `bookmark-mark'、各包的展开箭头）——
@@ -241,7 +240,7 @@ HEIGHT 参数分两种情况，不能一视同仁地跟宽度同比放大：
     (funcall orig-func bitmap bits height width align)))
 
 (add-hook 'after-init-hook
-          (lambda () (advice-add 'define-fringe-bitmap :around #'my/fringe-scale-advice)))
+          (lambda () (advice-add 'define-fringe-bitmap :around #'my--fringe-scale-advice)))
 
 ;; 按 cursor-type 发 DECSCUSR，TTY 下 evil 切状态才看得见光标形状
 (setq xterm-update-cursor 'type)

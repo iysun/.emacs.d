@@ -10,11 +10,11 @@
 
 | 操作 | GUI 耗时 | 处置 |
 |------|---------|------|
-| **centaur-tabs（require + 全局 mode）** | **~2.2s** | **已移除**：换内置 `tab-line`（项目分组 + 过滤 eglot buffer），见 `init-window.el` |
+| **centaur-tabs（require + 全局 mode）** | **~2.2s** | **已移除**：换内置 `tab-line`（项目分组 + 过滤 eglot buffer），见 `user-lisp/tab-line/init-tab-line.el` |
 | `require evil` | 0.53s | 必需 |
 | `package-initialize` | 0.41s | 必需 |
 | `require nerd-icons` | 0.36s | 仍用于 corfu/dired/completion（modeline/tabs 不再用） |
-| doom-modeline（require+mode） | 0.28s + 启动加载 | **已移除**：换手写 `mode-line-format`，见 `init-ui.el` |
+| doom-modeline（require+mode） | 0.28s + 启动加载 | **已移除**：换手写 `mode-line-format`，见 `user-lisp/mode-line/init-mode-line.el` |
 | `load-theme doom-one` | 0.10s | 廉价 |
 | `font-family-list` ×5 | 0.04s | **不是问题**（曾担心 Windows 字体枚举慢，实测廉价） |
 
@@ -30,7 +30,7 @@
 |----|------|------|
 | ~~dired 四件套（quick-sort/git-info/rsync/subtree）~~ | ~1.6s | **2026-07-28 已移除**：参照 zdn/.emacs.d 改成纯内置 dired/dired-aux/dired-x 实现（`user-lisp/init-dired.el`），四个包全砍，这笔开销不再存在 |
 | `eglot` 裸 require | ~1.1s | 删除 eager require；靠 `*-ts-mode-hook` 上的 `eglot-ensure` 按需加载 |
-| dashboard 首屏 | ~0.3s + 渲染 | 禁用（`init-ui.el` 注释掉 `dashboard-setup-startup-hook`；`early-init.el` 开 `inhibit-startup-screen`） |
+| dashboard 首屏 | ~0.3s + 渲染 | **已移除**（仓库不再依赖 dashboard；`early-init.el` 开 `inhibit-startup-screen`） |
 | `exec-path-from-shell` 裸 require | 小 | 删除（`-initialize` 本就注释，空载） |
 | `evil-collection-init`（无参） | ~0.18s | **保持**——现代版按 mode 延迟，并不慢（曾被误判为大头） |
 | `treesit-auto` 裸 require | ~0 | **保持**——在基线噪音内 |
@@ -51,8 +51,8 @@ package.el 会自动重建（`package--quickstart-maybe-refresh`），手工改 
 
 | 项 | 耗时 | 处置 |
 |----|------|------|
-| **global-diff-hl-mode** | **~0.40s** | **延迟**：从 after-init 挪到首次 `find-file` 一次性启用（`init-git.el`） |
-| use-emacs-theme（load-theme doom-one） | 0.24s | 必需 |
+| ~~global-diff-hl-mode~~ | ~~~0.40s~~ | **已移除**：`init-git.el` 明确不再引入 diff-hl，git 状态走内置 VC |
+| my/use-emacs-theme（load-theme catppuccin） | 0.24s | 必需 |
 | vertico-mode | 0.12s | 必需（首个 minibuffer 命令要用） |
 | recentf-mode | 0.11s | 保持 |
 | global-corfu-mode / marginalia / winner / savehist | 各 <0.04s | 保持 |
@@ -81,5 +81,5 @@ per-launch ~5.3s 已接近本机这套配置的地板。日常体感要「秒开
 
 - 代价：首次打开 dired / 首个代码文件会各多付一次对应加载（dired 包 / eglot）——属预期。
 - 验证：按 [.agent/run.md](../../.agent/run.md) 批处理加载确认 `EXIT=0`；`emacs` 启动后 `M-x emacs-init-time` 看实际耗时；
-  确认 dired 键位（S/I/TAB/C-c C-r）、`.go`/`.c` 文件 eglot 正常起、主题/modeline 正常、无 dashboard 首屏。
+  确认 dired 键位（S/I/TAB/C-c C-r）、`.go`/`.c` 文件 eglot 正常起、主题/modeline 正常、无启动首屏。
 - 想看启动耗时可加：`(add-hook 'emacs-startup-hook (lambda () (message "ready in %s" (emacs-init-time))))`。

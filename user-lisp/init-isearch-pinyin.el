@@ -38,6 +38,7 @@ isearch 每个按键会调多次搜索（主搜索 + 懒高亮分块），缓存
   "在 isearch 里把纯小写字母当拼音首字母匹配中文，例如 `zw' 搜「中文」。
 只影响 `C-s' / `C-r'，不动 evil 的 `/` `?' 和 `f' `t'；`M-r' 切正则搜索即绕过。"
   :global t
+  :group 'editing
   (setq isearch-search-fun-function
         (and my/isearch-pinyin-mode #'my/isearch-pinyin--search-fun)))
 

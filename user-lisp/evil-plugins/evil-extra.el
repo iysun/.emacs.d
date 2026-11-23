@@ -29,7 +29,7 @@
 
 ;; 只读收尾（对应 evil-collection-inhibit-insert-state）；eval-and-compile：宏编译期要读它
 (eval-and-compile
-  (defconst evil-extra--readonly-commands
+  (defconst my--evil-extra-readonly-commands
     '(evil-append evil-append-line evil-insert evil-insert-line
       evil-change evil-change-line evil-substitute evil-change-whole-line
       evil-delete evil-delete-line evil-delete-char evil-delete-backward-char
@@ -38,16 +38,16 @@
       evil-shift-left evil-shift-right evil-invert-char)))
 
 ;; 必须传字面量 map 符号，evil-define-key 才能推迟注册
-(defmacro evil-extra--readonly-bindings (map)
+(defmacro my--evil-extra-readonly-bindings (map)
   "Apply evil-collection's read-only bindings to literal keymap MAP."
   `(evil-define-key 'normal ,map
      (kbd "ZZ") 'quit-window
      (kbd "ZQ") 'evil-quit
      ,@(apply #'append
               (mapcar (lambda (c) `((vector 'remap ',c) #'ignore))
-                      evil-extra--readonly-commands))))
+                      my--evil-extra-readonly-commands))))
 
-(defmacro evil-extra--compile-map (map)
+(defmacro my--evil-extra-compile-map (map)
   "Bind evil keys for compilation keymap MAP."
   `(progn
      ;; 把 g 前缀让给 evil（编译 map 里若有 g 前缀会挡住 evil 的 g）
@@ -76,9 +76,9 @@
   (my/define-quit-keys)
 
   (evil-set-initial-state 'compilation-mode 'normal)
-  (evil-extra--readonly-bindings compilation-mode-map)
-  (evil-extra--compile-map compilation-mode-map)
-  (evil-extra--compile-map compilation-minor-mode-map)
+  (my--evil-extra-readonly-bindings compilation-mode-map)
+  (my--evil-extra-compile-map compilation-mode-map)
+  (my--evil-extra-compile-map compilation-minor-mode-map)
 
   (evil-define-key 'normal embark-collect-mode-map
     "a"        'embark-act
@@ -89,7 +89,7 @@
     "gr"       'revert-buffer)
 
   (evil-set-initial-state 'help-mode 'normal)
-  (evil-extra--readonly-bindings help-mode-map)
+  (my--evil-extra-readonly-bindings help-mode-map)
   (evil-define-key 'normal help-mode-map
     (kbd "C-f")      'scroll-up-command
     (kbd "C-b")      'scroll-down-command
@@ -118,7 +118,7 @@
     "i"              'help-goto-info
     "c"              'help-customize)
 
-  (evil-extra--readonly-bindings xref--xref-buffer-mode-map)
+  (my--evil-extra-readonly-bindings xref--xref-buffer-mode-map)
   (evil-define-key 'normal xref--xref-buffer-mode-map
     (kbd "C-n") 'xref-next-line
     (kbd "C-p") 'xref-prev-line
@@ -145,7 +145,7 @@
     (kbd "<return>") 'xref-quit-and-goto-xref)
 
   (evil-set-initial-state 'package-menu-mode 'normal)
-  (evil-extra--readonly-bindings package-menu-mode-map)
+  (my--evil-extra-readonly-bindings package-menu-mode-map)
   (evil-define-key 'normal package-menu-mode-map
     "i"   'package-menu-mark-install
     "U"   'package-menu-mark-upgrades
@@ -166,7 +166,7 @@
 
 
   (evil-set-initial-state 'proced-mode 'normal)
-  (evil-extra--readonly-bindings proced-mode-map)
+  (my--evil-extra-readonly-bindings proced-mode-map)
   (evil-define-key 'normal proced-mode-map
     "*"            'proced-mark-all
     "M"            'proced-mark-all

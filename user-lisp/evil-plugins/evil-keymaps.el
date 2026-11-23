@@ -12,13 +12,13 @@
   (evil-define-key 'normal 'global (kbd "gh") 'my/doc-at-point)
 
   ;; ⚠ eshell-mode-map 每次进 mode 都重建，hook 须排在 first-time 钩子之后（depth 90）。
-  (defun my/eshell-evil-insert-keys ()
+  (defun my/eshell--evil-insert-keys ()
     (evil-define-key 'insert eshell-mode-map (kbd "<return>") 'eshell-send-input)
     (evil-define-key 'insert eshell-mode-map (kbd "C-p") 'eshell-previous-matching-input-from-input)
     (evil-define-key 'insert eshell-mode-map (kbd "C-n") 'eshell-next-matching-input-from-input)
     (evil-define-key 'insert eshell-mode-map (kbd "C-r") 'consult-history)
     (evil-normalize-keymaps))
-  (add-hook 'eshell-mode-hook #'my/eshell-evil-insert-keys 90)
+  (add-hook 'eshell-mode-hook #'my/eshell--evil-insert-keys 90)
 
   ;; 覆盖 evil 默认的 C-w w 循环切窗，改用自写窗口缩放 hydra（定义见 init-window.el）。
   (define-key evil-window-map (kbd "w") #'hydra-window-size/body)
@@ -37,8 +37,8 @@
   (evil-define-key 'insert 'global (kbd "C-e") 'end-of-line)
   (evil-define-key 'insert 'global (kbd "C-k") 'kill-line)
   (evil-define-key 'insert 'global (kbd "C-d") 'delete-char)
-  (evil-define-key 'insert 'global (kbd "M-u") 'custom/upcase-back)
-  (evil-define-key 'insert 'global (kbd "M-l") 'custom/downcase-back)
-  (evil-define-key 'insert 'global (kbd "M-c") 'custom/capitalize-back))
+  (evil-define-key 'insert 'global (kbd "M-u") 'my/upcase-back)
+  (evil-define-key 'insert 'global (kbd "M-l") 'my/downcase-back)
+  (evil-define-key 'insert 'global (kbd "M-c") 'my/capitalize-back))
 
 (provide 'evil-keymaps)

@@ -2,15 +2,15 @@
 
 ## 镜像
 
-包源集中在 **`user-lisp/init-mirrors.el`**（唯一定义处），USTC / 清华 TUNA / 官方三套各存一个常量，
-文件末尾一行 `setq` 选用哪套。**换镜像只改那一行。**
+包源集中在 **`user-lisp/init-mirrors.el`**（唯一定义处），只保留 USTC 一套常量。
+**换镜像只改 `my/package-archives-ustc` 里的 URL。**
 
 只有一处使用方：`init.el` 里 `(require 'init-mirrors)`（在任何 package 安装/刷新之前生效）。不要再在别处写 `package-archives`。
 
 ## 新机器首次安装的签名校验兜底
 
 新机器本地还没有 GnuPG keyring 时，GNU ELPA 已签名包（compat / eglot 等）会因
-"No public key" 安装失败，并连累依赖它们的 consult/vertico/corfu/magit 等。
+"No public key" 安装失败，并连累依赖它们的 consult/vertico/corfu 等。
 
 `early-init.el` 的处理：**仅当**本地没有 `elpa/gnupg/pubring.kbx` 时关闭 `package-check-signature`；
 一旦机器有了 keyring（如已导入 GNU ELPA 公钥）仍按默认校验。

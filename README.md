@@ -1,6 +1,6 @@
 # .emacs.d
 
-个人 Emacs 配置（Emacs Lisp），模块化、跨平台（Windows / Linux / macOS）。
+个人 Emacs 配置（Emacs Lisp），模块化；目前只在 Windows 上验证，Linux/macOS 分支未经验证。
 以 evil 为核心，配 vertico/consult/corfu 补全栈、eglot、内置 VC、自维护主题等。
 
 ## 结构

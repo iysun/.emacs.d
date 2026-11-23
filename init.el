@@ -12,6 +12,29 @@
 
 (require 'use-package)
 
+(defvar my/packages
+  '(evil
+    posframe
+    multiple-cursors
+    hydra
+    nerd-icons
+    popper
+    consult
+    embark
+    embark-consult
+    marginalia
+    ;; ⚠ 别装 eshell-git-prompt：multiline2 每画一次提示符起 4 个 git 进程
+    eshell-syntax-highlighting
+    orderless
+    vertico
+    corfu
+    cape
+    pinyinlib
+    apheleia
+    ghostel
+    no-littering)
+  "本配置声明的第三方包；`custom.el' 里的 `package-selected-packages' 以这份为准。")
+
 ;; 把各包运行期文件收进 var/ 与 etc/
 ;; ⚠ 必须早于各模块 require：它靠改 recentf-save-file / savehist-file 生效
 (unless (package-installed-p 'no-littering)
@@ -19,31 +42,14 @@
 (require 'no-littering)
 (no-littering-theme-backups)
 
-(dolist (package
-         '(evil
-           posframe
-           multiple-cursors
-           hydra
-           nerd-icons
-           popper
-           consult
-           embark
-           embark-consult
-           marginalia
-           ;; ⚠ 别装 eshell-git-prompt：multiline2 每画一次提示符起 4 个 git 进程
-           eshell-syntax-highlighting
-           orderless
-           vertico
-           corfu
-           cape
-           pinyinlib
-           apheleia
-           ghostel))
+(when (executable-find "fd")
+  (add-to-list 'my/packages 'fd-dired))
+(when (executable-find "readtags")
+  (add-to-list 'my/packages 'citre))
+
+(dolist (package my/packages)
   (eval `(use-package ,package :ensure t :defer t)))
 ;; evil-surround / visualstar / commentary / gcmh 已内联进仓库，不从 elpa 装
-
-(when (executable-find "fd")
-  (use-package fd-dired :ensure t :defer t))
 
 ;; Emacs 31 自带实验性 markdown-ts-mode，但没打 autoload 也没进 auto-mode-alist
 (autoload 'markdown-ts-mode "markdown-ts-mode" nil t)

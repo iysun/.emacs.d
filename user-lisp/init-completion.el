@@ -278,6 +278,11 @@ auto         corfu 自动弹出（打字即弹），关闭行内预览；
 manual       corfu 仅手动触发（C-M-i / my/lsp-complete），开启行内预览；
 preview-only 完全关闭 corfu 弹窗，只保留行内预览。")
 
+(defcustom my/completion-style nil
+  "启动时应用的补全风格；nil 表示 manual。"
+  :type '(choice (const auto) (const manual) (const preview-only))
+  :group 'completion)
+
 (defun my/completion--preview-hook-list ()
   '(prog-mode-hook text-mode-hook eshell-mode-hook comint-mode-hook))
 
@@ -301,7 +306,7 @@ preview-only 完全关闭 corfu 弹窗，只保留行内预览。")
   (global-corfu-mode (if enable 1 -1))
   (corfu-popupinfo-mode (if enable 1 -1)))
 
-(defun my/apply-completion-style (style)
+(defun my--apply-completion-style (style)
   "按 STYLE（auto/manual/preview-only）应用补全行为，对已打开的 buffer 立即生效。"
   (pcase style
     ('auto
@@ -320,23 +325,23 @@ preview-only 完全关闭 corfu 弹窗，只保留行内预览。")
      (my/completion--sync-preview-buffers t))
     (_ (error "未知补全风格: %s" style))))
 
-(defun switch-completion-style (style)
-  "交互切换补全风格并持久化到 custom.el（仿 switch-emacs-theme）。"
+(defun my/switch-completion-style (style)
+  "交互切换补全风格并持久化到 custom.el（仿 my/switch-emacs-theme）。"
   (interactive
    (list
     (intern (completing-read
              "select completion style: "
              (mapcar #'symbol-name my/completion-styles)
              nil t))))
-  (my/apply-completion-style style)
-  (customize-save-variable 'custom-completion-style style))
+  (my--apply-completion-style style)
+  (customize-save-variable 'my/completion-style style))
 
-(defun use-completion-style ()
-  (my/apply-completion-style
-   (if (and (boundp 'custom-completion-style)
-            (memq custom-completion-style my/completion-styles))
-       custom-completion-style
+(defun my/use-completion-style ()
+  (my--apply-completion-style
+   (if (and (boundp 'my/completion-style)
+            (memq my/completion-style my/completion-styles))
+       my/completion-style
      'manual)))
-(add-hook 'after-init-hook 'use-completion-style)
+(add-hook 'after-init-hook 'my/use-completion-style)
 
 (provide 'init-completion)

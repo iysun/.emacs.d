@@ -56,7 +56,7 @@
 
 ;; ⚠ 不剥属性会让 savehist 膨胀，不可打印对象则整次保存失败
 ;; ⚠ yank-handler 是行级/块级粘贴的唯一依据，剥掉后 p/P 会退化成字符级
-(defun my/savehist-strip-string (string)
+(defun my--savehist-strip-string (string)
   (let ((handler (and (> (length string) 0)
                       (get-text-property 0 'yank-handler string)))
         (copy (substring-no-properties string)))
@@ -64,29 +64,29 @@
       (put-text-property 0 (length copy) 'yank-handler handler copy))
     copy))
 
-(defun my/savehist-unpropertize ()
+(defun my--savehist-unpropertize ()
   (setq kill-ring
-        (mapcar #'my/savehist-strip-string
+        (mapcar #'my--savehist-strip-string
                 (cl-remove-if-not #'stringp kill-ring))
         register-alist
         (cl-loop for (reg . item) in register-alist
                  if (stringp item)
-                 collect (cons reg (my/savehist-strip-string item))
+                 collect (cons reg (my--savehist-strip-string item))
                  else collect (cons reg item))))
 
-(defun my/savehist-drop-unprintable-registers ()
+(defun my--savehist-drop-unprintable-registers ()
   (setq register-alist (cl-remove-if-not #'savehist-printable register-alist)))
 
 ;; ⚠ savehist-save-hook 会 setq 在线变量；在副本上跑，否则自动存盘后立即丢 yank-handler
-(defun my/savehist-save-on-copies (orig &rest args)
+(defun my--savehist-save-on-copies (orig &rest args)
   (let ((kill-ring (copy-sequence kill-ring))
         (register-alist (copy-sequence register-alist)))
     (apply orig args)))
 
 (with-eval-after-load 'savehist
-  (add-hook 'savehist-save-hook #'my/savehist-unpropertize)
-  (add-hook 'savehist-save-hook #'my/savehist-drop-unprintable-registers)
-  (advice-add 'savehist-save :around #'my/savehist-save-on-copies))
+  (add-hook 'savehist-save-hook #'my--savehist-unpropertize)
+  (add-hook 'savehist-save-hook #'my--savehist-drop-unprintable-registers)
+  (advice-add 'savehist-save :around #'my--savehist-save-on-copies))
 
 (add-hook 'after-init-hook 'recentf-mode)
 (progn
@@ -98,15 +98,15 @@
 (defvar my/buffer-allow-names '("*compilation*" "*eshell*")
   "即使以 * 开头，也允许出现在 `other-buffer' 候选里的 buffer 名。")
 
-(defun my/buffer-predicate (buf)
+(defun my--buffer-predicate (buf)
   (or (not (string-prefix-p "*" (buffer-name buf)))
       (member (buffer-name buf) my/buffer-allow-names)))
 
-(defun my/set-buffer-predicate (&optional frame)
-  (set-frame-parameter frame 'buffer-predicate #'my/buffer-predicate))
+(defun my--set-buffer-predicate (&optional frame)
+  (set-frame-parameter frame 'buffer-predicate #'my--buffer-predicate))
 
-(add-hook 'after-init-hook #'my/set-buffer-predicate)
+(add-hook 'after-init-hook #'my--set-buffer-predicate)
 ;; ⚠ 新 frame 不继承 frame 参数，须单独再设
-(add-hook 'after-make-frame-functions #'my/set-buffer-predicate)
+(add-hook 'after-make-frame-functions #'my--set-buffer-predicate)
 
 (provide 'init-base)

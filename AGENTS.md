@@ -44,10 +44,10 @@
 | `user-lisp/eshell-prompt/init-eshell-prompt.el` | eshell 提示符实现本体，由 `init-term.el` `require` |
 | `user-lisp/lsp-symbols/init-lsp-symbols.el` | LSP `workspace/symbol` 搜索（consult 界面、按 SymbolKind 窄化、预览跳转），由 `init-lsp.el` `require`，命令 `my/lsp-symbols` 绑在 `M-s s`；没有 eglot 后端时退化为 `xref-find-apropos` |
 | `user-lisp/init-term.el` | 终端：eshell 全套（含语法高亮的 `executable-find` 缓存）+ ghostel（libghostty 终端，`C-c t` = `ghostel`、`C-x p t` = `ghostel-project`，shell 在 Windows 下为 `pwsh`，其余平台沿用 `$SHELL`）。⚠ Windows 走 ConPTY，原生模块与 `conpty.dll`/`OpenConsole.exe` 放 `var/ghostel/`（留包目录会被 MELPA 升级整目录替换删掉）；eshell 可视命令与 comint 输出解析也接 ghostel（`eshell-load-hook` / `comint-mode-hook` 上挂 mode，另有 `eshell/v` 内置命令）；evil 状态定为 `emacs`（insert/normal 键位会抢 C-a/C-e/C-k/C-u/C-p/C-n 和 ESC），semi-char 下这些键直通 shell，copy/line 模式各用自己键位，buffer 内关行号；`C-:` = `my/ghostel-run`（当前目录新开 ghostel 跑命令，命令结束仍留在同一终端）；`consult-buffer` 里 ghostel 单独成组（窄化键 `t`） |
-| `user-lisp/init-parens.el` | **括号显示**：默认很淡（`my-paren-face`）+ 光标处强调（`show-paren` 反显加粗）。机制**改编自 rainbow-delimiters**（GPLv3），只保留"走括号 + 跳过字符串/注释/转义/双字符 opener"的必要代码、砍掉深度配色机器，故不再依赖 `rainbow-delimiters`；淡色按主题 fg/bg 现场混合（用 `init-ui` 的 `my-ui--*`，须在其后 `require`） |
+| `user-lisp/init-parens.el` | **括号显示**：默认很淡（`my/paren-face`）+ 光标处强调（`show-paren` 反显加粗）。机制**改编自 rainbow-delimiters**（GPLv3），只保留"走括号 + 跳过字符串/注释/转义/双字符 opener"的必要代码、砍掉深度配色机器，故不再依赖 `rainbow-delimiters`；淡色按主题 fg/bg 现场混合（用 `init-ui` 的 `my/ui--*`，须在其后 `require`） |
 | `user-lisp/evil-plugins/` | evil 相关插件合集：**内联**的 `evil-surround` / `evil-commentary`(+integration) / `evil-visualstar`（GPLv3），以及本仓库的 `evil-config.el` / `evil-keymaps.el` / `evil-vc.el` / `evil-dired.el` / `evil-ibuffer.el` / `evil-extra.el` / `mc-evil.el` / `ime.el`。见其 `README.md` |
 | `user-lisp/gcmh/gcmh.el` | **内联**的 `gcmh`（GC 调优，GPLv3），由 `init-base.el` `require`。见其 `README.md` |
-| `themes/` | 本仓库自维护的主题文件（`*-theme.el`），由 `custom-theme-load-path` 接入（`user-lisp/init-ui.el`），新增主题放进去即可被 `switch-emacs-theme` 自动发现。共 13 个：`nn-world`（借自 zdn/.emacs.d，GPLv3，**模板**）、`catppuccin`/`crafters`/`gits`/`matrix`，深色 `gruvbox-dark`/`nord`/`dracula`/`monokai-pro`，浅色 `gruvbox-light`/`catppuccin-latte`/`solarized-light`/`one-light`（后 8 个都照 nn-world 模板换 24 槽调色板生成，结构与 face 表一致）。Emacs 自带的 `modus-vivendi`/`modus-operandi` 等也在候选里 |
+| `themes/` | 本仓库自维护的主题，由 `custom-theme-load-path` 接入（`user-lisp/init-ui.el`），新增主题放进去即可被 `my/switch-emacs-theme` 自动发现。共 13 个：`nn-world`（借自 zdn/.emacs.d，GPLv3，**模板**）、`catppuccin`/`crafters`/`gits`/`matrix`，深色 `gruvbox-dark`/`nord`/`dracula`/`monokai-pro`，浅色 `gruvbox-light`/`catppuccin-latte`/`solarized-light`/`one-light`。**face 表与调色板只在 `themes/my-theme-core.el` 里维护**，每个 `*-theme.el` 只做声明；新增主题 = 在 `my/theme-palettes` 加一条 + 建 stub，不再复制 500 行。Emacs 自带的 `modus-vivendi`/`modus-operandi` 等也在候选里 |
 | （迁出）字体 | vendor 字体与安装脚本已迁到 dotfiles 仓库（`iysun/dotfiles` 的 `fonts/` 与 `scripts/install-fonts.py`），本仓库不再跟踪字体文件。见 [docs/notes/vendored-fonts.md](docs/notes/vendored-fonts.md) |
 | `custom.el` | Customize 自动生成，**已 gitignore，勿手改** |
 | `elpa/` | 第三方包，**已 gitignore，勿编辑/勿提交** |
@@ -154,23 +154,43 @@ emacs                          # 真实 GUI，看 *Messages* / *Warnings*
 
 ## 注释规范（硬性：写/改代码的 agent 必须遵守）
 
-- **默认不写注释**。只在 WHY 不显然时写一条：隐藏约束、微妙不变量、特定 bug 的 workaround、
-  会让读者意外的行为。（判据与措辞取自 Claude Code 系统提示词的 comment 条款。）
+- **只写 WHY**：隐藏约束、微妙不变量、特定 bug 的 workaround、会让读者意外的行为。
+  好代码 + 好名字已经说明 WHAT，不要复述。
 - 自检问句：**删掉这条注释会让将来读代码的人困惑吗？不会就别写。**
-- 不写 WHAT（好名字已经说明）；不写「本任务是 / 谁调用 / 对应 issue #123」这类会腐烂的引用。
+- 不写「本任务是 / 谁调用 / 对应 issue #123」这类会腐烂的引用。
 - 望文生义的注释直接删，不要换个说法重写（`;; 用 rg 做兜底搜索`、
   `(setq completion-ignore-case t)  ; capf 匹配不区分大小写`）。
-- 留下的一律压到最短（十几字级别，可加 `⚠`）：`;; ⚠ 必须 setopt：setq 不触发 :set`。
-- 头注释最多两行、能删就删（没有非写不可的就别写头注释）；行内注释同样只留最短形式。
-- `docstring` 是代码不是注释：行为不显然时写一句，禁止多行注释块。
+- 注释可以多行，但只服务于一个 WHY；能一句说清就一句，别写成散文。行内注释同理。
+  头注释最多两行，没有非写不可的就别写。
+- `docstring` 是代码不是注释：首行一句话总结；只有行为不显然时才加正文，
+  不要重复函数名/参数名已经说明的内容。
+- 例外：内联的第三方文件（`evil-plugins/evil-surround` 等、`gcmh`）保留原版权/来源头，
+  不套用「头注释最多两行」的限制。
 - **不删别人的注释**——除非同时删掉它描述的代码，或确认它是错的：看似废话的注释可能在记录
-  当前 diff 看不出来的教训。（本仓库目前由维护者本人要求成批删减，属显式授权。）
+  当前 diff 看不出来的教训。
 - 改注释**不许动代码**：`.agent/check-comments-only.el` 校验（基线 HEAD 与工作区解析成
   sexp 比对，全部 `代码等价 OK`）+ 字节编译无 warning + `.agent/run.md` 冒烟。
 
+## 命名规范（硬性）
+
+本仓库定义的符号一律以 `my/` 开头；内部实现用双连字符分层：
+
+| 类别 | 形式 | 例子 |
+|------|------|------|
+| 交互命令 | `my/<动词>-…` | `my/switch-emacs-theme`、`my/quit-window`、`my/consult-line` |
+| 模块公开 API / 变量 / face / minor mode | `my/<模块>-…` | `my/paren-face`、`my/paren-mode`、`my/tab-line-group-name-max`、`my/ui-setup-bars` |
+| 模块内部实现 | `my/<模块>--…` | `my/ui--bg-of`、`my/paren--propertize`、`my/tab-line--group-buffers`、`my/lsp--servers` |
+| 全局内部实现（不属某模块） | `my--…` | `my--forward-whole-word`、`my--savehist-strip-string`、`my--mc-enter`、`my--find-project-root` |
+| 用户选项 | `my/<名>` | `my/emacs-theme`、`my/completion-style`、`my/isearch-pinyin-min-length` |
+
+- 不用 `custom/` 前缀；不再新增无前缀的 `switch-*` / `use-*`，也不再混写 `my-foo` 与 `my/foo`。
+- 与外部包 API 同名的符号（`forward-evil-word`、`evil-a-between` 等）保持原名，不强行套 `my/`。
+- 主题是唯一例外：`themes/*-theme.el` 只做声明，公共 face 表与调色板在 `themes/my-theme-core.el`。
+  该文件名/feature 受文件系统限制保留连字符（`my-theme-core`），不是公开 API 符号。
+
 ## 维护约定（判断式，非强制）
 
-- **注释一律按上面的「注释规范」写**：默认不写，只在 WHY 不显然时留最短一条；评审代码时先看这条。
+- **注释一律按上面的「注释规范」写**：只写 WHY，能短则短；评审代码时先看这条。
 - **`q` 退出统一名单**：normal 态 `q = my/quit-window` 的 buffer 全部来自
   `user-lisp/evil-plugins/evil-extra.el` 的 `my/quit-window-modes`（宏 `my/define-quit-keys` 展开）；
   加/删 buffer 只改这一个列表，别再去各 mode 的 keymap 里单独绑 `q`。

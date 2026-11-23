@@ -6,7 +6,7 @@
 
 ;; 只读模式把插入/修改类命令 remap 成 ignore（对应 evil-collection-inhibit-insert-state）；eval-and-compile：宏编译期要读它
 (eval-and-compile
-  (defconst evil-vc--readonly-commands
+  (defconst my--evil-vc-readonly-commands
     '(evil-append evil-append-line evil-insert evil-insert-line
       evil-change evil-change-line evil-substitute evil-change-whole-line
       evil-delete evil-delete-line evil-delete-char evil-delete-backward-char
@@ -15,14 +15,14 @@
       evil-shift-left evil-shift-right evil-invert-char)))
 
 ;; 只读收尾 q/ZZ/ZQ + remap；必须传字面量 map 符号
-(defmacro evil-vc--readonly-bindings (map)
+(defmacro my--evil-vc-readonly-bindings (map)
   "Apply evil-collection's read-only bindings to literal keymap MAP."
   `(evil-define-key 'normal ,map
      (kbd "ZZ") 'quit-window
      (kbd "ZQ") 'evil-quit
      ,@(apply #'append
               (mapcar (lambda (c) `((vector 'remap ',c) #'ignore))
-                      evil-vc--readonly-commands))))
+                      my--evil-vc-readonly-commands))))
 
 (defun my/diff-toggle-context-unified (start end)
   "Toggle between context and unified diff views.
@@ -99,7 +99,7 @@ With prefix ARG, restrict to the current file instead."
     (kbd "gO")        'vc-dir-display-file
     (kbd "gf")        'vc-dir-find-file
     (kbd "gr")        'revert-buffer)
-  (evil-vc--readonly-bindings vc-dir-mode-map)
+  (my--evil-vc-readonly-bindings vc-dir-mode-map)
 
   (evil-define-key 'normal diff-mode-map
     (kbd "ge")  'diff-ediff-patch
