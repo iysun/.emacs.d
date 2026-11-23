@@ -175,12 +175,21 @@ KEEP-CLICK 非 nil 时保留 local-map/help-echo/mouse-face —— 那是
   "消息在托盘行里停留的秒数，到点自动让位给状态段。")
 
 (defun my-ui--tray-message-line ()
-  "把接管的 echo 消息压成一行、去掉属性，当作右段。"
+  "把接管的 echo 消息压成一行、去掉属性，接在左段状态后面。"
   (when (stringp my-ui--tray-message)
     (let ((s (string-trim
               (replace-regexp-in-string
                "[\n\r]+" " " (substring-no-properties my-ui--tray-message)))))
       (unless (string-empty-p s) s))))
+
+(defun my-ui--tray-left-with-message ()
+  "左段状态，有 echo 消息时接在后面——消息不顶掉状态。"
+  (let ((status (my-ui--tray-left))
+        (msg (my-ui--tray-message-line)))
+    (cond ((and status msg) (concat status "  " msg))
+          (msg (concat "  " msg))
+          (status status)
+          (t ""))))
 
 (defun my-ui--echo-width ()
   "这一行的可用列数。留 1 列，避免最后一个字换行。"
@@ -205,11 +214,11 @@ KEEP-CLICK 非 nil 时保留 local-map/help-echo/mouse-face —— 那是
 
 (defun my-ui--tray-render ()
   "左段靠左、右段靠右的一整行。
-有 echo 消息时消息占右段（顶掉项目/分支/Flymake），左段状态一直保留——
-eldoc 这类会不停发消息的东西才不会把缓冲区名和行号刷走。"
+echo 消息接在左段状态后面（不顶掉状态），右段的项目/分支也保留；
+挤不下时先截消息尾巴，再连右段一起丢掉。"
   (let* ((width (max 1 (my-ui--echo-width)))
-         (left (or (my-ui--tray-left) ""))
-         (right (or (my-ui--tray-message-line) (my-ui--tray-right) ""))
+         (left (my-ui--tray-left-with-message))
+         (right (or (my-ui--tray-right) ""))
          (gap 2))
     (when (> (+ (string-width left) gap (string-width right)) width)
       (let ((room (max 0 (- width (string-width left) gap))))
@@ -420,8 +429,9 @@ eldoc 这类会不停发消息的东西才不会把缓冲区名和行号刷走�
 
 (define-minor-mode my-ui-echo-tray-mode
   "把原 mode-line 显示在 minibuffer 这一行：左段靠左，右段靠右。
-echo 消息不单独占一行，而是并到右段显示 `my-ui--tray-message-duration' 秒；
-右段的项目/分支可以直接点。正在输入或 isearch 时先让出这一行。"
+echo 消息不单独占一行，而是接在左段状态后面显示
+`my-ui--tray-message-duration' 秒；右段的项目/分支可以直接点。
+正在输入或 isearch 时先让出这一行。"
   :global t
   :group 'mode-line
   (if my-ui-echo-tray-mode
