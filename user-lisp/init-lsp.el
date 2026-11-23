@@ -33,7 +33,7 @@
 
 ;; 不 eager require eglot（省 ~1.1s 启动）；下面的钩子打开代码文件时才加载它
 ;; ⚠ 每个语言 ts-mode 与原生 mode 两条 hook 都挂：落点由 grammar + 白名单决定，可能落到原生 mode 或 fundamental-mode
-(defconst my/lsp-modes
+(defconst iys/lsp-modes
   '((c-ts-mode          c-mode)        ; clangd
     (c++-ts-mode        c++-mode)
     (python-ts-mode     python-mode)   ; pyright
@@ -48,7 +48,7 @@
     (css-ts-mode        css-mode))     ; vscode-css-language-server
   "每个元素是 (TS-MODE 原生-MODE …)，nil 表示无对应 mode。")
 
-(dolist (modes my/lsp-modes)
+(dolist (modes iys/lsp-modes)
   (dolist (m modes)
     (when m (add-hook (intern (format "%s-hook" m)) 'eglot-ensure))))
 
@@ -85,7 +85,7 @@
                                  (expand-file-name "scripts/rass/html.py" user-emacs-directory))
                            '("vscode-html-language-server" "--stdio")))))
 
-  (defun my/lsp-complete ()
+  (defun iys/lsp-complete ()
     "手动触发补全（C-M-i）。
 eglot-managed-mode-hook 已经把 completion-at-point-functions 换成了
 `cape-capf-super' 合并出的单个 capf（eglot + 本地 capf 一起给候选），
@@ -104,7 +104,7 @@ eglot-managed-mode-hook 已经把 completion-at-point-functions 换成了
                                  #'cape-file)
                                 (remq 'eglot-completion-at-point
                                       completion-at-point-functions)))
-              (local-set-key (kbd "C-M-i") #'my/lsp-complete)
+              (local-set-key (kbd "C-M-i") #'iys/lsp-complete)
 ;; ⚠ eglot 会头插 eglot-xref-backend 把 citre 挤到后面，xref-find-backend 就不回退 tags/global
               (when (memq 'citre-xref-backend xref-backend-functions)
                 (setq-local xref-backend-functions
@@ -119,21 +119,21 @@ eglot-managed-mode-hook 已经把 completion-at-point-functions 换成了
 ;; ⚠ 上游 bug：eglot 把 marker 混进 LSP 消息 → jsonrpc--json-encode 序列化报错
 ;; 序列化时报 "Wrong type argument: consp, #<marker>"；这里递归把 marker 换成整数位置兜底。
 (with-eval-after-load 'jsonrpc
-  (defun my--jsonrpc-sanitize-markers (obj)
+  (defun iys--jsonrpc-sanitize-markers (obj)
     (cond
      ((markerp obj) (marker-position obj))
      ((consp obj)
-      (cons (my--jsonrpc-sanitize-markers (car obj))
-            (my--jsonrpc-sanitize-markers (cdr obj))))
+      (cons (iys--jsonrpc-sanitize-markers (car obj))
+            (iys--jsonrpc-sanitize-markers (cdr obj))))
      ((vectorp obj)
-      (cl-map 'vector #'my--jsonrpc-sanitize-markers obj))
+      (cl-map 'vector #'iys--jsonrpc-sanitize-markers obj))
      (t obj)))
   (advice-add 'jsonrpc--json-encode :filter-args
-              (lambda (args) (list (my--jsonrpc-sanitize-markers (car args))))))
+              (lambda (args) (list (iys--jsonrpc-sanitize-markers (car args))))))
 
 ;; ⚠ 上游 bug：gopls 在 Windows 返回大写盘符的 URI，匹配不上 → 诊断被静默丢进 flymake-list-only-diagnostics
 (with-eval-after-load 'eglot
-  (define-advice eglot--find-buffer-visiting (:around (orig server abspath) my/case-insensitive-fallback)
+  (define-advice eglot--find-buffer-visiting (:around (orig server abspath) iys/case-insensitive-fallback)
     (or (funcall orig server abspath)
         (when (eq system-type 'windows-nt)
           (cl-loop for b in (eglot--managed-buffers server)

@@ -2,7 +2,7 @@
 
 ;; 由 init-lsp.el require；eglot 与 consult 都是按需加载。
 
-(defun my/lsp--servers ()
+(defun iys/lsp--servers ()
   "Return eglot servers supporting workspace/symbol for the current project."
   (when (featurep 'eglot)
     (cl-delete-if-not
@@ -15,7 +15,7 @@
          servers
        (list (eglot-current-server))))))
 
-(defconst my/lsp-symbol-narrow
+(defconst iys/lsp-symbol-narrow
   '((?c . "Class") (?f . "Function") (?e . "Enum") (?i . "Interface")
     (?m . "Module") (?n . "Namespace") (?p . "Package") (?s . "Struct")
     (?t . "Type Parameter") (?v . "Variable")
@@ -23,9 +23,9 @@
     (?F . "Field") (?M . "Method") (?N . "Number") (?O . "Object")
     (?P . "Property") (?S . "String") (?o . "Other")))
 
-(defvar my/lsp-symbols--history nil)
+(defvar iys/lsp-symbols--history nil)
 
-(defun my/lsp--candidate (info)
+(defun iys/lsp--candidate (info)
   "Turn an LSP SymbolInformation INFO into a consult candidate."
   (let* ((loc (plist-get info :location))
          (start (plist-get (plist-get loc :range) :start))
@@ -35,10 +35,10 @@
          (kind (alist-get (plist-get info :kind) eglot--symbol-kind-names)))
     (propertize (format "%s %s:%d" (plist-get info :name) shown
                         (1+ (or (plist-get start :line) 0)))
-                'consult--type (or (car (rassoc kind my/lsp-symbol-narrow)) ?o)
+                'consult--type (or (car (rassoc kind iys/lsp-symbol-narrow)) ?o)
                 'consult--candidate info)))
 
-(defun my/lsp--marker (info open)
+(defun iys/lsp--marker (info open)
   "Return the marker of INFO, using OPEN to visit files."
   (let* ((loc (plist-get info :location))
          (start (plist-get (plist-get loc :range) :start)))
@@ -47,15 +47,15 @@
      (1+ (or (plist-get start :line) 0))
      (or (plist-get start :character) 0))))
 
-(defun my/lsp--state ()
-  "Preview/jump state for `my/lsp-symbols'."
+(defun iys/lsp--state ()
+  "Preview/jump state for `iys/lsp-symbols'."
   (let ((open (consult--temporary-files))
         (jump (consult--jump-state)))
     (lambda (action info)
       (when (eq action 'exit) (funcall open))
-      (funcall jump action (and info (my/lsp--marker info open))))))
+      (funcall jump action (and info (iys/lsp--marker info open))))))
 
-(defun my/lsp--async-source (servers)
+(defun iys/lsp--async-source (servers)
   "Return a consult async source querying SERVERS for workspace symbols."
   (lambda (async)
     (lambda (action)
@@ -73,44 +73,44 @@
             (funcall async action))
         (funcall async action)))))
 
-(defun my/lsp--xref-find-apropos ()
+(defun iys/lsp--xref-find-apropos ()
   "`xref-find-apropos'，但把光标处内容作为初始输入（原生实现只放默认值，不填进 minibuffer）。"
   (if (not (xref-find-backend))
       (user-error "当前 buffer 没有 LSP/xref 后端，M-s s 用不了：先 M-x eglot 或建 tags 索引")
     (xref-find-apropos
-     (minibuffer-with-setup-hook #'my/search--select-seed
+     (minibuffer-with-setup-hook #'iys/search--select-seed
        (read-string "Search for pattern (word list or regexp): "
-                    (my/search-seed) 'xref--read-pattern-history)))))
+                    (iys/search-seed) 'xref--read-pattern-history)))))
 
-(defun my/lsp-symbols ()
+(defun iys/lsp-symbols ()
   "在 LSP 工作区符号里搜索（workspace/symbol），用光标处的符号作初始输入。
 没有 eglot 后端时退化为 `xref-find-apropos'。"
   (interactive)
   (require 'consult)
-  (let ((servers (my/lsp--servers)))
+  (let ((servers (iys/lsp--servers)))
     (if (not servers)
-        (my/lsp--xref-find-apropos)
+        (iys/lsp--xref-find-apropos)
       (let ((default-directory
              (or (ignore-errors (project-root (eglot--project (car servers))))
                  default-directory)))
-        (minibuffer-with-setup-hook #'my/search--select-seed
+        (minibuffer-with-setup-hook #'iys/search--select-seed
           (consult--read
            (consult--async-pipeline
             (consult--async-min-input)
             (consult--async-throttle)
-            (my/lsp--async-source servers)
-            (consult--async-map #'my/lsp--candidate)
+            (iys/lsp--async-source servers)
+            (consult--async-map #'iys/lsp--candidate)
             (consult--async-highlight))
            :require-match t
            :prompt "LSP Symbols: "
            :sort t
-           :initial (my/search-seed)
-           :history '(:input my/lsp-symbols--history)
-           :category 'my/lsp-symbols
+           :initial (iys/search-seed)
+           :history '(:input iys/lsp-symbols--history)
+           :category 'iys/lsp-symbols
            :lookup #'consult--lookup-candidate
-           :group (consult--type-group my/lsp-symbol-narrow)
-           :narrow (consult--type-narrow my/lsp-symbol-narrow)
-           :state (my/lsp--state))
+           :group (consult--type-group iys/lsp-symbol-narrow)
+           :narrow (consult--type-narrow iys/lsp-symbol-narrow)
+           :state (iys/lsp--state))
           (run-hooks 'consult-after-jump-hook))))))
 
 (provide 'init-lsp-symbols)

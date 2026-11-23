@@ -6,7 +6,7 @@
   (when (executable-find "shfmt")
     (setf (alist-get 'sh-mode apheleia-mode-alist) 'shfmt)))
 
-(defun my/format-buffer ()
+(defun iys/format-buffer ()
   "格式化统一入口：eglot 托管的 buffer 用 eglot-format，否则用 apheleia-format-buffer。"
   (interactive)
   (if (and (fboundp 'eglot-managed-p) (eglot-managed-p))

@@ -1,6 +1,7 @@
 # Emacs 安装：msys2 UCRT64 环境 + 自己编译 Emacs 31
 
-2026-07-27 起，本机 Emacs 是**在 msys2 的 UCRT64 环境里从上游源码自己编译的 Emacs 31.0.91**，
+2026-07-27 起，本机 Emacs 是**在 msys2 的 UCRT64 环境里从上游源码自己编译的 Emacs 31**
+（初次安装 31.0.91，当前 31.1），
 装在 `<scoop>\apps\msys2\current\ucrt64`；msys2 本身由 scoop 安装。
 
 当天走过两轮，结论按顺序看：
@@ -65,7 +66,7 @@ clone 走代理 `http://127.0.0.1:7897`。
 复制 `lisp/`、`etc/` 那一步之后，`make` 进程 CPU 归零、无任何子进程，能挂几十分钟不动。
 （试过输出走管道和输出重定向到文件，都一样，不是管道阻塞。）
 
-那一步的效果其实**已经做完了**（`share/emacs/31.0.91/{lisp,etc}` 都在），所以杀掉它、
+那一步的效果其实**已经做完了**（`share/emacs/31.1/{lisp,etc}` 都在），所以杀掉它、
 用 `-o` 把已完成的目标标记为最新，只跑剩下的二进制安装即可：
 
 ```bash
@@ -73,8 +74,8 @@ pacman -R mingw-w64-ucrt-x86_64-emacs      # 先卸掉包版，给自编版腾�
 make -o install-arch-indep -o install-etcdoc install-arch-dep install-nt install-eln
 ```
 
-这一步几十秒就完，装出 `bin/{emacs,emacs-31.0.91,emacsclient,emacsclientw,runemacs}.exe`、
-`libexec/emacs/31.0.91/x86_64-w64-mingw32/`（含官方 `emacs-<fingerprint>.pdmp`、`cmdproxy.exe`）。
+这一步几十秒就完，装出 `bin/{emacs,emacs-31.1,emacsclient,emacsclientw,runemacs}.exe`、
+`libexec/emacs/31.1/x86_64-w64-mingw32/`（含官方 `emacs-<fingerprint>.pdmp`、`cmdproxy.exe`）。
 
 ## PATH：用 scoop shim 指过去，别把 ucrt64\bin 整个塞进 PATH
 

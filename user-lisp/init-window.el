@@ -8,22 +8,22 @@
       window-divider-default-bottom-width 1)
 (add-hook 'after-init-hook #'window-divider-mode)
 
-(defun my/update-bottom-divider ()
+(defun iys/update-bottom-divider ()
   "托盘开着时，底部分割线是 1px 亮线，下面再留和 tab-line 相同的上边距。
 宽度没变时不写 frame 参数，避免每次 :w 都触发布局。关掉托盘后只留 1px。
 ⚠ 文本终端没有像素分割线，宽度按整行算，pad 必须为 0。"
   (let* ((pad (if (and (display-graphic-p)
-                       (bound-and-true-p my/ui-echo-tray-mode)
-                       (boundp 'my/ui-bar-padding))
-                  my/ui-bar-padding
+                       (bound-and-true-p iys/ui-echo-tray-mode)
+                       (boundp 'iys/ui-bar-padding))
+                  iys/ui-bar-padding
                 0))
          (width (1+ pad)))
     (unless (eql (frame-parameter nil 'bottom-divider-width) width)
       (set-frame-parameter nil 'bottom-divider-width width))))
-(add-hook 'window-configuration-change-hook #'my/update-bottom-divider)
+(add-hook 'window-configuration-change-hook #'iys/update-bottom-divider)
 
 ;; ⚠ q 在 log-edit buffer 里须走 log-edit-kill-buffer 放弃提交
-(defun my/quit-window (arg)
+(defun iys/quit-window (arg)
   "关闭当前窗口：分屏时直接删窗，否则 bury。ARG 非 nil 时再 kill buffer。
 在 VC 提交 buffer（`log-edit-mode'）里则放弃本次提交并关掉它。"
   (interactive "P")

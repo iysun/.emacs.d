@@ -7,12 +7,12 @@
 ;; 原理：把基线版本与工作区版本各用 `read' 解析成 sexp 列表后 `equal' 比较——注释、空白、
 ;; 换行都不影响结果；任何一个 sexp 变了就报错并以非 0 退出。压缩/整理注释时用它自检。
 
-(defconst my--repo (expand-file-name user-emacs-directory))
-(defvar my--rev "HEAD")
-(defvar my--bad 0)
-(defvar my--checked 0)
+(defconst iys--repo (expand-file-name user-emacs-directory))
+(defvar iys--rev "HEAD")
+(defvar iys--bad 0)
+(defvar iys--checked 0)
 
-(defun my--forms (str)
+(defun iys--forms (str)
   "把 STR 读成 sexp 列表；读取出错则把错误信息塞在最前面。"
   (with-temp-buffer
     (insert str)
@@ -24,26 +24,26 @@
         (error (push (format "!!READ-ERROR %S" err) forms)))
       (nreverse forms))))
 
-(defun my--base-content (rel)
+(defun iys--base-content (rel)
   (with-temp-buffer
     (unless (zerop (call-process "git" nil (current-buffer) nil
-                                 "-C" my--repo "show" (format "%s:%s" my--rev rel)))
+                                 "-C" iys--repo "show" (format "%s:%s" iys--rev rel)))
       (insert "!!GIT-SHOW-FAILED"))
     (buffer-string)))
 
-(defun my--check-file (rel)
+(defun iys--check-file (rel)
   (let* ((rel (replace-regexp-in-string "\\\\" "/" rel))
-         (abs (expand-file-name rel my--repo))
-         (old (my--base-content rel))
+         (abs (expand-file-name rel iys--repo))
+         (old (iys--base-content rel))
          (new (if (file-exists-p abs)
                   (with-temp-buffer (insert-file-contents abs) (buffer-string))
                 "!!NOT-FOUND"))
-         (fo (my--forms old))
-         (fn (my--forms new))
+         (fo (iys--forms old))
+         (fn (iys--forms new))
          (ok (equal fo fn)))
-    (setq my--checked (1+ my--checked))
+    (setq iys--checked (1+ iys--checked))
     (unless ok
-      (setq my--bad (1+ my--bad))
+      (setq iys--bad (1+ iys--bad))
       (let ((i 0))
         (while (and (< i (min (length fo) (length fn))) (equal (nth i fo) (nth i fn)))
           (setq i (1+ i)))
@@ -55,9 +55,9 @@
 
 (dolist (arg command-line-args-left)
   (cond
-   ((string-prefix-p "--rev=" arg) (setq my--rev (substring arg 6)))
+   ((string-prefix-p "--rev=" arg) (setq iys--rev (substring arg 6)))
    ((member arg '("--" "-q" "-Q")) nil)
-   (t (my--check-file arg))))
+   (t (iys--check-file arg))))
 
-(princ (format "\n%s：检查 %d 个文件，%d 个代码有变化\n" my--rev my--checked my--bad))
-(kill-emacs (if (zerop my--bad) 0 1))
+(princ (format "\n%s：检查 %d 个文件，%d 个代码有变化\n" iys--rev iys--checked iys--bad))
+(kill-emacs (if (zerop iys--bad) 0 1))

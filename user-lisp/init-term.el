@@ -17,7 +17,7 @@
 (add-hook 'eshell-mode-hook
           (lambda () (eshell-syntax-highlighting-global-mode 1)))
 
-(defun my/eshell-clear-executable-cache ()
+(defun iys/eshell-clear-executable-cache ()
   "清空 vendored 高亮器的 `executable-find' 缓存。"
   (interactive)
   (require 'eshell-syntax-highlighting)
@@ -35,10 +35,10 @@
   (setq ghostel-shell "pwsh"))
 
 ;; ⚠ global-display-line-numbers-mode 在 mode hook 之后才生效，只能用 after-change-major-mode-hook 关
-(defun my--ghostel-no-line-numbers ()
+(defun iys--ghostel-no-line-numbers ()
   (when (derived-mode-p 'ghostel-mode)
     (display-line-numbers-mode -1)))
-(add-hook 'after-change-major-mode-hook #'my--ghostel-no-line-numbers t)
+(add-hook 'after-change-major-mode-hook #'iys--ghostel-no-line-numbers t)
 
 (add-hook 'eshell-load-hook #'ghostel-eshell-visual-command-mode)
 (defalias 'eshell/v #'eshell/ghostel)
@@ -46,7 +46,7 @@
 (add-hook 'comint-mode-hook #'ghostel-comint-mode)
 
 ;; ghostel buffer 在 consult-buffer 里单独成组（窄化键 t，与 tab-line 分组的 g 区分开）
-(defvar my/consult--source-ghostel
+(defvar iys/consult--source-ghostel
   `( :name     "Ghostel"
      :narrow   ?t
      :category buffer
@@ -61,7 +61,7 @@
   "consult-buffer 的 ghostel 终端分组。")
 
 (with-eval-after-load 'consult
-  (add-to-list 'consult-buffer-sources 'my/consult--source-ghostel 'append)
+  (add-to-list 'consult-buffer-sources 'iys/consult--source-ghostel 'append)
   ;; ⚠ 不排掉的话 ghostel buffer 会在 Buffer 组里再出现一份
   (setq consult-source-buffer
         `( :name     "Buffer"
@@ -82,7 +82,7 @@
 ;; ⚠ 走 shell 且 -NoExit：命令跑完要留在同一个终端里；Windows 上 npm/lazygit 是 .cmd，argv 起不来
 ;; ⚠ pwsh -Command 会把 $PSStyle.OutputRendering 设成 PlainText，-NoExit 之后也不恢复，
 ;;   starship 写进提示符的颜色码会被剥掉。先改回 Ansi。
-(defun my--ghostel-run-command (command)
+(defun iys--ghostel-run-command (command)
   "Return (PROGRAM . ARGS) that runs COMMAND and then keeps a shell in the buffer."
   (if (eq system-type 'windows-nt)
       (cons "pwsh" (list "-NoLogo" "-NoExit" "-Command"
@@ -90,7 +90,7 @@
     (let ((shell (or (getenv "SHELL") "/bin/sh")))
       (cons shell (list "-c" (format "%s; exec %s -i" command shell))))))
 
-(defun my/ghostel-run (command)
+(defun iys/ghostel-run (command)
   "Run COMMAND in a fresh ghostel buffer at `default-directory'.
 The shell stays alive afterwards, so the buffer is usable as a terminal."
   (interactive (list (read-shell-command "Ghostel: ")))
@@ -98,7 +98,7 @@ The shell stays alive afterwards, so the buffer is usable as a terminal."
     (user-error "Empty command"))
   (require 'ghostel)
   (let* ((dir default-directory)
-         (spec (my--ghostel-run-command command))
+         (spec (iys--ghostel-run-command command))
          (buffer (generate-new-buffer (format "*ghostel: %s*" (string-trim command)))))
     (switch-to-buffer buffer)
     (setq default-directory dir)

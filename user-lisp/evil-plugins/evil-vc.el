@@ -6,7 +6,7 @@
 
 ;; 只读模式把插入/修改类命令 remap 成 ignore（对应 evil-collection-inhibit-insert-state）；eval-and-compile：宏编译期要读它
 (eval-and-compile
-  (defconst my--evil-vc-readonly-commands
+  (defconst iys--evil-vc-readonly-commands
     '(evil-append evil-append-line evil-insert evil-insert-line
       evil-change evil-change-line evil-substitute evil-change-whole-line
       evil-delete evil-delete-line evil-delete-char evil-delete-backward-char
@@ -15,16 +15,16 @@
       evil-shift-left evil-shift-right evil-invert-char)))
 
 ;; 只读收尾 q/ZZ/ZQ + remap；必须传字面量 map 符号
-(defmacro my--evil-vc-readonly-bindings (map)
+(defmacro iys--evil-vc-readonly-bindings (map)
   "Apply evil-collection's read-only bindings to literal keymap MAP."
   `(evil-define-key 'normal ,map
      (kbd "ZZ") 'quit-window
      (kbd "ZQ") 'evil-quit
      ,@(apply #'append
               (mapcar (lambda (c) `((vector 'remap ',c) #'ignore))
-                      my--evil-vc-readonly-commands))))
+                      iys--evil-vc-readonly-commands))))
 
-(defun my/diff-toggle-context-unified (start end)
+(defun iys/diff-toggle-context-unified (start end)
   "Toggle between context and unified diff views.
 START and END are either taken from the region or cover the whole buffer."
   (interactive (if (or current-prefix-arg (use-region-p))
@@ -36,7 +36,7 @@ START and END are either taken from the region or cover the whole buffer."
     (when (= old-point-max (point-max))
       (diff-context->unified start end))))
 
-(defun my/diff-toggle-restrict-view (&optional arg)
+(defun iys/diff-toggle-restrict-view (&optional arg)
   "Toggle restriction of the view to the current hunk.
 With prefix ARG, restrict to the current file instead."
   (interactive "P")
@@ -99,7 +99,7 @@ With prefix ARG, restrict to the current file instead."
     (kbd "gO")        'vc-dir-display-file
     (kbd "gf")        'vc-dir-find-file
     (kbd "gr")        'revert-buffer)
-  (my--evil-vc-readonly-bindings vc-dir-mode-map)
+  (iys--evil-vc-readonly-bindings vc-dir-mode-map)
 
   (evil-define-key 'normal diff-mode-map
     (kbd "ge")  'diff-ediff-patch
@@ -110,11 +110,11 @@ With prefix ARG, restrict to the current file instead."
     (kbd "gX")  'diff-file-kill
     (kbd "gx")  'diff-hunk-kill
     (kbd "gi")  'next-error-follow-minor-mode
-    (kbd "go")  'my/diff-toggle-restrict-view
+    (kbd "go")  'iys/diff-toggle-restrict-view
     (kbd "g~")  'diff-reverse-direction
     (kbd "gs")  'diff-split-hunk
     (kbd "gc")  'diff-test-hunk
-    (kbd "g%")  'my/diff-toggle-context-unified
+    (kbd "g%")  'iys/diff-toggle-context-unified
     (kbd "g#")  'diff-ignore-whitespace-hunk
     (kbd "RET")       'diff-goto-source
     (kbd "<return>")  'diff-goto-source

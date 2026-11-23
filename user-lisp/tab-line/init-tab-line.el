@@ -3,29 +3,29 @@
 ;; ⚠ 不能省：否则 let 覆写会被当词法变量
 (require 'tab-line)
 
-(defconst my/tab-line-group-name-max 20
+(defconst iys/tab-line-group-name-max 20
   "tab-line 分组名（项目名）最多显示的字符数，超出截断并加省略号。")
 
-(defun my/tab-line--shorten-name (name)
-  "把项目名 NAME 截到 `my/tab-line-group-name-max' 个字符，超出加省略号。"
-  (if (and (> my/tab-line-group-name-max 1)
-           (> (length name) my/tab-line-group-name-max))
-      (concat (substring name 0 (1- my/tab-line-group-name-max)) "…")
+(defun iys/tab-line--shorten-name (name)
+  "把项目名 NAME 截到 `iys/tab-line-group-name-max' 个字符，超出加省略号。"
+  (if (and (> iys/tab-line-group-name-max 1)
+           (> (length name) iys/tab-line-group-name-max))
+      (concat (substring name 0 (1- iys/tab-line-group-name-max)) "…")
     name))
 
-(defun my/tab-line-buffer-group-by-project (&optional buffer)
+(defun iys/tab-line-buffer-group-by-project (&optional buffer)
   "Group buffers by project root via project.el.
 每个项目分成两个组：文件 buffer 归 \"[项目]\"，非文件 buffer（编译 / xref /
 help / eshell / VC 等）归 \"|项目|\"；不在任何项目内的 buffer 归 \"Other\"。
-项目名超过 `my/tab-line-group-name-max' 个字符会截断并加省略号。
-⚠ 返回值同时是分组的\"身份\"标识（`my/tab-line--group-buffers' 用 `equal' 比较），
+项目名超过 `iys/tab-line-group-name-max' 个字符会截断并加省略号。
+⚠ 返回值同时是分组的\"身份\"标识（`iys/tab-line--group-buffers' 用 `equal' 比较），
 截断后若两个项目名前部相同，会被当成同一个组。"
   (with-current-buffer (or buffer (current-buffer))
     (let* ((file (buffer-file-name))
            (dir (or file default-directory))
            (proj (project-current nil dir))
            (root (when proj (project-root proj)))
-           (name (my/tab-line--shorten-name
+           (name (iys/tab-line--shorten-name
                   (if root
                       (file-name-nondirectory (directory-file-name root))
                     "Other"))))
@@ -34,7 +34,7 @@ help / eshell / VC 等）归 \"|项目|\"；不在任何项目内的 buffer 归 
        (root (concat "|" name "|"))
        (t " Other ")))))
 
-(defun my/tab-line--popup-buffer-p (buf)
+(defun iys/tab-line--popup-buffer-p (buf)
   "BUF 是否应该被排除在 tab-line 之外：popper 弹窗或 dashboard 首页。
 两者过去在 centaur-tabs 下都是靠 `centaur-tabs-local-mode' 局部开启 tab 栏，
 等价于「默认不出现在全局 tab 栏」——这里在过滤层面还原同样效果。
@@ -46,7 +46,7 @@ popper 未加载/`popper-mode' 未开启时 `popper-popup-p' 不存在，做特�
         (and (featurep 'popper) (fboundp 'popper-popup-p)
              (popper-popup-p buf)))))
 
-(defun my/tab-line-filter (buffers)
+(defun iys/tab-line-filter (buffers)
   "Filter out Eglot buffers / popper 弹窗 / dashboard buffer from tab-line."
   (let (result)
     (dolist (buf buffers (nreverse result))
@@ -54,16 +54,16 @@ popper 未加载/`popper-mode' 未开启时 `popper-popup-p' 不存在，做特�
         (unless (or (and name
                           (let ((case-fold-search t))
                             (string-match-p "\\`\\s-*\\*eglot" name)))
-                    (my/tab-line--popup-buffer-p buf))
+                    (iys/tab-line--popup-buffer-p buf))
           (push buf result))))))
 
-(defun my/tab-line--hide-tab-line (buf)
+(defun iys/tab-line--hide-tab-line (buf)
   "关掉 BUF 局部的 `tab-line-mode'。"
   (when (buffer-live-p buf)
     (with-current-buffer buf
       (when tab-line-mode (tab-line-mode -1)))))
 
-(defun my/tab-line--show-tab-line (buf)
+(defun iys/tab-line--show-tab-line (buf)
   "把 tab-line 还给 BUF。
 走 `tab-line-mode--turn-on' 而不是直接 `(tab-line-mode 1)'：前者是 `global-tab-line-mode'
 自己用的开启入口，会复查 minibuffer / `tab-line-exclude-modes' / `tab-line-exclude-buffers'
@@ -76,96 +76,96 @@ popper 未加载/`popper-mode' 未开启时 `popper-popup-p' 不存在，做特�
                  (fboundp 'tab-line-mode--turn-on))
         (tab-line-mode--turn-on)))))
 
-(defun my/tab-line--hide-in-popups (&rest _)
+(defun iys/tab-line--hide-in-popups (&rest _)
   "把当前所有打开着的 popper 弹窗的 tab-line 关掉。
 `popper-open-popup-alist' 的元素形如 (window . buffer)，按定义全是弹窗，不必再判状态。"
   (dolist (win-buf popper-open-popup-alist)
-    (my/tab-line--hide-tab-line (cdr win-buf))))
+    (iys/tab-line--hide-tab-line (cdr win-buf))))
 
-(defun my/tab-line--restore-on-raise (&optional buffer &rest _)
+(defun iys/tab-line--restore-on-raise (&optional buffer &rest _)
   "`popper-raise-popup' 之后把 tab-line 还给被提升的 BUFFER（参数语义与它一致）。"
-  (my/tab-line--show-tab-line (get-buffer (or buffer (current-buffer)))))
+  (iys/tab-line--show-tab-line (get-buffer (or buffer (current-buffer)))))
 
-(defun my/tab-line--restore-in-alist (win-buf-alist &rest _)
+(defun iys/tab-line--restore-in-alist (win-buf-alist &rest _)
   "popper-mode 关闭时，把 tab-line 还给 WIN-BUF-ALIST 里的所有 buffer。
 ⚠ 这里不能靠 `popper-popup-status' 判断该不该还——popper 关闭时只还原 mode-line、清空
 两张 alist，buffer 里的 `popper-popup-status' 仍留着 \\='popup 这个旧值。"
   (dolist (win-buf win-buf-alist)
-    (my/tab-line--show-tab-line (cdr win-buf))))
+    (iys/tab-line--show-tab-line (cdr win-buf))))
 
 (with-eval-after-load 'popper
-  (advice-add 'popper--update-popups      :after #'my/tab-line--hide-in-popups)
-  (advice-add 'popper-raise-popup         :after #'my/tab-line--restore-on-raise)
-  (advice-add 'popper--restore-mode-lines :after #'my/tab-line--restore-in-alist))
+  (advice-add 'popper--update-popups      :after #'iys/tab-line--hide-in-popups)
+  (advice-add 'popper-raise-popup         :after #'iys/tab-line--restore-on-raise)
+  (advice-add 'popper--restore-mode-lines :after #'iys/tab-line--restore-in-alist))
 
-(defconst my/tab-line-tab-padding " "
+(defconst iys/tab-line-tab-padding " "
   "每个标签左右各留的字面空格 padding。用文本字符撑，而不是 face 的 `:box'
 水平 line-width——实测 tab-line 下 `:box' 的水平 line-width 不会用 `:color' 真正
 填充那片区域，会透出整条 tab-line bar 自己的背景色，达不到\"padding 属于标签
 自己\"的效果（同样的 `:box' 用在垂直方向撑上下 padding 则没这个问题，见
-`user-lisp/init-bars.el' 的 `my/ui--v-box'）。字面空格必然跟标签名共享同一个容器
+`user-lisp/init-bars.el' 的 `iys/ui--v-box'）。字面空格必然跟标签名共享同一个容器
 face（由 `tab-line-tab-name-format-default' 统一 propertize/套用），颜色不会错，
 是更可靠的写法。
 选中/未选中标签统一用这一个值，不做宽度上的区分——\"当前调用是否在渲染选中
 标签\"这个判断在更下游的 `tab-line-tab-name-format-default' 里（依赖 window 而
 非单纯 buffer），要在这里复现同样判断只为了让选中标签的 padding 宽一点，不值得
 为宽度差异专门搭一份逻辑；选中态靠颜色块 + 加粗已经足够醒目，见 `init-bars.el'
-的 `my/ui-setup-bars'。")
+的 `iys/ui-setup-bars'。")
 
-(defun my/tab-line-tab-name (buffer &optional _buffers)
+(defun iys/tab-line-tab-name (buffer &optional _buffers)
   "tab 标签文本：左右 padding + buffer 名 +（文件改动未存时）● 标记。
 覆写 `tab-line-tab-name-function'。截断仍由 `tab-line-tab-name-truncated-max' 处理。"
-  (concat my/tab-line-tab-padding
+  (concat iys/tab-line-tab-padding
           (buffer-name buffer)
           (and (buffer-local-value 'buffer-file-name buffer)
                (buffer-modified-p buffer)
                " ●")
-          my/tab-line-tab-padding))
+          iys/tab-line-tab-padding))
 
-(defun my/tab-line-refresh (&rest _)
+(defun iys/tab-line-refresh (&rest _)
   "改动/保存后刷新 tab-line，让 ● 修改标记及时更新
 （tab-line 的默认缓存键不含 `buffer-modified-p'，不主动刷会滞后）。"
   (force-mode-line-update t))
 
-(defun my/tab-line--group-buffers (&optional group)
+(defun iys/tab-line--group-buffers (&optional group)
   "返回当前 tab-line 分组 GROUP（默认取当前 buffer 所在组）里、
 实际会显示为 tab 的 buffer 列表，顺序与 tab-line 实际展示顺序一致。
 直接复用 `tab-line-tabs-buffer-list-function'（已叠加本文件 eglot/popper/dashboard
 过滤 advice）而不是另起一份枚举逻辑——否则很容易跟 tab-line 真实显示的内容跑偏。
 排序复用 `tab-line-tabs-buffer-group-sort-function'，与 tab-line 内部
 `tab-line-tabs-buffer-groups' 构建标签顺序时用的排序一致。"
-  (let* ((group (or group (my/tab-line-buffer-group-by-project (current-buffer))))
+  (let* ((group (or group (iys/tab-line-buffer-group-by-project (current-buffer))))
          (bufs (seq-filter
-                (lambda (b) (equal (my/tab-line-buffer-group-by-project b) group))
+                (lambda (b) (equal (iys/tab-line-buffer-group-by-project b) group))
                 (funcall tab-line-tabs-buffer-list-function))))
     (if (functionp tab-line-tabs-buffer-group-sort-function)
         (seq-sort tab-line-tabs-buffer-group-sort-function bufs)
       bufs)))
 
-(defun my/tab-line-kill-group-buffers ()
+(defun iys/tab-line-kill-group-buffers ()
   "关闭当前 tab 分组（当前 project）内的所有 buffer。
 对应 centaur-tabs 的 `centaur-tabs-kill-all-buffers-in-current-group'。"
   (interactive)
-  (let ((bufs (my/tab-line--group-buffers)))
+  (let ((bufs (iys/tab-line--group-buffers)))
     (if (null bufs)
         (message "当前分组没有可关闭的 buffer")
       (mapc #'kill-buffer bufs))))
 
-(defun my/tab-line-kill-other-group-buffers ()
+(defun iys/tab-line-kill-other-group-buffers ()
   "关闭当前 tab 分组内除当前 buffer 外的所有 buffer。
 对应 centaur-tabs 的 `centaur-tabs-kill-other-buffers-in-current-group'。"
   (interactive)
-  (let ((bufs (remq (current-buffer) (my/tab-line--group-buffers))))
+  (let ((bufs (remq (current-buffer) (iys/tab-line--group-buffers))))
     (if (null bufs)
         (message "当前分组没有其它 buffer 可关闭")
       (mapc #'kill-buffer bufs))))
 
-(defconst my/tab-line-ace-jump-keys (append "asdfghjklqwertyuiopzxcvbnm" nil)
+(defconst iys/tab-line-ace-jump-keys (append "asdfghjklqwertyuiopzxcvbnm" nil)
   "ace-jump 可选字母池，主键位优先。当前分组 tab 数超过 26 个时，
 超出部分本轮不参与标注/跳转——这是刻意的简化：同一 project 分组同时开 26+ 个
 buffer tab 的场景已经超出人工数字母找 tab 的实用范围，不值得为此加多字符标签。")
 
-(defun my/tab-line-ace-jump (&optional arg)
+(defun iys/tab-line-ace-jump (&optional arg)
   "为当前分组内每个 tab 标一个字母，按字母跳过去。
 原生 tab-line 版对应 `centaur-tabs-ace-jump'。ARG 为 \\=`C-u C-u'（即 `(16)'）时，
 改为关闭选中的 tab 而不是跳转过去；centaur-tabs 原版 `C-u' 单前缀的「交换 tab 顺序」
@@ -176,8 +176,8 @@ buffer tab 的场景已经超出人工数字母找 tab 的实用范围，不值�
 新标签不会显示。这里用 `tab-line-force-update' 在覆写前后各清一次缓存：
 覆写前清一次让本轮字母标签能画出来；恢复原函数后再清一次，避免字母标签残留到下次显示。"
   (interactive "P")
-  (let* ((bufs (my/tab-line--group-buffers))
-         (label-alist (seq-mapn #'cons my/tab-line-ace-jump-keys bufs)))
+  (let* ((bufs (iys/tab-line--group-buffers))
+         (label-alist (seq-mapn #'cons iys/tab-line-ace-jump-keys bufs)))
     (if (null label-alist)
         (message "当前分组没有 tab 可跳转")
       (let ((orig tab-line-tab-name-function)
@@ -204,40 +204,40 @@ buffer tab 的场景已经超出人工数字母找 tab 的实用范围，不值�
 
 (progn
   (setq tab-line-tabs-function 'tab-line-tabs-buffer-groups)
-  (setq tab-line-tabs-buffer-group-function #'my/tab-line-buffer-group-by-project)
-  (setq tab-line-tab-name-function #'my/tab-line-tab-name)
+  (setq tab-line-tabs-buffer-group-function #'iys/tab-line-buffer-group-by-project)
+  (setq tab-line-tab-name-function #'iys/tab-line-tab-name)
   (setq tab-line-close-button-show nil)
   (setq tab-line-separator "")
   ;; ⚠ 内置默认不含 tab-line-tab-face-group，不补上分组名 face 不生效
   (add-to-list 'tab-line-tab-face-functions #'tab-line-tab-face-group)
-  (advice-add 'tab-line-tabs-buffer-list :filter-return #'my/tab-line-filter))
+  (advice-add 'tab-line-tabs-buffer-list :filter-return #'iys/tab-line-filter))
 
-(add-hook 'first-change-hook #'my/tab-line-refresh)
-(add-hook 'after-save-hook   #'my/tab-line-refresh)
+(add-hook 'first-change-hook #'iys/tab-line-refresh)
+(add-hook 'after-save-hook   #'iys/tab-line-refresh)
 
 (add-hook 'after-init-hook 'global-tab-line-mode)
 
-(defun my/tab-line--group-names ()
+(defun iys/tab-line--group-names ()
   "当前所有 tab-line 分组名（按字母序去重），供 consult `?g' 源枚举。"
   (seq-sort #'string<
             (seq-uniq
-             (mapcar #'my/tab-line-buffer-group-by-project
+             (mapcar #'iys/tab-line-buffer-group-by-project
                      (funcall tab-line-tabs-buffer-list-function)))))
 
-(defun my/tab-line-switch-group (group)
+(defun iys/tab-line-switch-group (group)
   "把当前窗口的 tab-line 切到 GROUP 分组视图，不改变当前 buffer。"
   (set-window-parameter nil 'tab-line-group group)
   (tab-line-force-update nil))
 
-(defvar my/consult--source-tab-line-group
+(defvar iys/consult--source-tab-line-group
   `( :name     "Tab Group"
      :narrow   ?g
-     :items    ,#'my/tab-line--group-names
-     :action   ,#'my/tab-line-switch-group)
+     :items    ,#'iys/tab-line--group-names
+     :action   ,#'iys/tab-line-switch-group)
   "consult-buffer 的 tab-line 分组切换源。")
 
 (with-eval-after-load 'consult
-  (add-to-list 'consult-buffer-sources 'my/consult--source-tab-line-group 'append))
+  (add-to-list 'consult-buffer-sources 'iys/consult--source-tab-line-group 'append))
 
 ;; ⚠ provide 名撞内置库 tab-line.el
 (provide 'init-tab-line)

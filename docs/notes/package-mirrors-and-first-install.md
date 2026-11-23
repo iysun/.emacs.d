@@ -3,7 +3,7 @@
 ## 镜像
 
 包源集中在 **`user-lisp/init-mirrors.el`**（唯一定义处），只保留 USTC 一套常量。
-**换镜像只改 `my/package-archives-ustc` 里的 URL。**
+**换镜像只改 `iys/package-archives-ustc` 里的 URL。**
 
 只有一处使用方：`init.el` 里 `(require 'init-mirrors)`（在任何 package 安装/刷新之前生效）。不要再在别处写 `package-archives`。
 

@@ -6,12 +6,12 @@
 ;; ⚠ 别引入 diff-hl/flydiff：全局 idle timer 给每个改过的 buffer 起 git diff（Windows 贵），CRLF 警告还会误报 hunk
 (setq vc-dir-auto-hide-up-to-date 'revert)
 
-(defun my/auto-smerge-mode ()
+(defun iys/auto-smerge-mode ()
   (save-excursion
     (goto-char (point-min))
     (when (re-search-forward "^<<<<<<< " nil t)
       (smerge-mode 1))))
-(add-hook 'find-file-hook #'my/auto-smerge-mode)
+(add-hook 'find-file-hook #'iys/auto-smerge-mode)
 
 ;; ⚠ 显式 require：不取 defhydra 宏，字节编译会把它当函数调用，.elc 加载即 void-variable
 (require 'hydra)

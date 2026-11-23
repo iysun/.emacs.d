@@ -21,7 +21,7 @@
   意味着 PATH 变化后旧条目自动不再命中。
 - 缓存值：可执行文件路径或 `nil`（负缓存）。
 
-`init-term.el` 里保留一个 `my/eshell-clear-executable-cache` 包装命令，方便 `M-x` 找。
+`init-term.el` 里保留一个 `iys/eshell-clear-executable-cache` 包装命令，方便 `M-x` 找。
 
 ## 升级
 

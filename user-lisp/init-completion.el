@@ -10,7 +10,7 @@
   )
 
 ;; 拼音首字母：z→[z中张…]，故 zw 命中「中文」；要求首字母连续
-(defun my/orderless-pinyin (component)
+(defun iys/orderless-pinyin (component)
   "把纯 ASCII 字母组件按拼音首字母匹配中文候选。"
   (when (and (>= (length component) 2)
              (string-match-p "\\`[a-zA-Z]+\\'" component))
@@ -18,7 +18,7 @@
     (orderless-regexp (pinyinlib-build-regexp-string component t))))
 
 (with-eval-after-load 'orderless
-  (add-to-list 'orderless-matching-styles #'my/orderless-pinyin))
+  (add-to-list 'orderless-matching-styles #'iys/orderless-pinyin))
 
 (add-hook 'after-init-hook 'marginalia-mode)
 
@@ -66,7 +66,7 @@
   )
 
 ;; ---- 搜索种子：单行选区优先，否则取光标处内容 ----
-(defun my/search-seed (&optional thing)
+(defun iys/search-seed (&optional thing)
   "单行选区 → 选区文本；否则 → 光标处的 THING（默认 symbol）。"
   (cond
    ((use-region-p)
@@ -75,7 +75,7 @@
         (string-trim (buffer-substring-no-properties beg end)))))
    (t (thing-at-point (or thing 'symbol) t))))
 
-(defun my/search--delete-seed ()
+(defun iys/search--delete-seed ()
   "种子仍整段选中时，DEL/Delete 删掉整段而不是一个字符。"
   (when (and (use-region-p)
              (memq this-command '(delete-backward-char delete-char
@@ -86,74 +86,74 @@
     (deactivate-mark)
     (setq this-command 'ignore)))
 
-(defun my/search--select-seed ()
+(defun iys/search--select-seed ()
   "选中 minibuffer 里的初始输入，并让 DEL/Delete 能一次清空。"
   (when (and (minibufferp) (> (point-max) (minibuffer-prompt-end)))
     (push-mark (minibuffer-prompt-end) nil t)
     (goto-char (point-max))
-    (add-hook 'pre-command-hook #'my/search--delete-seed nil t)))
+    (add-hook 'pre-command-hook #'iys/search--delete-seed nil t)))
 
 ;; 下面每个 wrapper 都让 M-s 开头的搜索带上光标处内容，并在 minibuffer 里全选
-(defun my/consult-line (&optional arg)
+(defun iys/consult-line (&optional arg)
   "`consult-line'，带光标处内容作为初始输入。"
   (interactive "P")
-  (minibuffer-with-setup-hook #'my/search--select-seed
-    (consult-line (my/search-seed) (and arg t))))
+  (minibuffer-with-setup-hook #'iys/search--select-seed
+    (consult-line (iys/search-seed) (and arg t))))
 
-(defun my/consult-line-multi (&optional query)
+(defun iys/consult-line-multi (&optional query)
   "`consult-line-multi'，带光标处内容作为初始输入。"
   (interactive "P")
-  (minibuffer-with-setup-hook #'my/search--select-seed
-    (consult-line-multi query (my/search-seed))))
+  (minibuffer-with-setup-hook #'iys/search--select-seed
+    (consult-line-multi query (iys/search-seed))))
 
-(defun my/consult-ripgrep (&optional dir)
+(defun iys/consult-ripgrep (&optional dir)
   "`consult-ripgrep'，带光标处内容作为初始输入。"
   (interactive "P")
-  (minibuffer-with-setup-hook #'my/search--select-seed
-    (consult-ripgrep dir (my/search-seed))))
+  (minibuffer-with-setup-hook #'iys/search--select-seed
+    (consult-ripgrep dir (iys/search-seed))))
 
-(defun my/consult-grep (&optional dir)
+(defun iys/consult-grep (&optional dir)
   "`consult-grep'，带光标处内容作为初始输入。"
   (interactive "P")
-  (minibuffer-with-setup-hook #'my/search--select-seed
-    (consult-grep dir (my/search-seed))))
+  (minibuffer-with-setup-hook #'iys/search--select-seed
+    (consult-grep dir (iys/search-seed))))
 
-(defun my/consult-git-grep (&optional dir)
+(defun iys/consult-git-grep (&optional dir)
   "`consult-git-grep'，带光标处内容作为初始输入。"
   (interactive "P")
-  (minibuffer-with-setup-hook #'my/search--select-seed
-    (consult-git-grep dir (my/search-seed))))
+  (minibuffer-with-setup-hook #'iys/search--select-seed
+    (consult-git-grep dir (iys/search-seed))))
 
-(defun my/consult-fd (&optional dir)
+(defun iys/consult-fd (&optional dir)
   "`consult-fd'，优先用光标处的文件名作为初始输入。"
   (interactive "P")
-  (minibuffer-with-setup-hook #'my/search--select-seed
-    (consult-fd dir (or (my/search-seed 'filename) (my/search-seed)))))
+  (minibuffer-with-setup-hook #'iys/search--select-seed
+    (consult-fd dir (or (iys/search-seed 'filename) (iys/search-seed)))))
 
-(defun my/consult-locate (&optional initial)
+(defun iys/consult-locate (&optional initial)
   "`consult-locate'，优先用光标处的文件名作为初始输入。"
   (interactive)
-  (minibuffer-with-setup-hook #'my/search--select-seed
-    (consult-locate (or initial (my/search-seed 'filename) (my/search-seed)))))
+  (minibuffer-with-setup-hook #'iys/search--select-seed
+    (consult-locate (or initial (iys/search-seed 'filename) (iys/search-seed)))))
 
-(defun my/consult-keep-lines ()
+(defun iys/consult-keep-lines ()
   "`consult-keep-lines'，带光标处内容作为初始输入。"
   (interactive)
-  (minibuffer-with-setup-hook #'my/search--select-seed
+  (minibuffer-with-setup-hook #'iys/search--select-seed
     (consult-keep-lines
      (lambda (pattern cands)
        (consult--completion-filter-dispatch pattern cands 'consult-location 'highlight))
-     (my/search-seed))))
+     (iys/search-seed))))
 
-(defun my/consult-focus-lines ()
+(defun iys/consult-focus-lines ()
   "`consult-focus-lines'，带光标处内容作为初始输入。"
   (interactive)
-  (minibuffer-with-setup-hook #'my/search--select-seed
+  (minibuffer-with-setup-hook #'iys/search--select-seed
     (consult-focus-lines
      (lambda (pattern cands)
        (consult--completion-filter-dispatch pattern cands 'consult-location 'highlight))
      nil
-     (my/search-seed))))
+     (iys/search-seed))))
 
 (progn
   ;; ⚠ "." 走同步路径，会当场阻塞一次 LSP 往返
@@ -199,7 +199,7 @@
 (add-to-list 'completion-at-point-functions #'cape-abbrev)
 
 ;; ⚠ 行内预览会跑全局 capf（含 eglot 的完整 LSP 请求），须用下面的 advice 换成纯本地 capf 表
-(defvar my/completion-preview-capfs
+(defvar iys/completion-preview-capfs
   (list #'citre-completion-at-point #'cape-dabbrev #'cape-keyword #'cape-file)
   "行内预览专用的 capf 列表：只用本地廉价源，绝不含 LSP（eglot）。
 citre 放最前面——它靠查 tags 文件，比 dabbrev 精确（带 kind/signature 标注），
@@ -208,17 +208,17 @@ citre 放最前面——它靠查 tags 文件，比 dabbrev 精确（带 kind/si
 dabbrev 几乎对任何已在 buffer 里出现过的前缀都能凑出候选，排前面会先把
 后面的 capf 全部挡住。citre-mode 没开、或当前 buffer 没有 tags 数据库时
 它直接返回 nil，自动落到下面几个源。LSP 候选仍然走手动触发
-（C-M-i / `my/lsp-complete'）或 auto 档的 corfu。")
+（C-M-i / `iys/lsp-complete'）或 auto 档的 corfu。")
 
 ;; ⚠ eshell 只有参数位能给 pcomplete（命令位会枚举 exec-path，很慢）；换掉它则文件名无候选
-(defun my/completion-preview--eshell-in-args-p ()
+(defun iys/completion-preview--eshell-in-args-p ()
   "point 是否已经离开命令名那一段（命令名与 point 之间出现过空白）。
 起点用 `field-beginning'：提示符文本带 `field' = \\='prompt（`eshell-emit-prompt' 加的），
 输入区是另一个 field，所以这里取到的就是本次输入的开头，不会把提示符里的空格算进去。"
   (let ((beg (field-beginning (point) t)))
     (string-match-p "[ \t]" (buffer-substring-no-properties beg (point)))))
 
-(defun my/completion-preview--eshell-pcomplete ()
+(defun iys/completion-preview--eshell-pcomplete ()
   "只在参数位生效的 pcomplete capf，供行内预览用（理由见上面的注释）。
 ⚠ 必须补上 `:exclusive no'：`completion-preview--capf-wrapper' 在一个 capf 给不出
 候选时会返回 \\='(nil) 来**阻断**后面的 capf（只有声明了 `:exclusive no' 的才放行），
@@ -226,11 +226,11 @@ dabbrev 几乎对任何已在 buffer 里出现过的前缀都能凑出候选，�
 会被它挡住，落不到 cape-dabbrev，历史提示就没了。plist 里先出现的键优先，所以万一
 pcomplete 以后自己带了 `:exclusive'，这里追加的这份会被自动忽略，不会改变它的意图。"
   (when (and (fboundp 'pcomplete-completions-at-point)
-             (my/completion-preview--eshell-in-args-p))
+             (iys/completion-preview--eshell-in-args-p))
     (when-let* ((res (pcomplete-completions-at-point)))
       (append res '(:exclusive no)))))
 
-(defun my/completion-preview--capfs ()
+(defun iys/completion-preview--capfs ()
   "预览该用的 capf 列表。
 eshell/comint 里最前面放 `cape-history'——补的是 shell 历史（eshell 走
 `eshell-history-ring'，即 var/eshell/history 那份持久化历史；comint 走
@@ -249,20 +249,20 @@ comint 不加 pcomplete：那边的命令补全同样要扫 PATH，坑一样，�
 入口，留待真需要时再单独处理。"
   (cond
    ((derived-mode-p 'eshell-mode)
-    (append (list #'cape-history #'my/completion-preview--eshell-pcomplete)
-            my/completion-preview-capfs))
+    (append (list #'cape-history #'iys/completion-preview--eshell-pcomplete)
+            iys/completion-preview-capfs))
    ((derived-mode-p 'comint-mode)
-    (cons #'cape-history my/completion-preview-capfs))
-   (t my/completion-preview-capfs)))
+    (cons #'cape-history iys/completion-preview-capfs))
+   (t iys/completion-preview-capfs)))
 
-(defun my/completion-preview--local-capfs (orig &rest args)
-  "让 `completion-preview--update' 只看 `my/completion-preview--capfs' 给出的列表。"
-  (let ((completion-at-point-functions (my/completion-preview--capfs)))
+(defun iys/completion-preview--local-capfs (orig &rest args)
+  "让 `completion-preview--update' 只看 `iys/completion-preview--capfs' 给出的列表。"
+  (let ((completion-at-point-functions (iys/completion-preview--capfs)))
     (apply orig args)))
 
 (with-eval-after-load 'completion-preview
   (advice-add 'completion-preview--update :around
-              #'my/completion-preview--local-capfs)
+              #'iys/completion-preview--local-capfs)
   (setq completion-preview-minimum-symbol-length 2)
   ;; ⚠ 默认 nil = 每键同步跑一遍 capf，零防抖
   (setq completion-preview-idle-delay 0.05)
@@ -272,76 +272,76 @@ comint 不加 pcomplete：那边的命令补全同样要扫 PATH，坑一样，�
     (push cmd completion-preview-commands))
   )
 
-(defconst my/completion-styles '(auto manual preview-only)
+(defconst iys/completion-styles '(auto manual preview-only)
   "可选补全风格：
 auto         corfu 自动弹出（打字即弹），关闭行内预览；
-manual       corfu 仅手动触发（C-M-i / my/lsp-complete），开启行内预览；
+manual       corfu 仅手动触发（C-M-i / iys/lsp-complete），开启行内预览；
 preview-only 完全关闭 corfu 弹窗，只保留行内预览。")
 
-(defcustom my/completion-style nil
+(defcustom iys/completion-style nil
   "启动时应用的补全风格；nil 表示 manual。"
   :type '(choice (const auto) (const manual) (const preview-only))
   :group 'completion)
 
-(defun my/completion--preview-hook-list ()
+(defun iys/completion--preview-hook-list ()
   '(prog-mode-hook text-mode-hook eshell-mode-hook comint-mode-hook))
 
-(defun my/completion--set-preview-hooks (enable)
+(defun iys/completion--set-preview-hooks (enable)
   "把 completion-preview-mode 挂/摘到 prog/text/eshell/comint 四个 hook 上。"
-  (dolist (hook (my/completion--preview-hook-list))
+  (dolist (hook (iys/completion--preview-hook-list))
     (if enable
         (add-hook hook #'completion-preview-mode)
       (remove-hook hook #'completion-preview-mode))))
 
-(defun my/completion--sync-preview-buffers (enable)
+(defun iys/completion--sync-preview-buffers (enable)
   "把已打开、属于上述四类 major-mode 的 buffer 里的 completion-preview-mode 同步到 ENABLE。"
   (dolist (buf (buffer-list))
     (with-current-buffer buf
       (when (derived-mode-p 'prog-mode 'text-mode 'eshell-mode 'comint-mode)
         (completion-preview-mode (if enable 1 -1))))))
 
-(defun my/completion--set-corfu (enable)
+(defun iys/completion--set-corfu (enable)
   "联动 global-corfu-mode 与 corfu-popupinfo-mode。两者都是 :global t，
 用显式 1/-1 而非 hook 里的隐式 toggle，避免反复切换风格后状态漂移。"
   (global-corfu-mode (if enable 1 -1))
   (corfu-popupinfo-mode (if enable 1 -1)))
 
-(defun my--apply-completion-style (style)
+(defun iys--apply-completion-style (style)
   "按 STYLE（auto/manual/preview-only）应用补全行为，对已打开的 buffer 立即生效。"
   (pcase style
     ('auto
      (setq corfu-auto t)
-     (my/completion--set-corfu t)
-     (my/completion--set-preview-hooks nil)
-     (my/completion--sync-preview-buffers nil))
+     (iys/completion--set-corfu t)
+     (iys/completion--set-preview-hooks nil)
+     (iys/completion--sync-preview-buffers nil))
     ('manual
      (setq corfu-auto nil)
-     (my/completion--set-corfu t)
-     (my/completion--set-preview-hooks t)
-     (my/completion--sync-preview-buffers t))
+     (iys/completion--set-corfu t)
+     (iys/completion--set-preview-hooks t)
+     (iys/completion--sync-preview-buffers t))
     ('preview-only
-     (my/completion--set-corfu nil)
-     (my/completion--set-preview-hooks t)
-     (my/completion--sync-preview-buffers t))
+     (iys/completion--set-corfu nil)
+     (iys/completion--set-preview-hooks t)
+     (iys/completion--sync-preview-buffers t))
     (_ (error "未知补全风格: %s" style))))
 
-(defun my/switch-completion-style (style)
-  "交互切换补全风格并持久化到 custom.el（仿 my/switch-emacs-theme）。"
+(defun iys/switch-completion-style (style)
+  "交互切换补全风格并持久化到 custom.el（仿 iys/switch-emacs-theme）。"
   (interactive
    (list
     (intern (completing-read
              "select completion style: "
-             (mapcar #'symbol-name my/completion-styles)
+             (mapcar #'symbol-name iys/completion-styles)
              nil t))))
-  (my--apply-completion-style style)
-  (customize-save-variable 'my/completion-style style))
+  (iys--apply-completion-style style)
+  (customize-save-variable 'iys/completion-style style))
 
-(defun my/use-completion-style ()
-  (my--apply-completion-style
-   (if (and (boundp 'my/completion-style)
-            (memq my/completion-style my/completion-styles))
-       my/completion-style
+(defun iys/use-completion-style ()
+  (iys--apply-completion-style
+   (if (and (boundp 'iys/completion-style)
+            (memq iys/completion-style iys/completion-styles))
+       iys/completion-style
      'manual)))
-(add-hook 'after-init-hook 'my/use-completion-style)
+(add-hook 'after-init-hook 'iys/use-completion-style)
 
 (provide 'init-completion)

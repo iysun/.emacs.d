@@ -12,7 +12,7 @@
 
 (require 'use-package)
 
-(defvar my/packages
+(defvar iys/packages
   '(evil
     posframe
     multiple-cursors
@@ -43,13 +43,13 @@
 (no-littering-theme-backups)
 
 (when (executable-find "fd")
-  (add-to-list 'my/packages 'fd-dired))
+  (add-to-list 'iys/packages 'fd-dired))
 (when (executable-find "readtags")
-  (add-to-list 'my/packages 'citre))
+  (add-to-list 'iys/packages 'citre))
 
-(dolist (package my/packages)
+(dolist (package iys/packages)
   (eval `(use-package ,package :ensure t :defer t)))
-;; evil-surround / visualstar / commentary / gcmh 已内联进仓库，不从 elpa 装
+;; evil-surround / visualstar / commentary / gcmh / eshell-syntax-highlighting 已内联进仓库，不从 elpa 装
 
 ;; Emacs 31 自带实验性 markdown-ts-mode，但没打 autoload 也没进 auto-mode-alist
 (autoload 'markdown-ts-mode "markdown-ts-mode" nil t)
@@ -90,7 +90,7 @@
 (require 'init-isearch-pinyin)
 
 ;; ⚠ quickstart 快照过期不报错、静默用旧包集合，故自检：快照早于 elpa/ 就告警
-(defun my/check-quickstart-freshness ()
+(defun iys/check-quickstart-freshness ()
   "用 package-quickstart 启动时，若快照早于 elpa/ 最后改动则告警。"
   (when (and (bound-and-true-p package-quickstart)
              (bound-and-true-p package-quickstart-file))
@@ -108,6 +108,6 @@
                  (format-time-string "%F %R" (file-attribute-modification-time (file-attributes qs)))
                  (format-time-string "%F %R" (file-attribute-modification-time (file-attributes elpa))))
          :warning)))))
-(add-hook 'emacs-startup-hook #'my/check-quickstart-freshness)
+(add-hook 'emacs-startup-hook #'iys/check-quickstart-freshness)
 
 (provide 'init)

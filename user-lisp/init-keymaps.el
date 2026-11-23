@@ -1,12 +1,12 @@
 ;; init-keymaps.el 	-*- lexical-binding: t -*-
 
-(defun my/downcase-back()
+(defun iys/downcase-back()
   (interactive)
   (downcase-word -1))
-(defun my/upcase-back()
+(defun iys/upcase-back()
   (interactive)
   (upcase-word -1))
-(defun my/capitalize-back()
+(defun iys/capitalize-back()
   (interactive)
   (capitalize-word -1))
 
@@ -26,8 +26,8 @@
 (global-set-key (kbd "C-x t b") 'consult-buffer-other-tab)
 (global-set-key (kbd "C-x p b") 'consult-project-buffer)
 (global-set-key (kbd "C-x p t") 'ghostel-project)
-(global-set-key (kbd "C-x C-k") 'my/tab-line-kill-group-buffers)
-(global-set-key (kbd "C-x C-o") 'my/tab-line-kill-other-group-buffers)
+(global-set-key (kbd "C-x C-k") 'iys/tab-line-kill-group-buffers)
+(global-set-key (kbd "C-x C-o") 'iys/tab-line-kill-other-group-buffers)
 (global-set-key (kbd "M-#") 'consult-register-load)
 (global-set-key (kbd "M-'") 'consult-register-store)
 (global-set-key (kbd "C-M-#") 'consult-register)
@@ -43,7 +43,7 @@
 (global-set-key (kbd "C-c r") 'hydra-winner/winner-redo)
 
 (global-set-key (kbd "M-y") 'consult-yank-pop)
-(global-set-key (kbd "C-:") 'my/ghostel-run)
+(global-set-key (kbd "C-:") 'iys/ghostel-run)
 
 (global-set-key (kbd "M-g b") 'consult-bookmark)
 (global-set-key (kbd "M-g e") 'consult-compile-error)
@@ -54,19 +54,19 @@
 (global-set-key (kbd "M-g k") 'consult-global-mark)
 (global-set-key (kbd "M-g i") 'consult-imenu)
 (global-set-key (kbd "M-g I") 'consult-imenu-multi)
-(global-set-key (kbd "M-g t") 'my/tab-line-ace-jump)
+(global-set-key (kbd "M-g t") 'iys/tab-line-ace-jump)
 (global-set-key (kbd "M-g p") 'consult-project-buffer)
 
-(global-set-key (kbd "M-s f") 'my/consult-fd)
-(global-set-key (kbd "M-s c") 'my/consult-locate)
-(global-set-key (kbd "M-s g") 'my/consult-grep)
-(global-set-key (kbd "M-s G") 'my/consult-git-grep)
-(global-set-key (kbd "M-s r") 'my/consult-ripgrep)
-(global-set-key (kbd "M-s s") 'my/lsp-symbols)
-(global-set-key (kbd "M-s l") 'my/consult-line)
-(global-set-key (kbd "M-s L") 'my/consult-line-multi)
-(global-set-key (kbd "M-s k") 'my/consult-keep-lines)
-(global-set-key (kbd "M-s u") 'my/consult-focus-lines)
+(global-set-key (kbd "M-s f") 'iys/consult-fd)
+(global-set-key (kbd "M-s c") 'iys/consult-locate)
+(global-set-key (kbd "M-s g") 'iys/consult-grep)
+(global-set-key (kbd "M-s G") 'iys/consult-git-grep)
+(global-set-key (kbd "M-s r") 'iys/consult-ripgrep)
+(global-set-key (kbd "M-s s") 'iys/lsp-symbols)
+(global-set-key (kbd "M-s l") 'iys/consult-line)
+(global-set-key (kbd "M-s L") 'iys/consult-line-multi)
+(global-set-key (kbd "M-s k") 'iys/consult-keep-lines)
+(global-set-key (kbd "M-s u") 'iys/consult-focus-lines)
 (global-set-key (kbd "M-s e") 'consult-isearch-history)
 
 (global-set-key (kbd "C->") 'tab-line-switch-to-next-tab)
@@ -76,7 +76,7 @@
 (global-set-key (kbd "C--") 'popper-toggle)
 (global-set-key (kbd "C-=") 'popper-cycle)
 
-;; ⚠ 必须 global-set-key：my--mc-enter 会切 emacs-state，两态都要生效
+;; ⚠ 必须 global-set-key：iys--mc-enter 会切 emacs-state，两态都要生效
 (global-set-key (kbd "C-M-n") 'mc/mark-next-like-this)
 (global-set-key (kbd "C-M-p") 'mc/mark-previous-like-this)
 (global-set-key (kbd "C-M-m") 'mc/skip-to-next-like-this)

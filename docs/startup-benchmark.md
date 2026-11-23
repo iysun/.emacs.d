@@ -28,8 +28,11 @@ python scripts/bench-startup.py -n 8   # 跑 8 次（默认 6）
 
 <!-- 在此区粘贴 scripts/bench-startup.py 的输出块；或用 `-a` 自动追加 -->
 
-> ⚠️ 以下为**旧格式记录**（2026-06-25，Emacs 30.2，脚本当时还测「dump 映像 / 全量 / 精简 minimal」
-> 三种场景，含 `emacs.pdmp` 字段）。这些场景已随配置简化移除，数据仅供参考，**需重跑 `python scripts/bench-startup.py` 刷新**。
+> **当前数据看文末 `DESKTOP-RD7D8L3（2026-11-23）` 块**：Emacs 31.1 + native-comp，
+> `emacs-init-time` **min 0.349s / median 0.356s**。
+>
+> ⚠️ 下面 2026-06-25 的记录是**旧格式**（Emacs 30.2、无 native-comp，脚本当时还测「dump 映像 / 全量 /
+> 精简 minimal」三种场景，含 `emacs.pdmp` 字段）。这些场景已随配置简化移除，仅作历史对比，不要当现状。
 
 ### PC-20241114VUMP（2026-06-25）
 
@@ -60,3 +63,21 @@ python scripts/bench-startup.py -n 8   # 跑 8 次（默认 6）
 | 场景 | min(s) | 中位数(s) | 有效/总次数 |
 |---|---|---|---|
 | 普通全量 | 6.605 | 6.669 | 5/6 |
+
+### DESKTOP-RD7D8L3（2026-11-23）
+
+| 字段 | 值 |
+|---|---|
+| OS | Windows 11 (10.0.26100) |
+| CPU | AMD Ryzen 7 7840H with Radeon 780M Graphics（16 逻辑核） |
+| 内存 | 27.7 GB |
+| 磁盘 | SSD |
+| Emacs | GNU Emacs 31.1 |
+| native-comp | ✅ 可用 |
+
+| 场景 | min(s) | 中位数(s) | 有效/总次数 |
+|---|---|---|---|
+| 全量 | 0.349 | 0.356 | 5/6 |
+
+> 测量：`scripts/bench-startup.py`（每场景 6 次，去首次预热取 min/中位数；真实 GUI `emacs-init-time`，已 `--init-directory` 钉定本仓库）。
+> 备注：已移除 centaur-tabs / doom-modeline / magit / dashboard；package-quickstart + native-comp 生效。

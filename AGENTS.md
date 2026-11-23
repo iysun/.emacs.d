@@ -36,19 +36,19 @@
 | `user-lisp/` | 功能模块目录，由 Emacs 31 user-lisp 机制自动加入 load-path 并字节编译/生成 autoload |
 | `user-lisp/init-*.el` | 各功能模块（每个 `(provide 'init-xxx)`） |
 | `user-lisp/init-windows.el` | Windows 专项、无其它调用方的设置（文件属性/管道调优、控制台+剪贴板编码、git 环境变量…），非 Windows 平台空操作。由 `early-init.el` 最早期绝对路径 `load`。新增纯 OS-only 代码都加进这一个文件；跨平台功能不放这里 |
-| `user-lisp/evil-plugins/ime.el` | 跨平台输入法切换（`my/switch-to-english-input-method`，Windows 用 im-select.exe / Linux·macOS 用 fcitx5-remote）。由 `early-init.el` 绝对路径 `load` |
+| `user-lisp/evil-plugins/ime.el` | 跨平台输入法切换（`iys/switch-to-english-input-method`，Windows 用 im-select.exe / Linux·macOS 用 fcitx5-remote）。由 `early-init.el` 绝对路径 `load` |
 | `user-lisp/init-mirrors.el` | **包源镜像的唯一定义处**（`init.el` require 它，换镜像只改这一个文件） |
 | `user-lisp/init-bars.el` | **mode-line + tab-line** 的入口：两条 bar 共用的工具函数 + 字号/内边距统一设置（放一起改才不会顾此失彼）。本体 `require` 自 `user-lisp/mode-line`、`user-lisp/tab-line`。须在 `init-ui` 之后加载，复用其字体选择结果 |
 | `user-lisp/mode-line/init-mode-line.el` | mode-line 实现本体，`(provide 'init-mode-line)`，由 `init-bars.el` `require` |
 | `user-lisp/tab-line/init-tab-line.el` | tab-line 实现本体，`(provide 'init-tab-line)`。⚠ 特意不叫 `tab-line.el`：user-lisp 会把子目录**前置**到 load-path，叫 `tab-line.el` 会盖住内置库 |
 | `user-lisp/eshell-prompt/init-eshell-prompt.el` | eshell 提示符实现本体，由 `init-term.el` `require` |
 | `user-lisp/eshell-syntax-highlighting/` | **vendored** 的 `eshell-syntax-highlighting`（GPLv3，上游 20241222.2030），本地补丁给 `executable-find` 加缓存；由 `init-term.el` 的 `eshell-mode-hook` 加载。见其 `README.md` |
-| `user-lisp/lsp-symbols/init-lsp-symbols.el` | LSP `workspace/symbol` 搜索（consult 界面、按 SymbolKind 窄化、预览跳转），由 `init-lsp.el` `require`，命令 `my/lsp-symbols` 绑在 `M-s s`；没有 eglot 后端时退化为 `xref-find-apropos` |
-| `user-lisp/init-term.el` | 终端：eshell 全套（语法高亮用 vendored 的 `eshell-syntax-highlighting`，缓存 `executable-find`）+ ghostel（libghostty 终端，`C-c t` = `ghostel`、`C-x p t` = `ghostel-project`，shell 在 Windows 下为 `pwsh`，其余平台沿用 `$SHELL`）。⚠ Windows 走 ConPTY，原生模块与 `conpty.dll`/`OpenConsole.exe` 放 `var/ghostel/`（留包目录会被 MELPA 升级整目录替换删掉）；eshell 可视命令与 comint 输出解析也接 ghostel（`eshell-load-hook` / `comint-mode-hook` 上挂 mode，另有 `eshell/v` 内置命令）；evil 状态定为 `emacs`（insert/normal 键位会抢 C-a/C-e/C-k/C-u/C-p/C-n 和 ESC），semi-char 下这些键直通 shell，copy/line 模式各用自己键位，buffer 内关行号；`C-:` = `my/ghostel-run`（当前目录新开 ghostel 跑命令，命令结束仍留在同一终端）；`consult-buffer` 里 ghostel 单独成组（窄化键 `t`） |
-| `user-lisp/init-parens.el` | **括号显示**：默认很淡（`my/paren-face`）+ 光标处强调（`show-paren` 反显加粗）。机制**改编自 rainbow-delimiters**（GPLv3），只保留"走括号 + 跳过字符串/注释/转义/双字符 opener"的必要代码、砍掉深度配色机器，故不再依赖 `rainbow-delimiters`；淡色按主题 fg/bg 现场混合（用 `init-ui` 的 `my/ui--*`，须在其后 `require`） |
+| `user-lisp/lsp-symbols/init-lsp-symbols.el` | LSP `workspace/symbol` 搜索（consult 界面、按 SymbolKind 窄化、预览跳转），由 `init-lsp.el` `require`，命令 `iys/lsp-symbols` 绑在 `M-s s`；没有 eglot 后端时退化为 `xref-find-apropos` |
+| `user-lisp/init-term.el` | 终端：eshell 全套（语法高亮用 vendored 的 `eshell-syntax-highlighting`，缓存 `executable-find`）+ ghostel（libghostty 终端，`C-c t` = `ghostel`、`C-x p t` = `ghostel-project`，shell 在 Windows 下为 `pwsh`，其余平台沿用 `$SHELL`）。⚠ Windows 走 ConPTY，原生模块与 `conpty.dll`/`OpenConsole.exe` 放 `var/ghostel/`（留包目录会被 MELPA 升级整目录替换删掉）；eshell 可视命令与 comint 输出解析也接 ghostel（`eshell-load-hook` / `comint-mode-hook` 上挂 mode，另有 `eshell/v` 内置命令）；evil 状态定为 `emacs`（insert/normal 键位会抢 C-a/C-e/C-k/C-u/C-p/C-n 和 ESC），semi-char 下这些键直通 shell，copy/line 模式各用自己键位，buffer 内关行号；`C-:` = `iys/ghostel-run`（当前目录新开 ghostel 跑命令，命令结束仍留在同一终端）；`consult-buffer` 里 ghostel 单独成组（窄化键 `t`） |
+| `user-lisp/init-parens.el` | **括号显示**：默认很淡（`iys/paren-face`）+ 光标处强调（`show-paren` 反显加粗）。机制**改编自 rainbow-delimiters**（GPLv3），只保留"走括号 + 跳过字符串/注释/转义/双字符 opener"的必要代码、砍掉深度配色机器，故不再依赖 `rainbow-delimiters`；淡色按主题 fg/bg 现场混合（用 `init-ui` 的 `iys/ui--*`，须在其后 `require`） |
 | `user-lisp/evil-plugins/` | evil 相关插件合集：**内联**的 `evil-surround` / `evil-commentary`(+integration) / `evil-visualstar`（GPLv3），以及本仓库的 `evil-config.el` / `evil-keymaps.el` / `evil-vc.el` / `evil-dired.el` / `evil-ibuffer.el` / `evil-extra.el` / `mc-evil.el` / `ime.el`。见其 `README.md` |
 | `user-lisp/gcmh/gcmh.el` | **内联**的 `gcmh`（GC 调优，GPLv3），由 `init-base.el` `require`。见其 `README.md` |
-| `themes/` | 本仓库自维护的主题，由 `custom-theme-load-path` 接入（`user-lisp/init-ui.el`），新增主题放进去即可被 `my/switch-emacs-theme` 自动发现。共 13 个：`nn-world`（借自 zdn/.emacs.d，GPLv3，**模板**）、`catppuccin`/`crafters`/`gits`/`matrix`，深色 `gruvbox-dark`/`nord`/`dracula`/`monokai-pro`，浅色 `gruvbox-light`/`catppuccin-latte`/`solarized-light`/`one-light`。**face 表与调色板只在 `themes/my-theme-core.el` 里维护**，每个 `*-theme.el` 只做声明；新增主题 = 在 `my/theme-palettes` 加一条 + 建 stub，不再复制 500 行。Emacs 自带的 `modus-vivendi`/`modus-operandi` 等也在候选里 |
+| `themes/` | 本仓库自维护的主题，由 `custom-theme-load-path` 接入（`user-lisp/init-ui.el`），新增主题放进去即可被 `iys/switch-emacs-theme` 自动发现。共 13 个：`nn-world`（借自 zdn/.emacs.d，GPLv3，**模板**）、`catppuccin`/`crafters`/`gits`/`matrix`，深色 `gruvbox-dark`/`nord`/`dracula`/`monokai-pro`，浅色 `gruvbox-light`/`catppuccin-latte`/`solarized-light`/`one-light`。**face 表与调色板只在 `themes/iys-theme-core.el` 里维护**，每个 `*-theme.el` 只做声明；新增主题 = 在 `iys/theme-palettes` 加一条 + 建 stub，不再复制 500 行。Emacs 自带的 `modus-vivendi`/`modus-operandi` 等也在候选里 |
 | （迁出）字体 | vendor 字体与安装脚本已迁到 dotfiles 仓库（`iysun/dotfiles` 的 `fonts/` 与 `scripts/install-fonts.py`），本仓库不再跟踪字体文件。见 [docs/notes/vendored-fonts.md](docs/notes/vendored-fonts.md) |
 | `custom.el` | Customize 自动生成，**已 gitignore，勿手改** |
 | `elpa/` | 第三方包，**已 gitignore，勿编辑/勿提交** |
@@ -76,18 +76,18 @@
 Emacs 的 `M-f`/`M-b`/`M-d` 走 `global-subword-mode`；evil 用 `forward-word-strictly`，避开它。
 `*`/`#` 也按整词：evil-search 模块会把 `*` 从 `evil-search-word-forward` 改绑到
 `evil-ex-search-word-forward`，后者取词用 Emacs `word`（不含 `-`/`_`），故本仓库重绑为自建的
-`my/evil-ex-search-word-{forward,backward}`——取词走 `evil-word`、搜索仍走 evil-ex（`gn`/`cgn` 可用）。
+`iys/evil-ex-search-word-{forward,backward}`——取词走 `evil-word`、搜索仍走 evil-ex（`gn`/`cgn` 可用）。
 ⚠ 首尾的 `-` 会被去掉（如 `-foo` 搜 `foo`、`--flag` 搜 `flag`），因为 `\<`/`\>` 是基于语法表
 的词边界、不含 `-`。`g*`/`g#` 已显式解绑（无边界版用不上；visual 态的 `*`/`#` 由 evil-visualstar 提供）。
 ⚠ 自定义 forward-op 必须返回
 「未移动数」（0=成功），否则 `evil-forward-nearest` 的 `(zerop ...)` 会报 wrong-type-argument。
 
-`init-format`（apheleia，非 LSP 场景的格式化；`SPC f` = `my/format-buffer` 统一入口，按 buffer
+`init-format`（apheleia，非 LSP 场景的格式化；`SPC f` = `iys/format-buffer` 统一入口，按 buffer
 是否有 eglot 托管自动分流到 eglot-format 或 apheleia-format-buffer）与
 `init-navigation`（citre 补 eglot/xref 覆盖不到的场景；citre 需要本机装 Universal Ctags，没装就
 整个不加载）借鉴自 zdn/.emacs.d。跳转键位统一到标准 xref 入口（`gd`/`M-.`/`M-,`/`M-?`）；
 citre 只留一个不可替代的命令：`SPC p`（`citre-peek`）。
-看文档键：`gh` = `my/doc-at-point`（`user-lisp/init-base.el`）。
+看文档键：`gh` = `iys/doc-at-point`（`user-lisp/init-base.el`）。
 
 ## 构建 / 编译 = user-lisp 自动处理
 
@@ -111,7 +111,7 @@ Emacs 31 的 user-lisp 机制在启动时会：
 >   - ⚠ 走 quickstart 时 `package--initialized` 仍为 nil，`init.el` 的兜底守卫要用
 >     `package--activated`（`package-activate-all` 会置它），**别**再调 `(package-initialize)`
 >     （它会做全量 load-all-descriptors/read-archive-contents，抵消 quickstart 收益）。
->   - 快照过期**不报错**，靠 `init.el` 的 `my/check-quickstart-freshness` 告警（早于 `elpa/` 就提醒重建）。
+>   - 快照过期**不报错**，靠 `init.el` 的 `iys/check-quickstart-freshness` 告警（早于 `elpa/` 就提醒重建）。
 > - **收窄 `byte-compile-warnings`**（`(not free-vars unresolved obsolete interactive-only lexical)`）：
 >   本配置大量"先 `setq` 包变量、用时才加载"，编译必然产生成片此类良性告警；真正的
 >   语法 / 宏错误仍会暴露（运行时也会立刻报）。
@@ -174,26 +174,26 @@ emacs                          # 真实 GUI，看 *Messages* / *Warnings*
 
 ## 命名规范（硬性）
 
-本仓库定义的符号一律以 `my/` 开头；内部实现用双连字符分层：
+本仓库定义的符号一律以 `iys/` 开头；内部实现用双连字符分层：
 
 | 类别 | 形式 | 例子 |
 |------|------|------|
-| 交互命令 | `my/<动词>-…` | `my/switch-emacs-theme`、`my/quit-window`、`my/consult-line` |
-| 模块公开 API / 变量 / face / minor mode | `my/<模块>-…` | `my/paren-face`、`my/paren-mode`、`my/tab-line-group-name-max`、`my/ui-setup-bars` |
-| 模块内部实现 | `my/<模块>--…` | `my/ui--bg-of`、`my/paren--propertize`、`my/tab-line--group-buffers`、`my/lsp--servers` |
-| 全局内部实现（不属某模块） | `my--…` | `my--forward-whole-word`、`my--savehist-strip-string`、`my--mc-enter`、`my--find-project-root` |
-| 用户选项 | `my/<名>` | `my/emacs-theme`、`my/completion-style`、`my/isearch-pinyin-min-length` |
+| 交互命令 | `iys/<动词>-…` | `iys/switch-emacs-theme`、`iys/quit-window`、`iys/consult-line` |
+| 模块公开 API / 变量 / face / minor mode | `iys/<模块>-…` | `iys/paren-face`、`iys/paren-mode`、`iys/tab-line-group-name-max`、`iys/ui-setup-bars` |
+| 模块内部实现 | `iys/<模块>--…` | `iys/ui--bg-of`、`iys/paren--propertize`、`iys/tab-line--group-buffers`、`iys/lsp--servers` |
+| 全局内部实现（不属某模块） | `iys--…` | `iys--forward-whole-word`、`iys--savehist-strip-string`、`iys--mc-enter`、`iys--find-project-root` |
+| 用户选项 | `iys/<名>` | `iys/emacs-theme`、`iys/completion-style`、`iys/isearch-pinyin-min-length` |
 
-- 不用 `custom/` 前缀；不再新增无前缀的 `switch-*` / `use-*`，也不再混写 `my-foo` 与 `my/foo`。
-- 与外部包 API 同名的符号（`forward-evil-word`、`evil-a-between` 等）保持原名，不强行套 `my/`。
-- 主题是唯一例外：`themes/*-theme.el` 只做声明，公共 face 表与调色板在 `themes/my-theme-core.el`。
-  该文件名/feature 受文件系统限制保留连字符（`my-theme-core`），不是公开 API 符号。
+- 不用 `custom/` 前缀；不再新增无前缀的 `switch-*` / `use-*`，也不再混写 `iys-foo` 与 `iys/foo`。
+- 与外部包 API 同名的符号（`forward-evil-word`、`evil-a-between` 等）保持原名，不强行套 `iys/`。
+- 主题是唯一例外：`themes/*-theme.el` 只做声明，公共 face 表与调色板在 `themes/iys-theme-core.el`。
+  该文件名/feature 受文件系统限制保留连字符（`iys-theme-core`），不是公开 API 符号。
 
 ## 维护约定（判断式，非强制）
 
 - **注释一律按上面的「注释规范」写**：只写 WHY，能短则短；评审代码时先看这条。
-- **`q` 退出统一名单**：normal 态 `q = my/quit-window` 的 buffer 全部来自
-  `user-lisp/evil-plugins/evil-extra.el` 的 `my/quit-window-modes`（宏 `my/define-quit-keys` 展开）；
+- **`q` 退出统一名单**：normal 态 `q = iys/quit-window` 的 buffer 全部来自
+  `user-lisp/evil-plugins/evil-extra.el` 的 `iys/quit-window-modes`（宏 `iys/define-quit-keys` 展开）；
   加/删 buffer 只改这一个列表，别再去各 mode 的 keymap 里单独绑 `q`。
 - **改了行为/加了模块** → 同步更新本文件相关小节（结构表、启用模块列表、命令）。纯重构 / 小修可不动文档。
 - **新增模块**：在 `user-lisp/` 下建 `init-xxx.el`，文件末 `(provide 'init-xxx)`，并在 `init.el` 末尾 `(require 'init-xxx)`。

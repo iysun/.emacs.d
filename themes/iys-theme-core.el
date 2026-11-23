@@ -1,10 +1,10 @@
-;;; my-theme-core.el --- 主题公共实现 -*- lexical-binding: t; -*-
+;;; iys-theme-core.el --- 主题公共实现 -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;; 基于 zdn/.emacs.d 的 nn-world 主题（GPLv3）重构：face 表只此一份，
 ;; 13 个主题共用；每个 *-theme.el 只声明主题名并引用这里的调色板。
 ;;; Code:
 
-(defconst my/theme-palettes
+(defconst iys/theme-palettes
   '(
     (catppuccin-latte
      (bg . "#eff1f5") (fg . "#4c4f69") (bright . "#7a7c90") (dim . "#a6a8b6")
@@ -110,9 +110,9 @@
      (gold . "#b58900") (red-dark . "#dc322f") (red-deep . "#825b5f") (yellow-dark . "#b58900")
      (green-dark . "#859900") (green-deep . "#667b52") (blue-muted . "#6c71c4") (purple-muted . "#6c71c4")
      ))
-  "各主题的 24 槽调色板。face 表只在 `my/theme--apply' 里写一次。")
+  "各主题的 24 槽调色板。face 表只在 `iys/theme--apply' 里写一次。")
 
-(defun my/theme--apply (theme palette)
+(defun iys/theme--apply (theme palette)
   "把 PALETTE 应用到 THEME 的 face 表。"
   (let ((bg (alist-get 'bg palette))
       (fg (alist-get 'fg palette))
@@ -579,11 +579,11 @@
      `(gnus-emphasis-underline     ((t :underline t)))
      `(gnus-splash                 ((t :foreground ,dim))))))
 
-(defmacro my/define-theme (name)
-  "声明主题 NAME 并应用 `my/theme-palettes' 里的调色板。"
+(defmacro iys/define-theme (name)
+  "声明主题 NAME 并应用 `iys/theme-palettes' 里的调色板。"
   `(progn
      (deftheme ,name)
-     (my/theme--apply ',name (alist-get ',name my/theme-palettes))))
+     (iys/theme--apply ',name (alist-get ',name iys/theme-palettes))))
 
-(provide 'my-theme-core)
-;;; my-theme-core.el ends here
+(provide 'iys-theme-core)
+;;; iys-theme-core.el ends here
