@@ -10,13 +10,18 @@ mode-line 挤爆。"
       str)))
 
 (defun my-ui--ml-click (text help cmd)
-  "把 TEXT 包成可点击段：悬浮显示 HELP，鼠标左键执行 CMD。"
-  (propertize text
-              'mouse-face 'mode-line-highlight
-              'help-echo help
-              'local-map (let ((m (make-sparse-keymap)))
-                           (define-key m [mode-line mouse-1] cmd)
-                           m)))
+  "把 TEXT 包成可点击段：悬浮显示 HELP，鼠标左键执行 CMD。
+同一个串既进 mode-line 也进回声区托盘，两处的事件不一样：mode-line 里带
+`mode-line' 区域前缀，回声区是普通文本、只有裸 `mouse-1'（见 button.el 里
+`<mode-line> <mouse-2>' 与 `<mouse-2>' 分开绑的注释），所以两套都绑。"
+  (let ((map (make-sparse-keymap)))
+    (define-key map [mode-line mouse-1] cmd)
+    (define-key map [mouse-1] cmd)
+    (define-key map [follow-link] 'mouse-face)
+    (propertize text
+                'mouse-face 'mode-line-highlight
+                'help-echo help
+                'local-map map)))
 
 (defvar-local my-ui--ml-vc-cache nil)
 (defvar-local my-ui--ml-project-cache nil)
@@ -103,15 +108,18 @@ mode-line 挤爆。"
 (defvar my-ui--tray-timer nil)
 (defvar my-ui--tray-updating nil)
 
-(defun my-ui--tray-keep (s)
-  "去掉 S 上的鼠标绑定。空白和占位 \"-\" 返回 nil。"
+(defun my-ui--tray-keep (s &optional keep-click)
+  "去掉 S 上的鼠标绑定。空白和占位 \"-\" 返回 nil。
+KEEP-CLICK 非 nil 时保留 local-map/help-echo/mouse-face —— 那是
+`my-ui--ml-click' 自己包的可点击段，托盘里要能点。"
   (when (stringp s)
     (let ((plain (string-trim (substring-no-properties s))))
       (unless (or (string-empty-p plain) (string= plain "-"))
         (let ((copy (copy-sequence s)))
-          (remove-text-properties 0 (length copy)
-                                  '(mouse-face nil help-echo nil local-map nil keymap nil)
-                                  copy)
+          (unless keep-click
+            (remove-text-properties 0 (length copy)
+                                    '(mouse-face nil help-echo nil local-map nil keymap nil)
+                                    copy))
           (setq copy (replace-regexp-in-string "[\n\r]+" " " copy))
           (string-trim copy))))))
 
@@ -152,12 +160,27 @@ mode-line 挤爆。"
     (when s (concat "  " s))))
 
 (defun my-ui--tray-right ()
-  "原 mode-line 右段：项目、分支、Flymake。"
+  "原 mode-line 右段：项目、分支、Flymake。
+项目/分支带 `my-ui--ml-click' 的点击绑定，托盘里也要能点，故 KEEP-CLICK。"
   (my-ui--tray-join
-   (list (my-ui--tray-keep (my-ui-ml-project))
-         (my-ui--tray-color (my-ui--tray-keep (my-ui-ml-vc))
+   (list (my-ui--tray-keep (my-ui-ml-project) t)
+         (my-ui--tray-color (my-ui--tray-keep (my-ui-ml-vc) t)
                             'font-lock-string-face)
          (my-ui--tray-flymake))))
+
+(defvar my-ui--tray-message nil
+  "接管下来的 echo 消息（原样一段，可能多行），nil 表示没有。")
+(defvar my-ui--tray-message-timer nil)
+(defvar my-ui--tray-message-duration 5
+  "消息在托盘行里停留的秒数，到点自动让位给状态段。")
+
+(defun my-ui--tray-message-line ()
+  "把接管的 echo 消息压成一行、去掉属性，当作右段。"
+  (when (stringp my-ui--tray-message)
+    (let ((s (string-trim
+              (replace-regexp-in-string
+               "[\n\r]+" " " (substring-no-properties my-ui--tray-message)))))
+      (unless (string-empty-p s) s))))
 
 (defun my-ui--echo-width ()
   "这一行的可用列数。留 1 列，避免最后一个字换行。"
@@ -181,10 +204,12 @@ mode-line 挤爆。"
       (concat left pad right))))
 
 (defun my-ui--tray-render ()
-  "左段靠左、右段靠右的一整行。"
+  "左段靠左、右段靠右的一整行。
+有 echo 消息时消息占右段（顶掉项目/分支/Flymake），左段状态一直保留——
+eldoc 这类会不停发消息的东西才不会把缓冲区名和行号刷走。"
   (let* ((width (max 1 (my-ui--echo-width)))
          (left (or (my-ui--tray-left) ""))
-         (right (or (my-ui--tray-right) ""))
+         (right (or (my-ui--tray-message-line) (my-ui--tray-right) ""))
          (gap 2))
     (when (> (+ (string-width left) gap (string-width right)) width)
       (let ((room (max 0 (- width (string-width left) gap))))
@@ -246,6 +271,48 @@ mode-line 挤爆。"
 (defun my-ui--echo-tray-suppressed-p ()
   (or (active-minibuffer-window)
       (bound-and-true-p isearch-mode)))
+
+;; ---- echo 消息并入托盘行 -------------------------------------------------
+;; `set-message-functions' 里的函数返回 t = 别再单独显示这条消息（返回值不是
+;; 字符串时，C 那边就不再往 echo area 写）。默认那条 `set-minibuffer-message'
+;; 仍然排在后面，处理“正在输入 minibuffer”时的消息。
+(defun my-ui--tray-message-clear ()
+  "忘掉接管的 echo 消息，并取消到期定时器。"
+  (when (timerp my-ui--tray-message-timer)
+    (cancel-timer my-ui--tray-message-timer))
+  (setq my-ui--tray-message-timer nil
+        my-ui--tray-message nil))
+
+(defun my-ui--tray-message-expire ()
+  (setq my-ui--tray-message-timer nil)
+  (when my-ui--tray-message
+    (setq my-ui--tray-message nil)
+    (my-ui--echo-tray-update)))
+
+(defun my-ui--tray-message-handler (msg)
+  "把 echo 消息并进托盘行；返回 t 表示不用 echo area 单独显示。
+正在用 minibuffer / isearch 时返回 nil，交回默认处理——那种时候消息得显示
+在输入行上，塞进托盘反而看不见。"
+  (cond
+   ((not (stringp msg)) nil)
+   ;; (message "") 是“清掉回显”，顺手把托盘里的旧消息一起清掉
+   ((string-empty-p msg)
+    (my-ui--tray-message-clear)
+    nil)
+   ((or (not my-ui-echo-tray-mode)
+        (my-ui--echo-tray-suppressed-p))
+    nil)
+   (t
+    (setq my-ui--tray-message msg)
+    (when (timerp my-ui--tray-message-timer)
+      (cancel-timer my-ui--tray-message-timer))
+    (setq my-ui--tray-message-timer
+          (run-at-time my-ui--tray-message-duration nil
+                       #'my-ui--tray-message-expire))
+    ;; echo area 里可能还挂着上一条（isearch/输入中漏过去的），不清会盖住托盘
+    (when (current-message) (message nil))
+    (my-ui--echo-tray-update)
+    t)))
 
 (defun my-ui--tray-bar-bg ()
   "和 tab-line 那条 bar 同一个背景，上下 padding 才是同一块颜色。"
@@ -321,6 +388,8 @@ mode-line 挤爆。"
   (add-hook 'echo-area-clear-hook #'my-ui--echo-tray-update)
   (add-hook 'minibuffer-setup-hook #'my-ui--tray-on-minibuffer-setup)
   (add-hook 'minibuffer-exit-hook #'my-ui--tray-on-minibuffer-exit)
+  ;; 排在 `set-minibuffer-message' 前面：托盘优先接管，输入中让它接手
+  (add-to-list 'set-message-functions #'my-ui--tray-message-handler)
   (unless my-ui--tray-timer
     (setq my-ui--tray-timer (run-with-timer 1 1 #'my-ui--echo-tray-update)))
   (when (fboundp 'my-ui-setup-bars)
@@ -333,6 +402,9 @@ mode-line 挤爆。"
   (when my-ui--tray-timer
     (cancel-timer my-ui--tray-timer)
     (setq my-ui--tray-timer nil))
+  (setq set-message-functions (delq #'my-ui--tray-message-handler
+                                    set-message-functions))
+  (my-ui--tray-message-clear)
   (remove-hook 'post-command-hook #'my-ui--echo-tray-update)
   (remove-hook 'echo-area-clear-hook #'my-ui--echo-tray-update)
   (remove-hook 'after-change-major-mode-hook #'my-ui--sync-mode-line)
@@ -348,7 +420,8 @@ mode-line 挤爆。"
 
 (define-minor-mode my-ui-echo-tray-mode
   "把原 mode-line 显示在 minibuffer 这一行：左段靠左，右段靠右。
-正在输入或 isearch 时先让出这一行。"
+echo 消息不单独占一行，而是并到右段显示 `my-ui--tray-message-duration' 秒；
+右段的项目/分支可以直接点。正在输入或 isearch 时先让出这一行。"
   :global t
   :group 'mode-line
   (if my-ui-echo-tray-mode
