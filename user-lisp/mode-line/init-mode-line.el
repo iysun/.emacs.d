@@ -171,22 +171,32 @@ KEEP-CLICK 非 nil 时保留 local-map/help-echo/mouse-face —— 那是
 (defvar my-ui--tray-message nil
   "接管下来的 echo 消息（原样一段，可能多行），nil 表示没有。")
 (defvar my-ui--tray-message-timer nil)
-(defvar my-ui--tray-message-duration 2
-  "消息在托盘行里停留的秒数，到点自动让位给状态段。
-和 `minibuffer-message-timeout'（默认 2）保持一致。")
+(defvar my-ui--tray-message-duration 1
+  "消息在托盘行里停留的秒数，到点自动让位给状态段。")
+(defvar my-ui--tray-message-max-width 40
+  "消息最多占多少列，超过就截断加省略号。
+挡住 eldoc 签名、which-key 提示这类长串，别让它把整行吃掉。")
 
 (defun my-ui--tray-message-line ()
-  "把接管的 echo 消息压成一行、去掉属性，接在左段状态后面。"
+  "把接管的 echo 消息压成一行、去掉属性，按 `my-ui--tray-message-max-width'
+截断后接在左段状态后面。"
   (when (stringp my-ui--tray-message)
     (let ((s (string-trim
               (replace-regexp-in-string
                "[\n\r]+" " " (substring-no-properties my-ui--tray-message)))))
-      (unless (string-empty-p s) s))))
+      (unless (string-empty-p s)
+        (truncate-string-to-width s my-ui--tray-message-max-width
+                                  nil nil (my-ui--tray-ellipsis))))))
 
-(defun my-ui--tray-left-with-message ()
-  "左段状态，有 echo 消息时接在后面——消息不顶掉状态。"
-  (let ((status (my-ui--tray-left))
-        (msg (my-ui--tray-message-line)))
+(defun my-ui--tray-left-with-message (room)
+  "左段状态，有 echo 消息时接在后面——消息不顶掉状态。
+ROOM 是这一行「状态 + 消息」能用的列数（已扣掉右段），消息超了就截断加
+省略号，保证右段不会被顶出可视范围。"
+  (let* ((status (my-ui--tray-left))
+         (msg (my-ui--tray-message-line))
+         (budget (and msg room (- room (string-width (or status "")) 2)))
+         (msg (when (and msg budget (> budget 0))
+                (truncate-string-to-width msg budget nil nil (my-ui--tray-ellipsis)))))
     (cond ((and status msg) (concat status "  " msg))
           (msg (concat "  " msg))
           (status status)
@@ -215,12 +225,13 @@ KEEP-CLICK 非 nil 时保留 local-map/help-echo/mouse-face —— 那是
 
 (defun my-ui--tray-render ()
   "左段靠左、右段靠右的一整行。
-echo 消息接在左段状态后面（不顶掉状态），右段的项目/分支也保留；
-挤不下时先截消息尾巴，再连右段一起丢掉。"
+echo 消息接在左段状态后面（不顶掉状态），另外还受 `my-ui--tray-message-max-width'
+和「先给右段留位」两条限制，所以再长的消息也不会把项目/分支顶出可视范围。"
   (let* ((width (max 1 (my-ui--echo-width)))
-         (left (my-ui--tray-left-with-message))
          (right (or (my-ui--tray-right) ""))
-         (gap 2))
+         (gap 2)
+         (left (my-ui--tray-left-with-message
+                (- width (string-width right) gap))))
     (when (> (+ (string-width left) gap (string-width right)) width)
       (let ((room (max 0 (- width (string-width left) gap))))
         (setq right (if (zerop room)
