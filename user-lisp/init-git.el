@@ -13,6 +13,9 @@
       (smerge-mode 1))))
 (add-hook 'find-file-hook #'my/auto-smerge-mode)
 
+;; ⚠ 显式 require：不取 defhydra 宏，字节编译会把它当函数调用，.elc 加载即 void-variable
+(require 'hydra)
+
 (defhydra hydra-smerge (:color red)
   "处理冲突"
   ("n" smerge-next "下一处冲突")

@@ -200,8 +200,12 @@ mode-line 挤爆。"
 (defvar my-ui--tray-resize-locked nil)
 
 (defun my-ui--tray-pad ()
-  "和 tab-line 用同一套上下内边距。上边距在分割线里，下边距是 line-spacing。"
-  (if (boundp 'my-ui-bar-padding) my-ui-bar-padding 2))
+  "和 tab-line 用同一套上下内边距。上边距在分割线里，下边距是 line-spacing。
+⚠ 文本终端没有像素级内边距：`字高 + 2px' 会被向上取整成两行，回声区永远
+是两条高。故终端下返回 0，托盘退化成一行。"
+  (if (display-graphic-p)
+      (if (boundp 'my-ui-bar-padding) my-ui-bar-padding 2)
+    0))
 
 (defun my-ui--tray-target-height ()
   "状态文字这一行的像素高度：字高 + 下边距。
@@ -223,12 +227,14 @@ mode-line 挤爆。"
 (defun my-ui--tray-fit-height ()
   "把空闲 minibuffer 固定到 `my-ui--tray-target-height'。
 正在显示提示或正在输入时不动，避免和回显抢高度。
-`window-resize' 默认把像素收成整行，这里临时打开 `window-resize-pixelwise'。"
+`window-resize' 默认把像素收成整行，这里临时打开 `window-resize-pixelwise'。
+⚠ 只在图形终端做：文本终端按整行取整，`字高 + pad' 会多撑出一行。"
   (when (and my-ui-echo-tray-mode
              (not (active-minibuffer-window))
              (not (current-message)))
     (let ((win (minibuffer-window)))
-      (when (window-live-p win)
+      (when (and (window-live-p win)
+                 (display-graphic-p (window-frame win)))
         (let ((delta (- (my-ui--tray-target-height)
                         (window-pixel-height win))))
           (unless (zerop delta)

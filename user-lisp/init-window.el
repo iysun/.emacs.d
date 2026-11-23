@@ -10,8 +10,10 @@
 
 (defun my/update-bottom-divider ()
   "托盘开着时，底部分割线是 1px 亮线，下面再留和 tab-line 相同的上边距。
-宽度没变时不写 frame 参数，避免每次 :w 都触发布局。关掉托盘后只留 1px。"
-  (let* ((pad (if (and (bound-and-true-p my-ui-echo-tray-mode)
+宽度没变时不写 frame 参数，避免每次 :w 都触发布局。关掉托盘后只留 1px。
+⚠ 文本终端没有像素分割线，宽度按整行算，pad 必须为 0。"
+  (let* ((pad (if (and (display-graphic-p)
+                       (bound-and-true-p my-ui-echo-tray-mode)
                        (boundp 'my-ui-bar-padding))
                   my-ui-bar-padding
                 0))
