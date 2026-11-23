@@ -23,7 +23,6 @@
     embark
     embark-consult
     marginalia
-    ;; ⚠ 别装 eshell-git-prompt：multiline2 每画一次提示符起 4 个 git 进程
     orderless
     vertico
     corfu
