@@ -103,15 +103,40 @@ popper 未加载/`popper-mode' 未开启时 `popper-popup-p' 不存在，做特�
 `:box' 的水平 line-width 在 tab-line 里填不出标签自己的底色，左右内边距只能写进文本；
 这些空格会和标签名套上同一个 face。选中与否在更下游才知道，这里不分两套宽度。")
 
+(defconst iys/tab-line-rise 8
+  "标签文字上下各多出来的像素。
+上沿加在字体 ascent 之上，下沿加在 descent 之下，两边才一样宽。
+选中线画在字形底边，所以下沿空在线的下面。")
+
+(defun iys/tab-line--font-metric (index fallback)
+  "当前 default 字体 `font-info' 的第 INDEX 项，取不到用 FALLBACK。"
+  (let* ((font (ignore-errors (face-attribute 'default :font)))
+         (info (and (fontp font) (ignore-errors (font-info font)))))
+    (or (and (vectorp info) (> (length info) index) (aref info index))
+        fallback)))
+
+(defun iys/tab-line--rise ()
+  "左 padding，同时把行向上撑高 `iys/tab-line-rise'。"
+  (let ((ascent (iys/tab-line--font-metric 8 (default-font-height))))
+    (propertize iys/tab-line-tab-padding
+                'display `(space :height (,(+ ascent iys/tab-line-rise)) :ascent 100))))
+
+(defun iys/tab-line--drop ()
+  "右 padding，同时把行向下撑高 `iys/tab-line-rise'。
+空格高度要含字体 descent，多出来的那段才露在选中线下面。"
+  (let ((descent (iys/tab-line--font-metric 9 0)))
+    (propertize iys/tab-line-tab-padding
+                'display `(space :height (,(+ descent iys/tab-line-rise)) :ascent 0))))
+
 (defun iys/tab-line-tab-name (buffer &optional _buffers)
-  "tab 标签文本：左右 padding + buffer 名 +（文件改动未存时）● 标记。
+  "tab 标签文本：上沿留白 + buffer 名 +（文件改动未存时）● 标记 + 下沿留白。
 覆写 `tab-line-tab-name-function'。截断仍由 `tab-line-tab-name-truncated-max' 处理。"
-  (concat iys/tab-line-tab-padding
+  (concat (iys/tab-line--rise)
           (buffer-name buffer)
           (and (buffer-local-value 'buffer-file-name buffer)
                (buffer-modified-p buffer)
                " ●")
-          iys/tab-line-tab-padding))
+          (iys/tab-line--drop)))
 
 (defun iys/tab-line-refresh (&rest _)
   "改动/保存后刷新 tab-line，让 ● 修改标记及时更新

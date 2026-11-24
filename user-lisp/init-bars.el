@@ -13,11 +13,11 @@
 设 0 则不加 box，退化成最细的一条线。")
 
 (defconst iys/ui-tab-current-tint 12
-  "悬浮标签相对 bar 背景浮起的幅度（百分比）。
-选中标签不用这层：它改用正文底色，靠 accent 下划线区分，见 `iys/ui-setup-bars'。")
+  "悬浮标签相对正文底色浮起的幅度（百分比）。
+选中标签不用这层：整条 tab-line 已是正文底色，靠下方 accent 线区分。")
 
 (defvar iys/ui--tab-accent "#4c9eff"
-  "选中标签下划线 / 悬浮高亮 / 修改标记的 accent 色。
+  "选中标签下划线 / 修改标记的 accent 色。
 主题相关，每次 `iys/ui-setup-bars' 时按当前主题重算。")
 
 (defun iys/ui--real-color (c)
@@ -47,6 +47,14 @@ padding 为 0 则返回 nil。
   (if (> iys/ui-bar-padding 0)
       `(:line-width (1 . ,iys/ui-bar-padding) :color ,color)
     nil))
+
+(defun iys/ui--tab-underline-position ()
+  "选中线放在字形底边。`:position' 从基线往下量，底边就是字体 descent。
+再往下的空是 `iys/tab-line-rise'，和文字上方那截一样高。"
+  (let* ((font (ignore-errors (face-attribute 'default :font)))
+         (info (and (fontp font) (ignore-errors (font-info font))))
+         (descent (or (and (vectorp info) (> (length info) 9) (aref info 9)) 0)))
+    (max 0 descent)))
 
 (defun iys/ui--bar-box (face)
   "给 FACE 生成「只当内边距、不显边框」的 box 规格；padding 为 0 时返回 nil。"
@@ -108,43 +116,39 @@ padding 为 0 则返回 nil。
         (or (iys/ui--real-color (face-foreground 'font-lock-function-name-face nil t))
             (iys/ui--real-color (face-foreground 'font-lock-keyword-face nil t))
             "#4c9eff"))
-  ;; ⚠ set-face-attribute 不清空旧值；换主题重跑须显式清掉上一次的 underline / weight
-  ;; 选中标签用正文底色，底部一条 accent，看起来是从正文里伸上来的（centaur-tabs 的 bar）。
-  ;; 未选中贴在 bar 上，不再各做一块浮起的色块。
+  ;; ⚠ set-face-attribute 不清空旧值；换主题重跑须显式清掉上一次的 underline / overline
+  ;; 整条 tab-line 用正文底色，不再加 box：内边距画在下划线下面，线就到不了底边。
   (let* ((body-bg (iys/ui--bg-of 'default))
-         (body-fg (or (iys/ui--real-color (face-foreground 'default nil t)) bar-fg))
-         (body-box (iys/ui--v-box body-bg))
-         (dim-fg (or (iys/ui--real-color (face-foreground 'shadow nil t)) 'unspecified)))
-    (when (facep 'tab-line-tab)
-      (set-face-attribute 'tab-line-tab nil
-                          :weight 'normal :slant 'normal :underline nil
-                          :background body-bg :foreground body-fg
-                          :box body-box))
+         (body-fg (or (iys/ui--real-color (face-foreground 'default nil t)) bar-fg)))
+    (dolist (f '(tab-line tab-line-active tab-line-inactive
+                 tab-line-tab tab-line-tab-inactive))
+      (when (facep f)
+        (set-face-attribute f nil
+                            :weight 'normal :slant 'normal
+                            :underline nil :overline nil
+                            :background body-bg :foreground body-fg
+                            :box nil)))
+    (when (facep 'tab-line-tab-group)
+      (set-face-attribute 'tab-line-tab-group nil
+                          :weight 'normal :slant 'normal
+                          :underline nil :overline nil
+                          :background body-bg :foreground iys/ui--tab-accent
+                          :box nil))
     (when (facep 'tab-line-tab-current)
       (set-face-attribute 'tab-line-tab-current nil
                           :weight 'normal :slant 'normal
-                          :underline `(:color ,iys/ui--tab-accent :position 2)
+                          :underline `(:color ,iys/ui--tab-accent
+                                       :position ,(iys/ui--tab-underline-position))
+                          :overline nil
                           :background body-bg :foreground body-fg
-                          :box body-box))
+                          :box nil))
     (when (facep 'tab-line-highlight)
-      (let ((hover-bg (iys/ui--tab-block-bg bar-bg iys/ui-tab-current-tint)))
+      (let ((hover-bg (iys/ui--tab-block-bg body-bg iys/ui-tab-current-tint)))
         (set-face-attribute 'tab-line-highlight nil
                             :background hover-bg
-                            :box (iys/ui--v-box hover-bg)
-                            :underline nil
-                            :foreground iys/ui--tab-accent)))
-    (when (facep 'tab-line-tab-inactive)
-      (set-face-attribute 'tab-line-tab-inactive nil
-                          :weight 'normal :slant 'normal :underline nil
-                          :background bar-bg
-                          :box (iys/ui--v-box bar-bg)
-                          :foreground dim-fg))
-    (when (facep 'tab-line-tab-group)
-      (set-face-attribute 'tab-line-tab-group nil
-                          :weight 'normal :slant 'normal :underline nil
-                          :background bar-bg
-                          :box (iys/ui--v-box bar-bg)
-                          :foreground iys/ui--tab-accent)))
+                            :box nil
+                            :underline nil :overline nil
+                            :foreground body-fg))))
   (when (facep 'tab-line-tab-modified)
     (set-face-attribute 'tab-line-tab-modified nil
                         :foreground iys/ui--tab-accent :slant 'italic))
