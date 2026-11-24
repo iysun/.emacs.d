@@ -50,7 +50,7 @@ padding 为 0 则返回 nil。
 
 (defun iys/ui--tab-underline-position ()
   "选中线放在字形底边。`:position' 从基线往下量，底边就是字体 descent。
-再往下的空是 `iys/tab-line-rise'，和文字上方那截一样高。"
+再往下的空是 `iys/ui-bar-padding'，和文字上方那截一样高。"
   (let* ((font (ignore-errors (face-attribute 'default :font)))
          (info (and (fontp font) (ignore-errors (font-info font))))
          (descent (or (and (vectorp info) (> (length info) 9) (aref info 9)) 0)))
