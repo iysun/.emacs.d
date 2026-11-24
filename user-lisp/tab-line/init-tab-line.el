@@ -99,18 +99,9 @@ popper 未加载/`popper-mode' 未开启时 `popper-popup-p' 不存在，做特�
   (advice-add 'popper--restore-mode-lines :after #'iys/tab-line--restore-in-alist))
 
 (defconst iys/tab-line-tab-padding " "
-  "每个标签左右各留的字面空格 padding。用文本字符撑，而不是 face 的 `:box'
-水平 line-width——实测 tab-line 下 `:box' 的水平 line-width 不会用 `:color' 真正
-填充那片区域，会透出整条 tab-line bar 自己的背景色，达不到\"padding 属于标签
-自己\"的效果（同样的 `:box' 用在垂直方向撑上下 padding 则没这个问题，见
-`user-lisp/init-bars.el' 的 `iys/ui--v-box'）。字面空格必然跟标签名共享同一个容器
-face（由 `tab-line-tab-name-format-default' 统一 propertize/套用），颜色不会错，
-是更可靠的写法。
-选中/未选中标签统一用这一个值，不做宽度上的区分——\"当前调用是否在渲染选中
-标签\"这个判断在更下游的 `tab-line-tab-name-format-default' 里（依赖 window 而
-非单纯 buffer），要在这里复现同样判断只为了让选中标签的 padding 宽一点，不值得
-为宽度差异专门搭一份逻辑；选中态靠颜色块 + 加粗已经足够醒目，见 `init-bars.el'
-的 `iys/ui-setup-bars'。")
+  "每个标签左右各留的字面空格。
+`:box' 的水平 line-width 在 tab-line 里填不出标签自己的底色，左右内边距只能写进文本；
+这些空格会和标签名套上同一个 face。选中与否在更下游才知道，这里不分两套宽度。")
 
 (defun iys/tab-line-tab-name (buffer &optional _buffers)
   "tab 标签文本：左右 padding + buffer 名 +（文件改动未存时）● 标记。
@@ -207,9 +198,11 @@ buffer tab 的场景已经超出人工数字母找 tab 的实用范围，不值�
   (setq tab-line-tabs-buffer-group-function #'iys/tab-line-buffer-group-by-project)
   (setq tab-line-tab-name-function #'iys/tab-line-tab-name)
   (setq tab-line-close-button-show nil)
+  ;; 标签之间不再插分隔符。左右空格已经在名字里，再加一截会把间距叠成三格。
   (setq tab-line-separator "")
-  ;; ⚠ 内置默认不含 tab-line-tab-face-group，不补上分组名 face 不生效
-  (add-to-list 'tab-line-tab-face-functions #'tab-line-tab-face-group)
+  ;; ⚠ 内置默认是 modified + special（整枚标签斜体），没有分组 face。
+  ;; 改动标记已经写在标签文本的 ● 里，再让整枚标签变斜体会盖住选中态的正文色。
+  (setq tab-line-tab-face-functions '(tab-line-tab-face-group))
   (advice-add 'tab-line-tabs-buffer-list :filter-return #'iys/tab-line-filter))
 
 (add-hook 'first-change-hook #'iys/tab-line-refresh)

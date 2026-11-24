@@ -12,17 +12,9 @@
   "两条 bar 的上下内边距（像素）。mode-line 与 tab-line 用同一个值，厚度才一致。
 设 0 则不加 box，退化成最细的一条线。")
 
-(defconst iys/ui-tab-current-tint 20
-  "选中标签背景相对 bar 背景「浮起」的幅度（百分比，见 `iys/ui--tab-block-bg'）。
-悬浮态用这个值的一半，选中/悬浮/未选中三态才有渐进层次。深色主题上实测 12 太淡、
-选中块几乎看不出来，调到 20 才有清晰对比又不刺眼。")
-
-(defconst iys/ui-tab-inactive-tint 6
-  "未选中标签 / 分组名（\"Other\" 之类）背景相对 bar 背景「浮起」的幅度
-（百分比，同样用 `iys/ui--tab-block-bg' 算）。之前这两者背景跟整条 bar 完全一样
-（视觉上不可见）——没有自己的可见色块，标签内部的空格 padding 就没有颜色可以
-「撑开」，看着仍会像空白。给它们也叠一层比选中态（`iys/ui-tab-current-tint'）
-淡得多的背景，padding 才有着落。")
+(defconst iys/ui-tab-current-tint 12
+  "悬浮标签相对 bar 背景浮起的幅度（百分比）。
+选中标签不用这层：它改用正文底色，靠 accent 下划线区分，见 `iys/ui-setup-bars'。")
 
 (defvar iys/ui--tab-accent "#4c9eff"
   "选中标签下划线 / 悬浮高亮 / 修改标记的 accent 色。
@@ -116,35 +108,43 @@ padding 为 0 则返回 nil。
         (or (iys/ui--real-color (face-foreground 'font-lock-function-name-face nil t))
             (iys/ui--real-color (face-foreground 'font-lock-keyword-face nil t))
             "#4c9eff"))
-  ;; ⚠ :box 颜色须跟背景同色，否则 padding 边缘露出旧背景缝
-  ;; ⚠ set-face-attribute 不清空旧值；换主题重跑须显式 :underline nil
-  (let* ((tab-current-bg (iys/ui--tab-block-bg bar-bg iys/ui-tab-current-tint)))
+  ;; ⚠ set-face-attribute 不清空旧值；换主题重跑须显式清掉上一次的 underline / weight
+  ;; 选中标签用正文底色，底部一条 accent，看起来是从正文里伸上来的（centaur-tabs 的 bar）。
+  ;; 未选中贴在 bar 上，不再各做一块浮起的色块。
+  (let* ((body-bg (iys/ui--bg-of 'default))
+         (body-fg (or (iys/ui--real-color (face-foreground 'default nil t)) bar-fg))
+         (body-box (iys/ui--v-box body-bg))
+         (dim-fg (or (iys/ui--real-color (face-foreground 'shadow nil t)) 'unspecified)))
+    (when (facep 'tab-line-tab)
+      (set-face-attribute 'tab-line-tab nil
+                          :weight 'normal :slant 'normal :underline nil
+                          :background body-bg :foreground body-fg
+                          :box body-box))
     (when (facep 'tab-line-tab-current)
       (set-face-attribute 'tab-line-tab-current nil
-                          :weight 'bold
-                          :underline nil
-                          :background tab-current-bg
-                          :box (iys/ui--v-box tab-current-bg)))
+                          :weight 'normal :slant 'normal
+                          :underline `(:color ,iys/ui--tab-accent :position 2)
+                          :background body-bg :foreground body-fg
+                          :box body-box))
     (when (facep 'tab-line-highlight)
-      (let ((hover-bg (iys/ui--tab-block-bg bar-bg (/ iys/ui-tab-current-tint 2))))
+      (let ((hover-bg (iys/ui--tab-block-bg bar-bg iys/ui-tab-current-tint)))
         (set-face-attribute 'tab-line-highlight nil
                             :background hover-bg
                             :box (iys/ui--v-box hover-bg)
-                            :foreground iys/ui--tab-accent))))
-  (let* ((inactive-bg (iys/ui--tab-block-bg bar-bg iys/ui-tab-inactive-tint))
-         (inactive-box (iys/ui--v-box inactive-bg))
-         (dim-fg (or (iys/ui--real-color (face-foreground 'shadow nil t)) 'unspecified)))
+                            :underline nil
+                            :foreground iys/ui--tab-accent)))
     (when (facep 'tab-line-tab-inactive)
       (set-face-attribute 'tab-line-tab-inactive nil
-                          :weight 'normal
-                          :background inactive-bg
-                          :box inactive-box
+                          :weight 'normal :slant 'normal :underline nil
+                          :background bar-bg
+                          :box (iys/ui--v-box bar-bg)
                           :foreground dim-fg))
     (when (facep 'tab-line-tab-group)
       (set-face-attribute 'tab-line-tab-group nil
-                          :background inactive-bg
-                          :box inactive-box
-                          :foreground dim-fg)))
+                          :weight 'normal :slant 'normal :underline nil
+                          :background bar-bg
+                          :box (iys/ui--v-box bar-bg)
+                          :foreground iys/ui--tab-accent)))
   (when (facep 'tab-line-tab-modified)
     (set-face-attribute 'tab-line-tab-modified nil
                         :foreground iys/ui--tab-accent :slant 'italic))
