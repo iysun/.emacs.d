@@ -350,7 +350,9 @@ echo 消息接在左段状态后面（不顶掉状态），另外还受 `iys/ui-
       (setq-local mode-line-format nil)
       (setq-local line-spacing (iys/ui--tray-pad))
       (when-let* ((bg (iys/ui--tray-bar-bg)))
-        (setq-local face-remapping-alist `((default (:background ,bg))))))))
+        ;; fringe 不跟着 default 走，不重映射的话托盘两端是正文底色
+        (setq-local face-remapping-alist `((default (:background ,bg))
+                                           (fringe (:background ,bg))))))))
 
 (defun iys/ui--tray-set-minibuf (text)
   "把 TEXT 写进空闲 minibuffer。这个 buffer 空着时，底部那一行不会出现。"
