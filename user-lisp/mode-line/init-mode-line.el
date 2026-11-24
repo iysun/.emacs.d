@@ -246,7 +246,7 @@ echo 消息接在左段状态后面（不顶掉状态），另外还受 `iys/ui-
 (defvar iys/ui--tray-resize-locked nil)
 
 (defun iys/ui--tray-pad ()
-  "和 tab-line 用同一套上下内边距。上边距在分割线里，下边距是 line-spacing。
+  "托盘文字下面的内边距，和 `iys/ui-bar-padding' 同一个数。
 ⚠ 文本终端没有像素级内边距：`字高 + 2px' 会被向上取整成两行，回声区永远
 是两条高。故终端下返回 0，托盘退化成一行。"
   (if (display-graphic-p)
@@ -254,8 +254,7 @@ echo 消息接在左段状态后面（不顶掉状态），另外还受 `iys/ui-
     0))
 
 (defun iys/ui--tray-target-height ()
-  "状态文字这一行的像素高度：字高 + 下边距。
-加上分割线里的上边距之后，和 tab-line（字高 + 上下边距）一样高。亮线本身不算在内。"
+  "托盘窗口的像素高度：字高 + 下边距。编辑区那边的细线是 window divider，不算在这里。"
   (+ (default-font-height) (iys/ui--tray-pad)))
 
 (defun iys/ui--tray-lock-resize ()

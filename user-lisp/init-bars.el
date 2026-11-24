@@ -77,21 +77,27 @@ padding 为 0 则返回 nil。
       "#d0d0d0")))
 
 (defun iys/ui--style-window-divider ()
-  "右侧 1px 只用 first-pixel，设成亮色。
-底部更宽时，first-pixel 仍是那条亮线，其余像素用 tab-line 的背景。
-这截和 tab-line 的上内边距是同一块颜色、同一个像素数。"
+  "托盘开着时，`window-divider' 就是编辑区和托盘之间那条 1px 细线。
+不到 3 像素时整段都画这个 face，所以颜色要直接涂在它上面。
+关掉托盘后改回 tab-line 底色，1px 的右侧分割线才不会露出来。"
   (let ((line (iys/ui--divider-color))
-        (bg (iys/ui--bg-of 'tab-line)))
+        (bg (iys/ui--bg-of 'tab-line))
+        (tray (and (display-graphic-p)
+                   (bound-and-true-p iys/ui-echo-tray-mode))))
     (when (facep 'window-divider-first-pixel)
       (set-face-attribute 'window-divider-first-pixel nil
                           :foreground line :background line))
-    (dolist (f '(window-divider window-divider-last-pixel))
-      (when (facep f)
-        (set-face-attribute f nil :foreground bg :background bg)))))
+    (when (facep 'window-divider-last-pixel)
+      (set-face-attribute 'window-divider-last-pixel nil
+                          :foreground bg :background bg))
+    (when (facep 'window-divider)
+      (set-face-attribute 'window-divider nil
+                          :foreground (if tray line bg)
+                          :background (if tray line bg)))))
 
 (defun iys/ui-setup-bars (&rest _)
   "把 mode-line 与 tab-line 调成字号一致、厚度一致的一对。
-托盘开着时 mode-line 不显示，分割线是 1px 的 window divider。"
+托盘开着时 mode-line 不显示，编辑区和托盘之间是 1px 的 window divider。"
   (require 'tab-line nil t)                       ; 确保 tab-line-* face 已定义
   ;; mode-line-active 是 Emacs 29+，故逐个 facep 判断
   (dolist (f '(mode-line mode-line-active mode-line-inactive))

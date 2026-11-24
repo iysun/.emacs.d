@@ -9,18 +9,27 @@
 (add-hook 'after-init-hook #'window-divider-mode)
 
 (defun iys/update-bottom-divider ()
-  "托盘开着时，底部分割线是 1px 亮线，下面再留和 tab-line 相同的上边距。
-宽度没变时不写 frame 参数，避免每次 :w 都触发布局。关掉托盘后只留 1px。
-⚠ 文本终端没有像素分割线，宽度按整行算，pad 必须为 0。"
-  (let* ((pad (if (and (display-graphic-p)
-                       (bound-and-true-p iys/ui-echo-tray-mode)
-                       (boundp 'iys/ui-bar-padding))
-                  iys/ui-bar-padding
-                0))
-         (width (1+ pad)))
-    (unless (eql (frame-parameter nil 'bottom-divider-width) width)
-      (set-frame-parameter nil 'bottom-divider-width width))))
+  "托盘开着时，图形界面底部分割线为 1px，右侧关掉。
+这条 1px 整段用 `window-divider' 上色（见 `iys/ui--style-window-divider'）。
+高度不到 3 像素时不会拆成 first-pixel，PGTK 和 Windows 都是这一像素，
+所以不要把高度撑大。右侧同一 face 会画出竖线，托盘开着时把它设为 0。
+关掉托盘后底和右都回到 1px。文本终端没有像素分割线，托盘开着时底部为 0。"
+  (if (not (display-graphic-p))
+      (let ((width (if (bound-and-true-p iys/ui-echo-tray-mode) 0 1)))
+        (unless (eql (frame-parameter nil 'bottom-divider-width) width)
+          (set-frame-parameter nil 'bottom-divider-width width)))
+    (let* ((tray (bound-and-true-p iys/ui-echo-tray-mode))
+           (right (if tray 0 1)))
+      (setq window-divider-default-bottom-width 1
+            window-divider-default-right-width right)
+      (dolist (frame (frame-list))
+        (when (display-graphic-p frame)
+          (unless (eql (frame-parameter frame 'bottom-divider-width) 1)
+            (set-frame-parameter frame 'bottom-divider-width 1))
+          (unless (eql (frame-parameter frame 'right-divider-width) right)
+            (set-frame-parameter frame 'right-divider-width right)))))))
 (add-hook 'window-configuration-change-hook #'iys/update-bottom-divider)
+(iys/update-bottom-divider)
 
 ;; ⚠ q 在 log-edit buffer 里须走 log-edit-kill-buffer 放弃提交
 (defun iys/quit-window (arg)
