@@ -40,7 +40,7 @@
 | `user-lisp/init-mirrors.el` | **包源镜像的唯一定义处**（`init.el` require 它，换镜像只改这一个文件） |
 | `user-lisp/init-bars.el` | **mode-line + tab-line** 的入口：两条 bar 共用的工具函数 + 字号/内边距统一设置（放一起改才不会顾此失彼）。本体 `require` 自 `user-lisp/mode-line`、`user-lisp/tab-line`。须在 `init-ui` 之后加载，复用其字体选择结果 |
 | `user-lisp/mode-line/init-mode-line.el` | mode-line 实现本体，`(provide 'init-mode-line)`，由 `init-bars.el` `require` |
-| `user-lisp/tab-line/init-tab-line.el` | tab-line 实现本体，`(provide 'init-tab-line)`。⚠ 特意不叫 `tab-line.el`：user-lisp 会把子目录**前置**到 load-path，叫 `tab-line.el` 会盖住内置库。整条 bar 用正文底色，选中标签下方一条 accent 线；不装 centaur-tabs 本身（启动约 2.2s） |
+| `user-lisp/tab-line/init-tab-line.el` | tab-line 实现本体，`(provide 'init-tab-line)`。⚠ 特意不叫 `tab-line.el`：user-lisp 会把子目录**前置**到 load-path，叫 `tab-line.el` 会盖住内置库。整条 bar 用正文底色，选中标签底边一条 accent 线；不装 centaur-tabs 本身（启动约 2.2s） |
 | `user-lisp/eshell-prompt/init-eshell-prompt.el` | eshell 提示符实现本体，由 `init-term.el` `require` |
 | `user-lisp/eshell-syntax-highlighting/` | **vendored** 的 `eshell-syntax-highlighting`（GPLv3，上游 20241222.2030），本地补丁给 `executable-find` 加缓存；由 `init-term.el` 的 `eshell-mode-hook` 加载。见其 `README.md` |
 | `user-lisp/lsp-symbols/init-lsp-symbols.el` | LSP `workspace/symbol` 搜索（consult 界面、按 SymbolKind 窄化、预览跳转），由 `init-lsp.el` `require`，命令 `iys/lsp-symbols` 绑在 `M-s s`；没有 eglot 后端时退化为 `xref-find-apropos` |

@@ -106,7 +106,7 @@ popper 未加载/`popper-mode' 未开启时 `popper-popup-p' 不存在，做特�
 (defun iys/tab-line--pad ()
   "标签文字上下各留的像素，和 `iys/ui-bar-padding' 同一个数。
 上沿加在字体 ascent 之上，下沿加在 descent 之下，两边才一样宽。
-选中线画在字形底边，所以下沿空在线的下面。"
+选中线贴着下沿留白的底边，所以这段空在字和线之间。"
   (if (boundp 'iys/ui-bar-padding) iys/ui-bar-padding 2))
 
 (defun iys/tab-line--font-metric (index fallback)
@@ -124,7 +124,7 @@ popper 未加载/`popper-mode' 未开启时 `popper-popup-p' 不存在，做特�
 
 (defun iys/tab-line--drop ()
   "右 padding，同时把行向下撑高 `iys/tab-line--pad'。
-空格高度要含字体 descent，多出来的那段才露在选中线下面。"
+空格高度要含字体 descent，多出来的那段才落到字形底边之外，线才贴得到 tab 底。"
   (let ((descent (iys/tab-line--font-metric 9 0)))
     (propertize iys/tab-line-tab-padding
                 'display `(space :height (,(+ descent (iys/tab-line--pad))) :ascent 0))))

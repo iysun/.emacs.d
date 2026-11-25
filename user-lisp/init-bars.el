@@ -48,14 +48,6 @@ padding 为 0 则返回 nil。
       `(:line-width (1 . ,iys/ui-bar-padding) :color ,color)
     nil))
 
-(defun iys/ui--tab-underline-position ()
-  "选中线放在字形底边。`:position' 从基线往下量，底边就是字体 descent。
-再往下的空是 `iys/ui-bar-padding'，和文字上方那截一样高。"
-  (let* ((font (ignore-errors (face-attribute 'default :font)))
-         (info (and (fontp font) (ignore-errors (font-info font))))
-         (descent (or (and (vectorp info) (> (length info) 9) (aref info 9)) 0)))
-    (max 0 descent)))
-
 (defun iys/ui--bar-box (face)
   "给 FACE 生成「只当内边距、不显边框」的 box 规格；padding 为 0 时返回 nil。"
   (iys/ui--v-box (iys/ui--bg-of face)))
@@ -124,6 +116,7 @@ padding 为 0 则返回 nil。
             "#4c9eff"))
   ;; ⚠ set-face-attribute 不清空旧值；换主题重跑须显式清掉上一次的 underline / overline
   ;; 整条 tab-line 用正文底色，不再加 box：内边距画在下划线下面，线就到不了底边。
+  ;; :position 是离字形串底边往上的像素。0 贴着下沿留白的底；写成 descent 会把线抬回字底。
   (let* ((body-bg (iys/ui--bg-of 'default))
          (body-fg (or (iys/ui--real-color (face-foreground 'default nil t)) bar-fg)))
     (dolist (f '(tab-line tab-line-active tab-line-inactive
@@ -143,8 +136,7 @@ padding 为 0 则返回 nil。
     (when (facep 'tab-line-tab-current)
       (set-face-attribute 'tab-line-tab-current nil
                           :weight 'normal :slant 'normal
-                          :underline `(:color ,iys/ui--tab-accent
-                                       :position ,(iys/ui--tab-underline-position))
+                          :underline `(:color ,iys/ui--tab-accent :position 0)
                           :overline nil
                           :background body-bg :foreground body-fg
                           :box nil))
