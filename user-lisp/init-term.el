@@ -10,6 +10,15 @@
 (setq eshell-cmpl-autolist t)
 (setq eshell-history-size 10000)
 
+;; ⚠ 只通过 M-x 调用，配置里没有引用；不要当成死代码删掉
+(defvar eshell-buffer-maximum-lines)
+(defun iys/eshell-clear ()
+  "截断当前 eshell 缓冲。"
+  (interactive)
+  (let ((eshell-buffer-maximum-lines 0))
+    (eshell-truncate-buffer)
+    (previous-line)
+    (delete-char 1)))
 
 (require 'init-eshell-prompt)
 

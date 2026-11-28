@@ -161,6 +161,12 @@
 (add-to-list 'load-path (expand-file-name "themes" user-emacs-directory))
 (add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
 
+;; ⚠ 只通过 M-x 调用，配置里没有引用；不要当成死代码删掉
+(defun iys/set-bigger-spacing ()
+  "把当前 buffer 的行距加大。"
+  (interactive)
+  (setq-local default-text-properties '(line-spacing 0.2 line-height 1.2)))
+
 (defcustom iys/emacs-theme nil
   "启动时加载的主题名；nil 表示回退到 `nn-world'。"
   :type 'symbol
