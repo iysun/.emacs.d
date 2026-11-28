@@ -89,6 +89,7 @@ Emacs 的 `M-f`/`M-b`/`M-d` 走 `global-subword-mode`；evil 用 `forward-word-s
 （可同时用上游 LSP 和 mux 内存/缓存索引，已卸 citre）。跳转用 `gd` / `M-.`（xref）。
 Emacs 项目（`.project` / `.git` / `project-list-file`）打开时 mux 自动建 tags；否则 `SPC c` = `iys/lspmux-index`。
 看文档键：`gh` = `iys/doc-at-point`（`iys-notify-doc-at-point` 的别名；posframe，再按一次落到普通窗口）。
+通知在子 frame 里不能选字：`gy` 在通知可见时复制全文（kill-ring + 系统剪贴板），否则仍是 `evil-commentary-yank`（`gyy` 等）；`gH` = `iys-notify-pop-out`（落到普通窗口再选）。
 `lspmux` 源码以 submodule 钉在 `vendor/lspmux`；eglot 仍调 PATH 上的二进制（`cargo install --path vendor/lspmux --bin lspmux`）。
 
 ## 本机第三方程序

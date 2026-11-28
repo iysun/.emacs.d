@@ -53,7 +53,8 @@
   :group 'iys-notify)
 
 (defcustom iys-notify-persist-commands
-  '(iys-notify-doc-at-point iys-notify-hide iys-notify-pop-out)
+  '(iys-notify-doc-at-point iys-notify-hide iys-notify-pop-out
+    iys-notify-copy)
   "这些命令不关掉当前通知（`pre-command-hook' 里跳过）。"
   :type '(repeat function)
   :group 'iys-notify)
@@ -187,14 +188,46 @@
       (progn (eldoc--format-doc-buffer docs) nil)
     (funcall orig docs interactive)))
 
+(defun iys-notify--text ()
+  (when (buffer-live-p iys-notify--buffer)
+    (with-current-buffer iys-notify--buffer
+      (string-trim (buffer-substring-no-properties (point-min) (point-max))))))
+
+;;;###autoload
+(defun iys-notify-copy ()
+  "把当前通知全文写入 kill-ring 和系统剪贴板。子 frame 不抢焦点，没法在里面选字。"
+  (interactive)
+  (let ((text (iys-notify--text)))
+    (unless (and text (not (string-empty-p text)))
+      (user-error "没有可复制的通知"))
+    (let ((select-enable-clipboard t))
+      (kill-new text))
+    (message "已复制通知")))
+
+;;;###autoload
+(defun iys-notify-copy-dwim ()
+  "通知可见时复制全文。否则交给 `evil-commentary-yank'（原来的 gy / gyy）。"
+  (interactive)
+  (if (iys-notify-visible-p)
+      (iys-notify-copy)
+    (if (fboundp 'evil-commentary-yank)
+        (call-interactively #'evil-commentary-yank)
+      (user-error "没有可复制的通知"))))
+
 ;;;###autoload
 (defun iys-notify-pop-out ()
-  "把当前文档通知落到普通窗口，便于翻页/复制。"
+  "把当前通知落到普通窗口，便于翻页/选区复制。"
   (interactive)
-  (when (buffer-live-p iys-notify--buffer)
-    (let ((buf iys-notify--buffer))
-      (iys-notify-hide)
-      (pop-to-buffer buf))))
+  (unless (buffer-live-p iys-notify--buffer)
+    (user-error "没有通知"))
+  (let ((buf iys-notify--buffer))
+    (iys-notify-hide)
+    (with-current-buffer buf
+      (when (string-prefix-p " " (buffer-name))
+        (rename-buffer (string-trim-left (buffer-name)) t))
+      (unless (derived-mode-p 'special-mode)
+        (special-mode)))
+    (pop-to-buffer buf)))
 
 ;;;###autoload
 (defun iys-notify-doc-at-point ()
@@ -225,8 +258,13 @@
     t)
    (t (and (iys-notify-show msg) t))))
 
+(defun iys-notify--keep-p (cmd)
+  (or (memq cmd iys-notify-persist-commands)
+      (and (symbolp cmd)
+           (string-prefix-p "iys-notify-" (symbol-name cmd)))))
+
 (defun iys-notify--on-pre-command ()
-  (unless (memq this-command iys-notify-persist-commands)
+  (unless (iys-notify--keep-p this-command)
     (iys-notify-hide)))
 
 (defun iys-notify--enable ()
@@ -248,7 +286,8 @@
   "用 posframe 弹出 echo 消息和交互式 eldoc。
 
 echo 到下一条命令关掉（`read-event' 期间会留着）。
-`iys-notify-doc-at-point' 第一次弹文档，再按一次落到普通窗口。"
+`iys-notify-doc-at-point' 第一次弹文档，再按一次落到普通窗口。
+`iys-notify-copy' 复制全文；`iys-notify-pop-out' 落到普通窗口再选。"
   :global t
   :group 'iys-notify
   :lighter nil

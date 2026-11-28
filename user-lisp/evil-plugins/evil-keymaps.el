@@ -8,6 +8,12 @@
   (evil-define-key 'normal 'global (kbd "SPC f") 'iys/format-buffer)
   (evil-define-key 'normal 'global (kbd "SPC c") 'iys/lspmux-index)
   (evil-define-key 'normal 'global (kbd "gh") 'iys/doc-at-point)
+  (evil-define-key 'normal 'global (kbd "gH") 'iys-notify-pop-out)
+  ;; evil-commentary-mode 自己的 map 也绑了 gy，后加载会盖掉 global，须再绑一次
+  (evil-define-key 'normal 'global (kbd "gy") 'iys-notify-copy-dwim)
+  (with-eval-after-load 'evil-commentary
+    (evil-define-key 'normal evil-commentary-mode-map
+      (kbd "gy") 'iys-notify-copy-dwim))
 
   ;; ⚠ eshell-mode-map 每次进 mode 都重建，hook 须排在 first-time 钩子之后（depth 90）。
   (defun iys/eshell--evil-insert-keys ()
