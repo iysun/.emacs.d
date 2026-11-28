@@ -224,11 +224,11 @@
     nil)
    ((run-hook-with-args-until-success 'iys-notify-inhibit-functions msg)
     nil)
+   ;; eldoc 在调用 `message' 之前写入的是 `eldoc-last-message'，没有双横线那份。
    ((and iys-notify-swallow-idle-eldoc
-         (boundp 'eldoc--last-message)
-         (stringp eldoc--last-message)
+         (stringp eldoc-last-message)
          (string= (substring-no-properties msg)
-                  (substring-no-properties eldoc--last-message)))
+                  (substring-no-properties eldoc-last-message)))
     t)
    (t (and (iys-notify-show msg) t))))
 

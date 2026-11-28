@@ -159,7 +159,10 @@
   ;; ⚠ "." 走同步路径，会当场阻塞一次 LSP 往返
   (setq corfu-auto-trigger ".")
   (setq corfu-preview-current nil)
-  (setq corfu-popupinfo-delay '(0.4 . 0.2))
+  ;; popupinfo 是第二个子 frame，还会同步做 completionItem/resolve。
+  ;; 后续延迟太短时，每换一个候选就改一次尺寸；PGTK 上要等合成器。
+  ;; 停够一秒才更新，快速翻候选不会跟着弹。
+  (setq corfu-popupinfo-delay '(1.0 . 1.0))
   (custom-set-faces
    '(corfu-border ((t (:inherit region :background unspecified)))))
   )
