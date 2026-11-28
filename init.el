@@ -27,6 +27,7 @@
     vertico
     corfu
     cape
+    yasnippet
     pinyinlib
     ghostel
     no-littering)
