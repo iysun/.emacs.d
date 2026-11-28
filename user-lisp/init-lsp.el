@@ -69,21 +69,32 @@
                           :completeUnimported t)))
 
   ;; 所有托管 mode 只连 lspmux；按 languageId 懒启动上游（见 ~/work/projects/lspmux）
+  ;; ⚠ 这里必须是一条 (MODES "lspmux")。再多包一层列表的话，
+  ;; eglot 会把字符串 "lspmux" 当成 major mode，连接直接报 symbolp 然后被 eglot-ensure 吞掉。
+  ;; ⚠ mhtml-ts-mode 同时派生自 css-mode / js-mode。eglot 取第一条
+  ;; `provided-mode-derived-p' 命中的 languageId，所以 mhtml 必须排在 css/js 前面，
+  ;; 否则 HTML 文件会被当成 css，只拉起 vscode-css，标签和 script 都没有补全。
   (add-to-list 'eglot-server-programs
-               '(((c-mode c-ts-mode c++-mode c++-ts-mode
-                   python-mode python-ts-mode
-                   go-mode go-ts-mode
-                   go-dot-mod-mode go-mod-ts-mode
-                   go-dot-work-mode go-work-ts-mode
-                   rust-mode rust-ts-mode
-                   css-mode css-ts-mode
-                   html-mode html-ts-mode mhtml-mode mhtml-ts-mode
-                   (js-mode :language-id "javascript")
-                   (js-ts-mode :language-id "javascript")
-                   (tsx-ts-mode :language-id "typescriptreact")
-                   (typescript-ts-mode :language-id "typescript")
-                   (typescript-mode :language-id "typescript"))
-                  "lspmux")))
+               '(((mhtml-mode :language-id "html")
+                  (mhtml-ts-mode :language-id "html")
+                  html-mode html-ts-mode
+                  c-mode c-ts-mode
+                  (c++-mode :language-id "cpp")
+                  (c++-ts-mode :language-id "cpp")
+                  python-mode python-ts-mode
+                  go-mode go-ts-mode
+                  (go-dot-mod-mode :language-id "go.mod")
+                  (go-mod-ts-mode :language-id "go.mod")
+                  (go-dot-work-mode :language-id "go.work")
+                  (go-work-ts-mode :language-id "go.work")
+                  rust-mode rust-ts-mode
+                  css-mode css-ts-mode
+                  (js-mode :language-id "javascript")
+                  (js-ts-mode :language-id "javascript")
+                  (tsx-ts-mode :language-id "typescriptreact")
+                  (typescript-ts-mode :language-id "typescript")
+                  (typescript-mode :language-id "typescript"))
+                 "lspmux"))
 
   (defun iys/lsp-complete ()
     "手动触发补全（C-M-i）。
