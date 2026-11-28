@@ -109,4 +109,44 @@
 ;; ⚠ 新 frame 不继承 frame 参数，须单独再设
 (add-hook 'after-make-frame-functions #'iys--set-buffer-predicate)
 
+;; ⚠ 两套都要设：环境变量给 git/curl/LSP 子进程，变量给 url 库
+;; ⚠ 只通过 M-x 调用，配置里没有引用；不要当成死代码删掉
+(defvar iys/proxy-address "127.0.0.1:7897"
+  "HTTP(S) 代理地址，格式 host:port。")
+
+(defvar iys/proxy-no-proxy "^\\(localhost\\|127\\.0\\.0\\.1\\)"
+  "不走代理的主机名正则，对应 `url-proxy-services' 的 no_proxy 项。")
+
+(defun iys/proxy-on ()
+  "启用网络代理（`iys/proxy-address'）。"
+  (interactive)
+  (setq url-proxy-services
+        `(("http"     . ,iys/proxy-address)
+          ("https"    . ,iys/proxy-address)
+          ("no_proxy" . ,iys/proxy-no-proxy)))
+  (let ((url (concat "http://" iys/proxy-address)))
+    (setenv "http_proxy" url)
+    (setenv "https_proxy" url)
+    (setenv "HTTP_PROXY" url)
+    (setenv "HTTPS_PROXY" url))
+  (setenv "no_proxy" "localhost,127.0.0.1")
+  (setenv "NO_PROXY" "localhost,127.0.0.1")
+  (message "Proxy on: %s" iys/proxy-address))
+
+(defun iys/proxy-off ()
+  "关闭网络代理。"
+  (interactive)
+  (setq url-proxy-services nil)
+  (dolist (var '("http_proxy" "https_proxy" "HTTP_PROXY" "HTTPS_PROXY"
+                 "no_proxy" "NO_PROXY"))
+    (setenv var nil))
+  (message "Proxy off"))
+
+(defun iys/proxy-toggle ()
+  "切换网络代理开关。"
+  (interactive)
+  (if url-proxy-services
+      (iys/proxy-off)
+    (iys/proxy-on)))
+
 (provide 'init-base)
