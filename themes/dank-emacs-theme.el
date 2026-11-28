@@ -118,6 +118,7 @@
    `(default ((t (:background ,bg :foreground ,on-background))))
    `(cursor ((t (:background ,dank-cyan-bright))))
    `(highlight ((t (:background ,primary-container :foreground ,on-primary-container))))
+   `(hl-line ((t (:inherit nil :extend t :underline (:color ,outline-variant :position 0)))))
    `(region ((t (:background ,primary-container :foreground ,dank-cyan-bright :extend t))))
    `(secondary-selection ((t (:background ,secondary-container :foreground ,on-secondary-container :extend t))))
    `(isearch ((t (:background ,dank-yellow :foreground ,bg :weight bold))))

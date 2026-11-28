@@ -146,6 +146,24 @@
 (when (boundp 'enable-theme-functions)
   (add-hook 'enable-theme-functions #'iys/ui-setup-whitespace-faces))
 
+(defun iys/ui-setup-hl-line (&rest _)
+  "当前行不铺底、不改字色。dank 默认 `hl-line' 继承 `highlight'，整行变紫。
+改成窗口宽一条细下划线，跟 tab-line 选中标签同一套语言；定位还靠行号。"
+  (let ((c (or (iys/ui--fg 'vertical-border nil)
+               (iys/ui--fg 'shadow nil)
+               (iys/ui--blend-fg (iys/ui--fg 'default "#cccccc") (iys/ui--bg) 0.28))))
+    (set-face-attribute 'hl-line nil
+                        :inherit nil
+                        :background 'unspecified
+                        :foreground 'unspecified
+                        :box nil
+                        :underline `(:color ,c :position 0)
+                        :extend t)))
+
+(add-hook 'after-init-hook #'iys/ui-setup-hl-line t)
+(when (boundp 'enable-theme-functions)
+  (add-hook 'enable-theme-functions #'iys/ui-setup-hl-line))
+
 (defun iys/ui--whitespace-after-on ()
   (when whitespace-mode
     (iys/ui-setup-whitespace-faces)

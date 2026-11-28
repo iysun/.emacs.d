@@ -16,7 +16,7 @@
 
   (setq project-vc-extra-root-markers '(".project"))
 
-  (global-hl-line-mode t)
+  (global-hl-line-mode t) ; 样式在 `iys/ui-setup-hl-line'：细下划线，不铺底
 
   (setq jit-lock-defer-time 0.1)
   )

@@ -150,7 +150,7 @@
      `(highlight      ((t :background ,secondary)))
      `(lazy-highlight ((t :inherit highlight)))
      `(region         ((t :inherit highlight)))
-     `(hl-line        ((t :background ,hl-line-bg)))
+     `(hl-line        ((t :inherit nil :extend t :underline (:color ,dim :position 0))))
   
      `(vertical-border            ((t :foreground ,secondary)))
      `(window-divider             ((t :inherit vertical-border)))
