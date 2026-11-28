@@ -53,8 +53,7 @@
   :group 'iys-notify)
 
 (defcustom iys-notify-persist-commands
-  '(iys-notify-doc-at-point iys-notify-hide iys-notify-pop-out
-    iys-notify-copy)
+  '(iys-notify-doc-at-point iys-notify-hide iys-notify-pop-out)
   "这些命令不关掉当前通知（`pre-command-hook' 里跳过）。"
   :type '(repeat function)
   :group 'iys-notify)
@@ -188,32 +187,6 @@
       (progn (eldoc--format-doc-buffer docs) nil)
     (funcall orig docs interactive)))
 
-(defun iys-notify--text ()
-  (when (buffer-live-p iys-notify--buffer)
-    (with-current-buffer iys-notify--buffer
-      (string-trim (buffer-substring-no-properties (point-min) (point-max))))))
-
-;;;###autoload
-(defun iys-notify-copy ()
-  "把当前通知全文写入 kill-ring 和系统剪贴板。子 frame 不抢焦点，没法在里面选字。"
-  (interactive)
-  (let ((text (iys-notify--text)))
-    (unless (and text (not (string-empty-p text)))
-      (user-error "没有可复制的通知"))
-    (let ((select-enable-clipboard t))
-      (kill-new text))
-    (message "已复制通知")))
-
-;;;###autoload
-(defun iys-notify-copy-dwim ()
-  "通知可见时复制全文。否则交给 `evil-commentary-yank'（原来的 gy / gyy）。"
-  (interactive)
-  (if (iys-notify-visible-p)
-      (iys-notify-copy)
-    (if (fboundp 'evil-commentary-yank)
-        (call-interactively #'evil-commentary-yank)
-      (user-error "没有可复制的通知"))))
-
 ;;;###autoload
 (defun iys-notify-pop-out ()
   "把当前通知落到普通窗口，便于翻页/选区复制。"
@@ -231,11 +204,11 @@
 
 ;;;###autoload
 (defun iys-notify-doc-at-point ()
-  "看光标处符号的文档。第一次弹通知，再按一次落到普通窗口。
+  "看光标处符号的文档。通知已在就落到普通窗口（echo / 文档都行）。
 
 走交互 `eldoc'，绕过 idle delay，eglot 的 hover 是异步的，等结果回来才画。"
   (interactive)
-  (if (and (eq iys-notify--kind 'doc) (iys-notify-visible-p))
+  (if (iys-notify-visible-p)
       (iys-notify-pop-out)
     (call-interactively #'eldoc)))
 
@@ -286,8 +259,7 @@
   "用 posframe 弹出 echo 消息和交互式 eldoc。
 
 echo 到下一条命令关掉（`read-event' 期间会留着）。
-`iys-notify-doc-at-point' 第一次弹文档，再按一次落到普通窗口。
-`iys-notify-copy' 复制全文；`iys-notify-pop-out' 落到普通窗口再选。"
+`iys-notify-doc-at-point' 第一次弹文档；通知已在则落到普通窗口。"
   :global t
   :group 'iys-notify
   :lighter nil
