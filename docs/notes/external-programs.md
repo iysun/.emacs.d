@@ -23,8 +23,7 @@ M-x iys/check-external-programs
 | `rg` | xref 搜索、`consult-ripgrep`（`M-s r`） | xref 不走 ripgrep |
 | `fd` | `consult-fd`（`M-s f`）、fd-dired | 不装 fd-dired；文件查找弱一档。Debian 二进制常叫 `fdfind`，PATH 上要有名为 `fd` 的入口 |
 | `locate` | `consult-locate`（`M-s c`） | 该命令不可用 |
-| `readtags` | citre | `init-navigation` 整份不加载 |
-| `ctags` | Universal Ctags，生成 tags | citre / 以后的 `lspmux tags` 没有索引可吃 |
+| `ctags` | Universal Ctags；lspmux 建/增量符号索引 | mux 的 tags 源没有索引（不写仓库 `tags` 文件） |
 | `shfmt` | apheleia 格式化 `sh-mode` | 不把 sh 交给 shfmt |
 | `node` | npm 语言服务器的运行时 | html/css/ts/pyright 起不来 |
 | `cc` | `treesit-install-language-grammar` | 装 grammar 失败 |
@@ -48,7 +47,13 @@ M-x iys/check-external-programs
 
 eglot 只连 `lspmux`。打开某种语言时 mux 才拉对应上游；上游仍要在 PATH 上（mux 按 argv 拉子进程，不负责安装）。
 
-`lspmux` 来自 `~/work/projects/lspmux`：`cargo install --path . --bin lspmux`。
+`lspmux` 源码钉在本仓 `vendor/lspmux`（submodule）。装二进制：
+
+```
+cargo install --path ~/.emacs.d/vendor/lspmux --bin lspmux
+```
+
+日常开发仍在 `~/work/projects/lspmux`；推送后再更新 submodule SHA 并重装。
 
 ## 不在这份 PATH 清单里的
 

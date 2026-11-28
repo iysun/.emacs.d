@@ -6,9 +6,6 @@
 
 (with-eval-after-load 'evil
   (evil-define-key 'normal 'global (kbd "SPC f") 'iys/format-buffer)
-  (evil-define-key 'normal 'global (kbd "SPC p") 'citre-peek)
-  (evil-define-key 'normal 'global (kbd "SPC c") 'citre-create-tags-file)
-  (evil-define-key 'normal 'global (kbd "SPC u") 'citre-update-tags-file)
   (evil-define-key 'normal 'global (kbd "gh") 'iys/doc-at-point)
 
   ;; ⚠ eshell-mode-map 每次进 mode 都重建，hook 须排在 first-time 钩子之后（depth 90）。

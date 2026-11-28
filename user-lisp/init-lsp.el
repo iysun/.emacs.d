@@ -71,7 +71,7 @@
                           :completeUnimported t)
                   :implicitProjectConfiguration (:checkJs t)))
 
-  ;; 所有托管 mode 只连 lspmux；按 languageId 懒启动上游（见 ~/work/projects/lspmux）
+  ;; 所有托管 mode 只连 PATH 上的 lspmux；源码钉在 vendor/lspmux（submodule）
   ;; ⚠ 这里必须是一条 (MODES "lspmux")。再多包一层列表的话，
   ;; eglot 会把字符串 "lspmux" 当成 major mode，连接直接报 symbolp 然后被 eglot-ensure 吞掉。
   ;; ⚠ mhtml-ts-mode 同时派生自 css-mode / js-mode。eglot 取第一条
@@ -118,13 +118,7 @@ eglot-managed-mode-hook 已经把 completion-at-point-functions 换成了
                                  #'cape-file)
                                 (remq 'eglot-completion-at-point
                                       completion-at-point-functions)))
-              (local-set-key (kbd "C-M-i") #'iys/lsp-complete)
-;; ⚠ eglot 会头插 eglot-xref-backend 把 citre 挤到后面，xref-find-backend 就不回退 tags/global
-              (when (memq 'citre-xref-backend xref-backend-functions)
-                (setq-local xref-backend-functions
-                            (cons 'citre-xref-backend
-                                  (remq 'citre-xref-backend
-                                        xref-backend-functions)))))))
+              (local-set-key (kbd "C-M-i") #'iys/lsp-complete))))
 
 ;; fset ignore 才真掐掉日志构造开销（代价：M-x eglot-events-buffer 永远空）
 (with-eval-after-load 'jsonrpc

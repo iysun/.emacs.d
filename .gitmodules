@@ -1,0 +1,4 @@
+[submodule "vendor/lspmux"]
+	path = vendor/lspmux
+	url = https://github.com/iysun/lspmux.git
+	branch = main

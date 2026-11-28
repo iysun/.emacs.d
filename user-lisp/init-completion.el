@@ -200,14 +200,9 @@
 
 ;; ⚠ 行内预览会跑全局 capf（含 eglot 的完整 LSP 请求），须用下面的 advice 换成纯本地 capf 表
 (defvar iys/completion-preview-capfs
-  (list #'citre-completion-at-point #'cape-dabbrev #'cape-keyword #'cape-file)
+  (list #'cape-dabbrev #'cape-keyword #'cape-file)
   "行内预览专用的 capf 列表：只用本地廉价源，绝不含 LSP（eglot）。
-citre 放最前面——它靠查 tags 文件，比 dabbrev 精确（带 kind/signature 标注），
-但 `citre-completion-at-point' 的 collection 没声明 `:exclusive'，一旦有
-匹配就会独占，必须排在 dabbrev/keyword/file 前面，否则永远轮不到它：
-dabbrev 几乎对任何已在 buffer 里出现过的前缀都能凑出候选，排前面会先把
-后面的 capf 全部挡住。citre-mode 没开、或当前 buffer 没有 tags 数据库时
-它直接返回 nil，自动落到下面几个源。LSP 候选仍然走手动触发
+tags 补全走 lspmux，不在预览里再查一遍。LSP 候选仍然走手动触发
 （C-M-i / `iys/lsp-complete'）或 auto 档的 corfu。")
 
 ;; ⚠ eshell 只有参数位能给 pcomplete（命令位会枚举 exec-path，很慢）；换掉它则文件名无候选

@@ -59,10 +59,11 @@
 | `scripts/bench-startup.py` | 跨平台测速脚本：采集机器信息 + 真实 GUI 启动耗时，输出/追加基准块 |
 | `scripts/make-shortcuts.py` | Windows：在开始菜单建 Emacs 快捷方式（指向 `runemacs.exe`）。需 `pip install pywin32` |
 | `user-lisp/init-externals.el` | 本配置依赖的外部程序清单（`iys/external-programs`）+ 手动检测 `iys/check-external-programs`。**不在启动时自动检查** |
+| `vendor/lspmux` | **git submodule**（`iysun/lspmux`，跟 `main`）。eglot 强依赖这份源码钉的版本。不放 `user-lisp/`，避免 Rust 树被字节编译。新机器 `git clone --recurse-submodules`，再 `cargo install --path vendor/lspmux --bin lspmux`。日常开发仍在 `~/work/projects/lspmux`，推送后在本仓 `git submodule update --remote vendor/lspmux` 再装一遍 |
 
 当前启用的模块（见 `init.el` 末尾）：`init-base` `init-externals` `init-ui` `init-parens` `init-bars` `init-window`
 `init-completion` `init-dired` `init-git` `init-term` `init-project` `init-keymaps`
-`init-lsp`（eglot 全部 mode 只连 PATH 上的 `lspmux`） `init-format` `init-navigation`` `init-isearch-pinyin`（isearch 里拼音首字母搜中文，只走 `C-s`/`C-r`，用 `pinyinlib`），以及 `user-lisp/evil-plugins/` 下的
+`init-lsp`（eglot 全部 mode 只连 PATH 上的 `lspmux`，源码钉在 `vendor/lspmux`） `init-format` `init-navigation`` `init-isearch-pinyin`（isearch 里拼音首字母搜中文，只走 `C-s`/`C-r`，用 `pinyinlib`），以及 `user-lisp/evil-plugins/` 下的
 `evil-config` `evil-keymaps` `evil-vc` `evil-dired` `evil-ibuffer` `evil-extra` `mc-evil`（`ime` 由 `early-init.el` 加载）。
 其中 **`evil-config` 由 `init.el` 在 `after-init-hook`（depth -99）才 `require`**，让 evil 的加载
 不计入 `emacs-init-time`；故 `evil-keymaps`/`init-completion` 取 `evil-define-key` 宏改用
@@ -83,11 +84,10 @@ Emacs 的 `M-f`/`M-b`/`M-d` 走 `global-subword-mode`；evil 用 `forward-word-s
 「未移动数」（0=成功），否则 `evil-forward-nearest` 的 `(zerop ...)` 会报 wrong-type-argument。
 
 `init-format`（apheleia，非 LSP 场景的格式化；`SPC f` = `iys/format-buffer` 统一入口，按 buffer
-是否有 eglot 托管自动分流到 eglot-format 或 apheleia-format-buffer）与
-`init-navigation`（citre 补 eglot/xref 覆盖不到的场景；citre 需要本机装 Universal Ctags，没装就
-整个不加载）借鉴自 zdn/.emacs.d。跳转键位统一到标准 xref 入口（`gd`/`M-.`/`M-,`/`M-?`）；
-citre 只留一个不可替代的命令：`SPC p`（`citre-peek`）。
+是否有 eglot 托管自动分流到 eglot-format 或 apheleia-format-buffer）。跳转走 eglot → lspmux
+（可同时用上游 LSP 和 mux 内存/缓存索引，已卸 citre）。跳转用 `gd` / `M-.`（xref）。
 看文档键：`gh` = `iys/doc-at-point`（`user-lisp/init-base.el`）。
+`lspmux` 源码以 submodule 钉在 `vendor/lspmux`；eglot 仍调 PATH 上的二进制（`cargo install --path vendor/lspmux --bin lspmux`）。
 
 ## 本机第三方程序
 

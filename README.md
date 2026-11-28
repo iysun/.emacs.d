@@ -14,10 +14,17 @@
   `user-lisp/gcmh/` 同理内联了 `gcmh`。
 - **`user-lisp/eshell-syntax-highlighting/`**：vendored 的 eshell 语法高亮，带 `executable-find`
   缓存补丁；不再从 ELPA 安装。
+- **`vendor/lspmux`**：eglot 依赖的 lspmux 源码（git submodule）。克隆要带 `--recurse-submodules`，
+  再 `cargo install --path vendor/lspmux --bin lspmux`。
 
 ```sh
+git clone --recurse-submodules https://github.com/iysun/.emacs.d.git ~/.emacs.d
+cargo install --path ~/.emacs.d/vendor/lspmux --bin lspmux
 emacs                 # 启动
 ```
+
+已有克隆补 submodule：`git submodule update --init --recursive`。钉新版本：lspmux 推送到 `main` 后，
+`git submodule update --remote vendor/lspmux`，再 `cargo install --path vendor/lspmux --bin lspmux --force`。
 
 ## 常用命令
 

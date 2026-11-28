@@ -1,6 +1,15 @@
 # LSP Servers
 
 Eglot 使用的 LSP server 汇总。配置入口：`user-lisp/init-lsp.el`。
+eglot **只连** `lspmux`；下面各语言服务器是 mux 按 languageId 拉起的上游，仍要在 PATH 上。
+
+## lspmux（唯一入口）
+
+- **源码**：本仓 submodule `vendor/lspmux`（`iysun/lspmux`）
+- **安装**：`cargo install --path vendor/lspmux --bin lspmux`
+- **验证**：`lspmux --help`
+- **更新**：lspmux `main` 推送后 `git submodule update --remote vendor/lspmux`，再 `--force` 重装
+- **触发**：`init-lsp.el` 里所有托管 mode
 
 ## Go — gopls
 

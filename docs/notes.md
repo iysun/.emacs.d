@@ -8,5 +8,5 @@
 - [包源镜像与首次安装](notes/package-mirrors-and-first-install.md) — 换镜像、初次装包失败、签名/缺依赖时读
 - [启动性能：测了什么、延迟了什么](notes/startup-performance.md) — 想提启动速度、想知道某项为何延迟/为何不 eager（dired/eglot 首次用时）时读
 - [eglot / LSP 手感调优（含若干默认失效的坑）](notes/lsp-eglot-tuning.md) — 调 LSP 跳转/日志/事件缓冲、tree-sitter 模式路由、e2e 某功能却"没反应"时读
-- [本机第三方程序](notes/external-programs.md) — 换机器、eglot/搜索/citre 静默没了、要查 PATH 上该有哪些二进制时读；检测命令 `M-x iys/check-external-programs`（不自动跑）
+- [本机第三方程序](notes/external-programs.md) — 换机器、eglot/搜索静默没了、要查 PATH 上该有哪些二进制时读；检测命令 `M-x iys/check-external-programs`（不自动跑）
 - [Vendor 字体（已迁移到 dotfiles）](notes/vendored-fonts.md) — mode-line/tab-line 图标乱码、换新机器要装字体、想知道为什么某字体没进仓库、要更新 vendor 字体时读

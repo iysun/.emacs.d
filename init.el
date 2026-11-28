@@ -43,8 +43,6 @@
 
 (when (executable-find "fd")
   (add-to-list 'iys/packages 'fd-dired))
-(when (executable-find "readtags")
-  (add-to-list 'iys/packages 'citre))
 
 (dolist (package iys/packages)
   (eval `(use-package ,package :ensure t :defer t)))
