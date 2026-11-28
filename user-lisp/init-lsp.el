@@ -48,6 +48,37 @@
     (css-ts-mode        css-mode))     ; lspmux → vscode-css
   "每个元素是 (TS-MODE 原生-MODE …)，nil 表示无对应 mode。")
 
+(defun iys/lspmux--auto-index-p (project)
+  "是否让 lspmux 打开文件时自动建 tags：`.project` / `.git` / `project-list-file`。"
+  (require 'project)
+  (when-let* ((root (and project (ignore-errors (project-root project)))))
+    (let ((root (file-name-as-directory (expand-file-name root))))
+      (or (file-exists-p (expand-file-name ".project" root))
+          (file-exists-p (expand-file-name ".git" root))
+          (seq-some
+           (lambda (known)
+             (file-equal-p (expand-file-name known) root))
+           (project-known-project-roots))))))
+
+(defun iys/lspmux-contact (_interactive project)
+  (list "lspmux"
+        :initializationOptions
+        (list :autoIndex (if (iys/lspmux--auto-index-p project) t :json-false))))
+
+(defun iys/lspmux-index ()
+  "让 lspmux 为当前文件所在目录建/加载 tags 索引（`lspmux/index`）。"
+  (interactive)
+  (unless buffer-file-name
+    (user-error "没有访问文件"))
+  (require 'eglot)
+  (let ((server (eglot-current-server)))
+    (unless server
+      (user-error "当前 buffer 没有 eglot"))
+    (jsonrpc-request server :lspmux/index
+                     (list :uri (eglot-path-to-uri (expand-file-name buffer-file-name)))
+                     :timeout 120)
+    (message "lspmux 已索引")))
+
 (dolist (modes iys/lsp-modes)
   (dolist (m modes)
     (when m (add-hook (intern (format "%s-hook" m)) 'eglot-ensure))))
@@ -72,13 +103,14 @@
                   :implicitProjectConfiguration (:checkJs t)))
 
   ;; 所有托管 mode 只连 PATH 上的 lspmux；源码钉在 vendor/lspmux（submodule）
-  ;; ⚠ 这里必须是一条 (MODES "lspmux")。再多包一层列表的话，
-  ;; eglot 会把字符串 "lspmux" 当成 major mode，连接直接报 symbolp 然后被 eglot-ensure 吞掉。
+  ;; ⚠ CONTACT 必须是函数或 (PROGRAM …)，不能再包一层列表，否则
+  ;; eglot 会把字符串 "lspmux" 当成 major mode。
   ;; ⚠ mhtml-ts-mode 同时派生自 css-mode / js-mode。eglot 取第一条
   ;; `provided-mode-derived-p' 命中的 languageId，所以 mhtml 必须排在 css/js 前面，
   ;; 否则 HTML 文件会被当成 css，只拉起 vscode-css，标签和 script 都没有补全。
   (add-to-list 'eglot-server-programs
-               '(((mhtml-mode :language-id "html")
+               (cons
+                '((mhtml-mode :language-id "html")
                   (mhtml-ts-mode :language-id "html")
                   html-mode html-ts-mode
                   c-mode c-ts-mode
@@ -97,7 +129,7 @@
                   (tsx-ts-mode :language-id "typescriptreact")
                   (typescript-ts-mode :language-id "typescript")
                   (typescript-mode :language-id "typescript"))
-                 "lspmux"))
+                #'iys/lspmux-contact)))
 
   (defun iys/lsp-complete ()
     "手动触发补全（C-M-i）。

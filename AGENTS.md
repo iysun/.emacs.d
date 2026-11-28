@@ -86,6 +86,7 @@ Emacs 的 `M-f`/`M-b`/`M-d` 走 `global-subword-mode`；evil 用 `forward-word-s
 `init-format`（apheleia，非 LSP 场景的格式化；`SPC f` = `iys/format-buffer` 统一入口，按 buffer
 是否有 eglot 托管自动分流到 eglot-format 或 apheleia-format-buffer）。跳转走 eglot → lspmux
 （可同时用上游 LSP 和 mux 内存/缓存索引，已卸 citre）。跳转用 `gd` / `M-.`（xref）。
+Emacs 项目（`.project` / `.git` / `project-list-file`）打开时 mux 自动建 tags；否则 `SPC c` = `iys/lspmux-index`。
 看文档键：`gh` = `iys/doc-at-point`（`user-lisp/init-base.el`）。
 `lspmux` 源码以 submodule 钉在 `vendor/lspmux`；eglot 仍调 PATH 上的二进制（`cargo install --path vendor/lspmux --bin lspmux`）。
 
