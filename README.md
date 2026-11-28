@@ -24,6 +24,7 @@ emacs                 # 启动
 | 命令 | 作用 |
 |------|------|
 | `python scripts/bench-startup.py` | 测本机启动速度（详见基准文档） |
+| `M-x iys/check-external-programs` | 检查 PATH 上的第三方程序（不自动跑；见 [docs/notes/external-programs.md](docs/notes/external-programs.md)） |
 
 ## 文档
 

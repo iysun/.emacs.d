@@ -58,9 +58,10 @@
 | `docs/startup-benchmark.md` | 多机启动速度基准记录 + 测法 |
 | `scripts/bench-startup.py` | 跨平台测速脚本：采集机器信息 + 真实 GUI 启动耗时，输出/追加基准块 |
 | `scripts/make-shortcuts.py` | Windows：在开始菜单建 Emacs 快捷方式（指向 `runemacs.exe`）。需 `pip install pywin32` |
-| `scripts/rass/` | rass（LSP 多路复用器）的用户预设：`html.py` 把 vscode-html+css+ts 聚合成一个 server 给 eglot。需 `pip install rassumfrassum` + 对应 npm 语言服务器 |
+| `user-lisp/init-externals.el` | 本配置依赖的外部程序清单（`iys/external-programs`）+ 手动检测 `iys/check-external-programs`。**不在启动时自动检查** |
+| `scripts/rass/` | HTML 的 **回退** 预设：rass 把 vscode-html+css+ts 聚合成一个 server。eglot 优先 PATH 上的 `lspmux`（`~/work/projects/lspmux`，`cargo install --path . --bin lspmux`），缺了才走 rass，再缺走纯 `vscode-html-language-server` |
 
-当前启用的模块（见 `init.el` 末尾）：`init-base` `init-ui` `init-parens` `init-bars` `init-window`
+当前启用的模块（见 `init.el` 末尾）：`init-base` `init-externals` `init-ui` `init-parens` `init-bars` `init-window`
 `init-completion` `init-dired` `init-git` `init-term` `init-project` `init-keymaps`
 `init-lsp` `init-format` `init-navigation` `init-isearch-pinyin`（isearch 里拼音首字母搜中文，只走 `C-s`/`C-r`，用 `pinyinlib`），以及 `user-lisp/evil-plugins/` 下的
 `evil-config` `evil-keymaps` `evil-vc` `evil-dired` `evil-ibuffer` `evil-extra` `mc-evil`（`ime` 由 `early-init.el` 加载）。
@@ -88,6 +89,20 @@ Emacs 的 `M-f`/`M-b`/`M-d` 走 `global-subword-mode`；evil 用 `forward-word-s
 整个不加载）借鉴自 zdn/.emacs.d。跳转键位统一到标准 xref 入口（`gd`/`M-.`/`M-,`/`M-?`）；
 citre 只留一个不可替代的命令：`SPC p`（`citre-peek`）。
 看文档键：`gh` = `iys/doc-at-point`（`user-lisp/init-base.el`）。
+
+## 本机第三方程序
+
+Emacs 会调用 PATH 上的 git / rg / fd / ctags / 一串语言服务器 / 输入法工具等；缺了往往静默降级。
+权威清单是 `iys/external-programs`（`user-lisp/init-externals.el`），给人看的表在
+[docs/notes/external-programs.md](docs/notes/external-programs.md)。
+
+**不要在启动时自动检查**（会拖慢、也会在缺可选工具时刷警告）。换机器或功能突然没了：
+
+```
+M-x iys/check-external-programs
+```
+
+`C-u` 只列出缺失项。改清单时 Elisp 与那篇笔记一起改。
 
 ## 构建 / 编译 = user-lisp 自动处理
 
