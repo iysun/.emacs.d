@@ -198,12 +198,11 @@
 (add-to-list 'completion-at-point-functions #'cape-keyword)
 (add-to-list 'completion-at-point-functions #'cape-abbrev)
 
-;; ⚠ 行内预览会跑全局 capf（含 eglot 的完整 LSP 请求），须用下面的 advice 换成纯本地 capf 表
+;; 不直接用全局 completion-at-point-functions：里面还有 elisp/abbrev，顺序也不是预览要的。
+;; LSP 由 `iys/completion-preview--eglot' 单独排在最前。
 (defvar iys/completion-preview-capfs
   (list #'cape-dabbrev #'cape-keyword #'cape-file)
-  "行内预览专用的 capf 列表：只用本地廉价源，绝不含 LSP（eglot）。
-tags 补全走 lspmux，不在预览里再查一遍。LSP 候选仍然走手动触发
-（C-M-i / `iys/lsp-complete'）或 auto 档的 corfu。")
+  "行内预览在 LSP 没有可补后缀时接着用的本地 capf。")
 
 ;; ⚠ eshell 只有参数位能给 pcomplete（命令位会枚举 exec-path，很慢）；换掉它则文件名无候选
 (defun iys/completion-preview--eshell-in-args-p ()
@@ -212,6 +211,15 @@ tags 补全走 lspmux，不在预览里再查一遍。LSP 候选仍然走手动�
 输入区是另一个 field，所以这里取到的就是本次输入的开头，不会把提示符里的空格算进去。"
   (let ((beg (field-beginning (point) t)))
     (string-match-p "[ \t]" (buffer-substring-no-properties beg (point)))))
+
+(defun iys/completion-preview--eglot ()
+  "eglot 的 capf，给行内预览用。
+eglot 不标 `:exclusive no'。预览在表对不上前缀时会停住、不再问后面的 capf，
+dabbrev 就被挡住。plist 里先出现的键优先，所以追加在末尾，eglot 以后自己标了就以它为准。"
+  (when (and (bound-and-true-p eglot--managed-mode)
+             (fboundp 'eglot-completion-at-point))
+    (when-let* ((res (eglot-completion-at-point)))
+      (append res '(:exclusive no)))))
 
 (defun iys/completion-preview--eshell-pcomplete ()
   "只在参数位生效的 pcomplete capf，供行内预览用（理由见上面的注释）。
@@ -241,14 +249,16 @@ eshell/comint 里最前面放 `cape-history'——补的是 shell 历史（eshel
 
 eshell 里第二条是「只在参数位生效的 pcomplete」：历史没命中时才轮到它补文件名。
 comint 不加 pcomplete：那边的命令补全同样要扫 PATH，坑一样，且没有 eshell 这种统一
-入口，留待真需要时再单独处理。"
+入口，留待真需要时再单独处理。
+
+其它 buffer 第一条是 eglot：有可补的后缀就用它，没有（或没开 eglot）再落到本地词。"
   (cond
    ((derived-mode-p 'eshell-mode)
     (append (list #'cape-history #'iys/completion-preview--eshell-pcomplete)
             iys/completion-preview-capfs))
    ((derived-mode-p 'comint-mode)
     (cons #'cape-history iys/completion-preview-capfs))
-   (t iys/completion-preview-capfs)))
+   (t (cons #'iys/completion-preview--eglot iys/completion-preview-capfs))))
 
 (defun iys/completion-preview--local-capfs (orig &rest args)
   "让 `completion-preview--update' 只看 `iys/completion-preview--capfs' 给出的列表。"
