@@ -2,6 +2,14 @@
 
 (require 'init-lsp-symbols)
 
+;; 客户端和协议一起钉在 submodule 里。路径只相对这份配置。
+(load (expand-file-name "vendor/lspmux/emacs/lspmux-async" user-emacs-directory))
+
+(declare-function lspmux-async-complete "lspmux-async")
+(declare-function lspmux-async-mode "lspmux-async")
+(declare-function eglot-xref-backend "eglot")
+(declare-function eglot-hover-eldoc-function "eglot")
+
 ;; ⚠ 必须 setopt（setq 不触发 defcustom 的 :set）；只有没有 maybe 路由的语言靠它才走 ts-mode
 ;; ⚠ 延迟到 startup hook：setopt 会载入 treesit 并生成 remap，占 init 时间
 (add-hook 'emacs-startup-hook
@@ -135,25 +143,27 @@
                 #'iys/lspmux-contact))
 
   (defun iys/lsp-complete ()
-    "手动触发补全（C-M-i）。
-eglot-managed-mode-hook 已经把 completion-at-point-functions 换成了
-`cape-capf-super' 合并出的单个 capf（eglot + 本地 capf 一起给候选），
-自动弹出的 corfu 用的也是同一个，这里直接调 `completion-at-point' 即可，
-留这个命令只是为了在 corfu-auto 关闭的补全风格下也有手动触发入口。"
+    "手动触发补全（C-M-i）。走 lspmux 通知，不调用会阻塞的 `completion-at-point'。"
     (interactive)
-    (call-interactively #'completion-at-point))
+    (call-interactively #'lspmux-async-complete))
 
   (add-hook 'eglot-managed-mode-hook
             (lambda ()
-              (setq-local completion-at-point-functions
-                          (cons (cape-capf-super
-                                 #'eglot-completion-at-point
-                                 #'cape-dabbrev
-                                 #'cape-keyword
-                                 #'cape-file)
-                                (remq 'eglot-completion-at-point
-                                      completion-at-point-functions)))
-              (local-set-key (kbd "C-M-i") #'iys/lsp-complete))))
+              (if (bound-and-true-p eglot--managed-mode)
+                  (progn
+                    ;; eglot 的 capf / xref 定义会在主线程上等到回应。LSP 候选改由通知回调画。
+                    (setq-local completion-at-point-functions
+                                (cons (cape-capf-super
+                                       #'cape-dabbrev
+                                       #'cape-keyword
+                                       #'cape-file)
+                                      (remq 'eglot-completion-at-point
+                                            completion-at-point-functions)))
+                    (remove-hook 'xref-backend-functions #'eglot-xref-backend t)
+                    (remove-hook 'eldoc-documentation-functions #'eglot-hover-eldoc-function t)
+                    (local-set-key (kbd "C-M-i") #'iys/lsp-complete)
+                    (lspmux-async-mode 1))
+                (lspmux-async-mode -1)))))
 
 ;; fset ignore 才真掐掉日志构造开销（代价：M-x eglot-events-buffer 永远空）
 (with-eval-after-load 'jsonrpc

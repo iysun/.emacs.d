@@ -2,6 +2,8 @@
 
 ;; ⚠ evil-define-key 是宏，须编译期 require evil，否则 .elc 报 Invalid function
 (eval-when-compile (require 'evil))
+(declare-function lspmux-async-next "lspmux-async")
+(declare-function lspmux-async-prev "lspmux-async")
 
 (progn
   (setq completion-styles '(orderless basic))
@@ -179,15 +181,17 @@
   (evil-define-key 'insert 'global (kbd "C-n")
     `(menu-item "" evil-complete-next :filter
                 ,(lambda (cmd)
-                   (if (and corfu-mode completion-in-region-mode)
-                       #'corfu-next
-                     cmd))))
+                   (cond
+                    ((bound-and-true-p lspmux-async-menu-mode) #'lspmux-async-next)
+                    ((and corfu-mode completion-in-region-mode) #'corfu-next)
+                    (t cmd)))))
   (evil-define-key 'insert 'global (kbd "C-p")
     `(menu-item "" evil-complete-previous :filter
                 ,(lambda (cmd)
-                   (if (and corfu-mode completion-in-region-mode)
-                       #'corfu-previous
-                     cmd))))
+                   (cond
+                    ((bound-and-true-p lspmux-async-menu-mode) #'lspmux-async-prev)
+                    ((and corfu-mode completion-in-region-mode) #'corfu-previous)
+                    (t cmd)))))
   )
 
 (setq text-mode-ispell-word-completion nil)
@@ -202,10 +206,10 @@
 (add-to-list 'completion-at-point-functions #'cape-abbrev)
 
 ;; 不直接用全局 completion-at-point-functions：里面还有 elisp/abbrev，顺序也不是预览要的。
-;; LSP 由 `iys/completion-preview--eglot' 单独排在最前。
+;; LSP 候选走 lspmux 仓库里的 `lspmux-async' 菜单，不进这条同步 capf。
 (defvar iys/completion-preview-capfs
   (list #'cape-dabbrev #'cape-keyword #'cape-file)
-  "行内预览在 LSP 没有可补后缀时接着用的本地 capf。")
+  "行内预览用的本地 capf。")
 
 ;; ⚠ eshell 只有参数位能给 pcomplete（命令位会枚举 exec-path，很慢）；换掉它则文件名无候选
 (defun iys/completion-preview--eshell-in-args-p ()
@@ -214,15 +218,6 @@
 输入区是另一个 field，所以这里取到的就是本次输入的开头，不会把提示符里的空格算进去。"
   (let ((beg (field-beginning (point) t)))
     (string-match-p "[ \t]" (buffer-substring-no-properties beg (point)))))
-
-(defun iys/completion-preview--eglot ()
-  "eglot 的 capf，给行内预览用。
-eglot 不标 `:exclusive no'。预览在表对不上前缀时会停住、不再问后面的 capf，
-dabbrev 就被挡住。plist 里先出现的键优先，所以追加在末尾，eglot 以后自己标了就以它为准。"
-  (when (and (bound-and-true-p eglot--managed-mode)
-             (fboundp 'eglot-completion-at-point))
-    (when-let* ((res (eglot-completion-at-point)))
-      (append res '(:exclusive no)))))
 
 (defun iys/completion-preview--eshell-pcomplete ()
   "只在参数位生效的 pcomplete capf，供行内预览用（理由见上面的注释）。
@@ -254,14 +249,14 @@ eshell 里第二条是「只在参数位生效的 pcomplete」：历史没命中
 comint 不加 pcomplete：那边的命令补全同样要扫 PATH，坑一样，且没有 eshell 这种统一
 入口，留待真需要时再单独处理。
 
-其它 buffer 第一条是 eglot：有可补的后缀就用它，没有（或没开 eglot）再落到本地词。"
+其它 buffer 只用本地词。LSP 候选在 `lspmux-async' 的菜单里，不走这条同步 capf。"
   (cond
    ((derived-mode-p 'eshell-mode)
     (append (list #'cape-history #'iys/completion-preview--eshell-pcomplete)
             iys/completion-preview-capfs))
    ((derived-mode-p 'comint-mode)
     (cons #'cape-history iys/completion-preview-capfs))
-   (t (cons #'iys/completion-preview--eglot iys/completion-preview-capfs))))
+   (t iys/completion-preview-capfs)))
 
 (defun iys/completion-preview--local-capfs (orig &rest args)
   "让 `completion-preview--update' 只看 `iys/completion-preview--capfs' 给出的列表。"

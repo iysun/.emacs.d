@@ -61,7 +61,7 @@
 | `scripts/bench-startup.py` | 跨平台测速脚本：采集机器信息 + 真实 GUI 启动耗时，输出/追加基准块 |
 | `scripts/make-shortcuts.py` | Windows：在开始菜单建 Emacs 快捷方式（指向 `runemacs.exe`）。需 `pip install pywin32` |
 | `user-lisp/init-externals.el` | 本配置依赖的外部程序清单（`iys/external-programs`）+ 手动检测 `iys/check-external-programs`。**不在启动时自动检查** |
-| `vendor/lspmux` | **git submodule**（`iysun/lspmux`，跟 `main`）。eglot 强依赖这份源码钉的版本。不放 `user-lisp/`，避免 Rust 树被字节编译。新机器 `git clone --recurse-submodules`，再 `cargo install --path vendor/lspmux --bin lspmux`。日常开发仍在 `~/work/projects/lspmux`，推送后在本仓 `git submodule update --remote vendor/lspmux` 再装一遍 |
+| `vendor/lspmux` | **git submodule**（`iysun/lspmux`，跟 `main`）。eglot 强依赖这份源码钉的版本。不放 `user-lisp/`，避免 Rust 树被字节编译。异步菜单是仓里的 `emacs/lspmux-async.el`，由 `init-lsp.el` 从这份 submodule 加载。新机器 `git clone --recurse-submodules`，再 `cargo install --path vendor/lspmux --bin lspmux`。日常开发仍在 `~/work/projects/lspmux`，推送后在本仓 `git submodule update --remote vendor/lspmux` 再装一遍 |
 
 当前启用的模块（见 `init.el` 末尾）：`init-base` `init-externals` `init-ui` `init-notify` `init-parens` `init-bars` `init-window`
 `init-completion` `init-dired` `init-git` `init-term` `init-project` `init-keymaps`
