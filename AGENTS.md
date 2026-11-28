@@ -85,10 +85,9 @@ Emacs 的 `M-f`/`M-b`/`M-d` 走 `global-subword-mode`；evil 用 `forward-word-s
 ⚠ 自定义 forward-op 必须返回
 「未移动数」（0=成功），否则 `evil-forward-nearest` 的 `(zerop ...)` 会报 wrong-type-argument。
 
-`init-format`（`SPC f` = `iys/format-buffer` → `eglot-format` → lspmux；shell 等无 LSP 的语言由 mux 跑 `format` argv，已卸 apheleia）。跳转走 eglot → lspmux
-（可同时用上游 LSP 和 mux 内存/缓存索引，已卸 citre）。跳转用 `gd` / `M-.`（xref）。
+`init-format`（`SPC f` = `iys/format-buffer` → `eglot-format` → lspmux；shell 等无 LSP 的语言由 mux 跑 `format` argv，已卸 apheleia）。定义跳转在 `lspmux-async-mode` 里走 `gd` / `M-.`，发 `lspmux/definition`，不走会在主线程上等待的 xref。多条位置用 `completing-read`，不是 `*xref*`。上游 LSP 和 mux 的 tags 索引可以同时用，citre 已卸。
 Emacs 项目（`.project` / `.git` / `project-list-file`）打开时 mux 自动建 tags；否则 `SPC c` = `iys/lspmux-index`。
-看文档键：`gh` = `iys/doc-at-point`（通知已在则落到普通窗口再选/复制，否则弹文档）。
+`gh` 在 `lspmux-async-mode` 里是 `lspmux-async-hover`（等 `lspmux/hoverResult`）。其它 buffer 仍是 `iys/doc-at-point`（通知已在则落到普通窗口再选/复制，否则弹文档）。
 `lspmux` 源码以 submodule 钉在 `vendor/lspmux`；eglot 仍调 PATH 上的二进制（`cargo install --path vendor/lspmux --bin lspmux`）。
 
 ## 本机第三方程序
@@ -224,7 +223,7 @@ emacs                          # 真实 GUI，看 *Messages* / *Warnings*
 - 包源用 USTC 镜像；**只在 `user-lisp/init-mirrors.el` 里改**。
 - 路径别硬编码 `~/.emacs.d/`，一律用 `user-emacs-directory`。Windows 上 Git Bash 等会设 `HOME`，
   届时 `~/.emacs.d` 指向 `C:\Users\<user>\.emacs.d`，而本仓库在 `%APPDATA%\.emacs.d`，两者不是一个地方。
-- **多平台代码怎么归位**（目前只有 Windows 是真实平台，Linux/macOS 分支未经验证）：
+- **多平台代码怎么归位**（Windows 与 Linux 都在用，macOS 分支未经验证）：
   - **某平台专属、没有别的模块会调用** → `user-lisp/init-<os>.el`，整个文件 `(when (eq system-type '<os>) ...)`
     包起来，由 `early-init.el` 绝对路径 `load`。
   - **跨平台功能，只是实现因平台而异** → 留在功能所属模块里，一个函数内部按 `system-type`

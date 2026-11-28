@@ -50,6 +50,6 @@ gopls 安装到 `$GOPATH/bin`（默认 `~/go/bin`），确保该目录在 `PATH`
 | `M-x eglot-shutdown` | 关闭当前 LSP |
 | `M-x eglot-reconnect` | 重连 LSP |
 | `M-x consult-eglot-symbols` | 搜索工程符号 |
-| `M-.` | 跳转定义 |
+| `M-.` | 跳转定义（`lspmux/definition`，不是 eglot 的 xref） |
 | `M-,` | 跳回 |
 | `M-?` | 查找引用 |

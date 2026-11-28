@@ -1,5 +1,5 @@
 ;; -*- lexical-binding: t; -*-
-;; 跳转 / 符号 / tags 补全都走 eglot → lspmux，不再加载 citre。
-;; 跳转入口是 xref（`gd` / `M-.`）。tags 索引：Emacs 项目自动，否则 SPC c。
+;; 定义跳转不走 xref：eglot 的 xref 会在主线程上等到回应。
+;; `gd` / `M-.` 在 lspmux-async-mode 里发 lspmux/definition。
 
 (provide 'init-navigation)
