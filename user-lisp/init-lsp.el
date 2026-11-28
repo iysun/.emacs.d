@@ -62,11 +62,14 @@
           :documentHighlightProvider
           :foldingRangeProvider))
 
+  ;; 没有 jsconfig 的 JS 文件，typescript-language-server 默认 checkJs 为假，
+  ;; 未定义名字（如单独一行的 dsaf）不算诊断。打开之后才会报 Cannot find name。
   (setq-default eglot-workspace-configuration
                 '(:gopls (:staticcheck       :json-false
                           :analyses          (:unusedparams t :shadow t)
                           :usePlaceholders   t
-                          :completeUnimported t)))
+                          :completeUnimported t)
+                  :implicitProjectConfiguration (:checkJs t)))
 
   ;; 所有托管 mode 只连 lspmux；按 languageId 懒启动上游（见 ~/work/projects/lspmux）
   ;; ⚠ 这里必须是一条 (MODES "lspmux")。再多包一层列表的话，
