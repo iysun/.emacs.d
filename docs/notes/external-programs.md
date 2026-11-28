@@ -37,9 +37,8 @@ M-x iys/check-external-programs
 
 | 程序 | 语言 |
 |------|------|
-| `lspmux` | HTML 首选（聚合下面三条） |
-| `rass` | HTML 回退（`scripts/rass/html.py`） |
-| `vscode-html-language-server` | HTML；也是 lspmux/rass 的上游 |
+| `lspmux` | eglot 唯一入口；按 languageId 拉起下面的上游 |
+| `vscode-html-language-server` | HTML（lspmux 上游） |
 | `vscode-css-language-server` | CSS，以及 HTML 里的 `<style>` |
 | `typescript-language-server` | JS/TS/TSX，以及 HTML 里的 `<script>` |
 | `clangd` | C/C++ |
@@ -47,7 +46,7 @@ M-x iys/check-external-programs
 | `gopls` | Go |
 | `rust-analyzer` | Rust |
 
-HTML 的 eglot 顺序：`lspmux` → `rass` → 纯 `vscode-html-language-server`。有 lspmux 时，后面两条仍要在 PATH 上（mux 按 argv 拉子进程，不负责安装）。
+eglot 只连 `lspmux`。打开某种语言时 mux 才拉对应上游；上游仍要在 PATH 上（mux 按 argv 拉子进程，不负责安装）。
 
 `lspmux` 来自 `~/work/projects/lspmux`：`cargo install --path . --bin lspmux`。
 

@@ -59,11 +59,10 @@
 | `scripts/bench-startup.py` | 跨平台测速脚本：采集机器信息 + 真实 GUI 启动耗时，输出/追加基准块 |
 | `scripts/make-shortcuts.py` | Windows：在开始菜单建 Emacs 快捷方式（指向 `runemacs.exe`）。需 `pip install pywin32` |
 | `user-lisp/init-externals.el` | 本配置依赖的外部程序清单（`iys/external-programs`）+ 手动检测 `iys/check-external-programs`。**不在启动时自动检查** |
-| `scripts/rass/` | HTML 的 **回退** 预设：rass 把 vscode-html+css+ts 聚合成一个 server。eglot 优先 PATH 上的 `lspmux`（`~/work/projects/lspmux`，`cargo install --path . --bin lspmux`），缺了才走 rass，再缺走纯 `vscode-html-language-server` |
 
 当前启用的模块（见 `init.el` 末尾）：`init-base` `init-externals` `init-ui` `init-parens` `init-bars` `init-window`
 `init-completion` `init-dired` `init-git` `init-term` `init-project` `init-keymaps`
-`init-lsp` `init-format` `init-navigation` `init-isearch-pinyin`（isearch 里拼音首字母搜中文，只走 `C-s`/`C-r`，用 `pinyinlib`），以及 `user-lisp/evil-plugins/` 下的
+`init-lsp`（eglot 全部 mode 只连 PATH 上的 `lspmux`） `init-format` `init-navigation`` `init-isearch-pinyin`（isearch 里拼音首字母搜中文，只走 `C-s`/`C-r`，用 `pinyinlib`），以及 `user-lisp/evil-plugins/` 下的
 `evil-config` `evil-keymaps` `evil-vc` `evil-dired` `evil-ibuffer` `evil-extra` `mc-evil`（`ime` 由 `early-init.el` 加载）。
 其中 **`evil-config` 由 `init.el` 在 `after-init-hook`（depth -99）才 `require`**，让 evil 的加载
 不计入 `emacs-init-time`；故 `evil-keymaps`/`init-completion` 取 `evil-define-key` 宏改用

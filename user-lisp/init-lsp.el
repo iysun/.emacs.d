@@ -34,18 +34,18 @@
 ;; 不 eager require eglot（省 ~1.1s 启动）；下面的钩子打开代码文件时才加载它
 ;; ⚠ 每个语言 ts-mode 与原生 mode 两条 hook 都挂：落点由 grammar + 白名单决定，可能落到原生 mode 或 fundamental-mode
 (defconst iys/lsp-modes
-  '((c-ts-mode          c-mode)        ; clangd
+  '(    (c-ts-mode          c-mode)        ; lspmux → clangd
     (c++-ts-mode        c++-mode)
-    (python-ts-mode     python-mode)   ; pyright
-    (js-ts-mode         js-mode)       ; typescript-language-server
+    (python-ts-mode     python-mode)   ; lspmux → pyright
+    (js-ts-mode         js-mode)       ; lspmux → typescript
     (typescript-ts-mode typescript-mode)
     (tsx-ts-mode        nil)           ; 无原生对应 mode
-    (go-ts-mode         go-mode)       ; gopls
+    (go-ts-mode         go-mode)       ; lspmux → gopls
     (go-mod-ts-mode     go-dot-mod-mode)
     (go-work-ts-mode    go-dot-work-mode)
-    (rust-ts-mode       rust-mode)     ; rust-analyzer
-    (mhtml-ts-mode      mhtml-mode)    ; lspmux 聚合 html+css+ts（.html 落 mhtml-ts-mode）
-    (css-ts-mode        css-mode))     ; vscode-css-language-server
+    (rust-ts-mode       rust-mode)     ; lspmux → rust-analyzer
+    (mhtml-ts-mode      mhtml-mode)    ; lspmux 聚合 html+css+ts
+    (css-ts-mode        css-mode))     ; lspmux → vscode-css
   "每个元素是 (TS-MODE 原生-MODE …)，nil 表示无对应 mode。")
 
 (dolist (modes iys/lsp-modes)
@@ -68,23 +68,22 @@
                           :usePlaceholders   t
                           :completeUnimported t)))
 
-  (add-to-list 'eglot-server-programs '((c++-ts-mode c++-mode c-ts-mode c-mode) "clangd"))
-  (add-to-list 'eglot-server-programs '((python-ts-mode python-mode) "pyright-langserver" "--stdio"))
+  ;; 所有托管 mode 只连 lspmux；按 languageId 懒启动上游（见 ~/work/projects/lspmux）
   (add-to-list 'eglot-server-programs
-               '(((js-mode            :language-id "javascript")
-                  (js-ts-mode         :language-id "javascript")
-                  (tsx-ts-mode        :language-id "typescriptreact")
-                  (typescript-ts-mode :language-id "typescript")
-                  (typescript-mode    :language-id "typescript"))
-                 "typescript-language-server" "--stdio"))
-  ;; 一个 buffer 只能连一个 server：lspmux 聚合 html+css+ts，缺了回退 rass，再缺纯 html
-  (add-to-list 'eglot-server-programs
-               `((html-mode html-ts-mode mhtml-mode mhtml-ts-mode)
-                 . ,(eglot-alternatives
-                     (list '("lspmux")
-                           (list "rass"
-                                 (expand-file-name "scripts/rass/html.py" user-emacs-directory))
-                           '("vscode-html-language-server" "--stdio")))))
+               '(((c-mode c-ts-mode c++-mode c++-ts-mode
+                   python-mode python-ts-mode
+                   go-mode go-ts-mode
+                   go-dot-mod-mode go-mod-ts-mode
+                   go-dot-work-mode go-work-ts-mode
+                   rust-mode rust-ts-mode
+                   css-mode css-ts-mode
+                   html-mode html-ts-mode mhtml-mode mhtml-ts-mode
+                   (js-mode :language-id "javascript")
+                   (js-ts-mode :language-id "javascript")
+                   (tsx-ts-mode :language-id "typescriptreact")
+                   (typescript-ts-mode :language-id "typescript")
+                   (typescript-mode :language-id "typescript"))
+                  "lspmux")))
 
   (defun iys/lsp-complete ()
     "手动触发补全（C-M-i）。
