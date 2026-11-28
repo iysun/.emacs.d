@@ -73,7 +73,7 @@
 
 (defface iys-notify
   '((t :inherit default))
-  "通知子 frame 的前景/背景。主题可改成略浮起的面板色。"
+  "通知子 frame 的前景/背景。默认跟正文同一底，靠边框把面板勾出来。"
   :group 'iys-notify)
 
 (defface iys-notify-border

@@ -171,7 +171,7 @@
      `(homoglyph              ((t :foreground ,yellow)))
      `(tooltip                ((t :background ,quaternary :foreground ,fg)))
      `(help-key-binding       ((t :inherit tooltip)))
-     `(iys-notify             ((t :background ,hl-line-bg :foreground ,fg)))
+     `(iys-notify             ((t :background ,bg :foreground ,fg)))
      `(iys-notify-border      ((t :foreground ,secondary)))
   
      `(button                 ((t (:underline t))))
