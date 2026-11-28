@@ -4,6 +4,7 @@
 (eval-when-compile (require 'evil))
 (declare-function lspmux-async-next "lspmux-async")
 (declare-function lspmux-async-prev "lspmux-async")
+(declare-function lspmux-async-mode "lspmux-async")
 
 (progn
   (setq completion-styles '(orderless basic))
@@ -157,42 +158,25 @@
      nil
      (iys/search-seed))))
 
-(progn
-  ;; ⚠ "." 走同步路径，会当场阻塞一次 LSP 往返
-  (setq corfu-auto-trigger ".")
-  (setq corfu-preview-current nil)
-  ;; popupinfo 是第二个子 frame，还会同步做 completionItem/resolve。
-  ;; 后续延迟太短时，每换一个候选就改一次尺寸；PGTK 上要等合成器。
-  ;; 停够一秒才更新，快速翻候选不会跟着弹。
-  (setq corfu-popupinfo-delay '(1.0 . 1.0))
-  (custom-set-faces
-   '(corfu-border ((t (:inherit region :background unspecified)))))
-  )
+;; 本地词和 LSP 进同一份菜单。capf 列表与灰字预览相同，不含 eglot。
+(defvar lspmux-async-local-capfs)
+(defvar lspmux-async-auto)
+(setq lspmux-async-local-capfs #'iys/completion-preview--capfs)
 
-(with-eval-after-load 'corfu
-  (keymap-set corfu-map "RET"
-              `(menu-item "" nil :filter
-                          ,(lambda (&optional _)
-                             (unless (or (derived-mode-p 'eshell-mode 'comint-mode)
-                                         (minibufferp))
-                               #'corfu-send))))
-
-  ;; ⚠ evil insert 的 C-n/C-p 优先级高于 corfu-map，只能在 evil-insert-state-map 里 filter 分流
+;; ⚠ evil insert 的 C-n/C-p 优先级高于 minor mode map，只能在 evil-insert-state-map 里 filter 分流
+(with-eval-after-load 'evil
   (evil-define-key 'insert 'global (kbd "C-n")
     `(menu-item "" evil-complete-next :filter
                 ,(lambda (cmd)
-                   (cond
-                    ((bound-and-true-p lspmux-async-menu-mode) #'lspmux-async-next)
-                    ((and corfu-mode completion-in-region-mode) #'corfu-next)
-                    (t cmd)))))
+                   (if (bound-and-true-p lspmux-async-menu-mode)
+                       #'lspmux-async-next
+                     cmd))))
   (evil-define-key 'insert 'global (kbd "C-p")
     `(menu-item "" evil-complete-previous :filter
                 ,(lambda (cmd)
-                   (cond
-                    ((bound-and-true-p lspmux-async-menu-mode) #'lspmux-async-prev)
-                    ((and corfu-mode completion-in-region-mode) #'corfu-previous)
-                    (t cmd)))))
-  )
+                   (if (bound-and-true-p lspmux-async-menu-mode)
+                       #'lspmux-async-prev
+                     cmd)))))
 
 (setq text-mode-ispell-word-completion nil)
 
@@ -277,9 +261,9 @@ comint 不加 pcomplete：那边的命令补全同样要扫 PATH，坑一样，�
 
 (defconst iys/completion-styles '(auto manual preview-only)
   "可选补全风格：
-auto         corfu 自动弹出（打字即弹），关闭行内预览；
-manual       corfu 仅手动触发（C-M-i / iys/lsp-complete），开启行内预览；
-preview-only 完全关闭 corfu 弹窗，只保留行内预览。")
+auto         打字停一下就弹 lspmux 菜单，关闭行内预览；
+manual       菜单只在 C-M-i / iys/lsp-complete 时弹出，开启行内预览；
+preview-only 不弹菜单，只保留行内预览。")
 
 (defcustom iys/completion-style nil
   "启动时应用的补全风格；nil 表示 manual。"
@@ -303,27 +287,38 @@ preview-only 完全关闭 corfu 弹窗，只保留行内预览。")
       (when (derived-mode-p 'prog-mode 'text-mode 'eshell-mode 'comint-mode)
         (completion-preview-mode (if enable 1 -1))))))
 
-(defun iys/completion--set-corfu (enable)
-  "联动 global-corfu-mode 与 corfu-popupinfo-mode。两者都是 :global t，
-用显式 1/-1 而非 hook 里的隐式 toggle，避免反复切换风格后状态漂移。"
-  (global-corfu-mode (if enable 1 -1))
-  (corfu-popupinfo-mode (if enable 1 -1)))
+(defun iys/completion--menu-hooks ()
+  '(prog-mode-hook text-mode-hook eshell-mode-hook comint-mode-hook))
+
+(defun iys/completion--enable-menu ()
+  "打开 lspmux 菜单。hook 里不能直接放 mode 函数，否则会来回切换。"
+  (lspmux-async-mode 1))
+
+(defun iys/completion--set-menu (enable auto)
+  "按风格打开或关掉 lspmux 菜单。AUTO 为真时打字停一下就弹。"
+  (setq lspmux-async-auto auto)
+  (dolist (hook (iys/completion--menu-hooks))
+    (if enable
+        (add-hook hook #'iys/completion--enable-menu)
+      (remove-hook hook #'iys/completion--enable-menu)))
+  (dolist (buf (buffer-list))
+    (with-current-buffer buf
+      (when (derived-mode-p 'prog-mode 'text-mode 'eshell-mode 'comint-mode)
+        (lspmux-async-mode (if enable 1 -1))))))
 
 (defun iys--apply-completion-style (style)
   "按 STYLE（auto/manual/preview-only）应用补全行为，对已打开的 buffer 立即生效。"
   (pcase style
     ('auto
-     (setq corfu-auto t)
-     (iys/completion--set-corfu t)
+     (iys/completion--set-menu t t)
      (iys/completion--set-preview-hooks nil)
      (iys/completion--sync-preview-buffers nil))
     ('manual
-     (setq corfu-auto nil)
-     (iys/completion--set-corfu t)
+     (iys/completion--set-menu t nil)
      (iys/completion--set-preview-hooks t)
      (iys/completion--sync-preview-buffers t))
     ('preview-only
-     (iys/completion--set-corfu nil)
+     (iys/completion--set-menu nil nil)
      (iys/completion--set-preview-hooks t)
      (iys/completion--sync-preview-buffers t))
     (_ (error "未知补全风格: %s" style))))

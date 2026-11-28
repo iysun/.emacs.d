@@ -160,10 +160,7 @@
                                       (remq 'eglot-completion-at-point
                                             completion-at-point-functions)))
                     (remove-hook 'xref-backend-functions #'eglot-xref-backend t)
-                    (remove-hook 'eldoc-documentation-functions #'eglot-hover-eldoc-function t)
-                    (local-set-key (kbd "C-M-i") #'iys/lsp-complete)
-                    (lspmux-async-mode 1))
-                (lspmux-async-mode -1)))))
+                    (remove-hook 'eldoc-documentation-functions #'eglot-hover-eldoc-function t))))))
 
 ;; fset ignore 才真掐掉日志构造开销（代价：M-x eglot-events-buffer 永远空）
 (with-eval-after-load 'jsonrpc

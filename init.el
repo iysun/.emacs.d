@@ -25,7 +25,6 @@
     marginalia
     orderless
     vertico
-    corfu
     cape
     yasnippet
     pinyinlib
