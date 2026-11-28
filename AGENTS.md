@@ -38,8 +38,10 @@
 | `user-lisp/init-windows.el` | Windows 专项、无其它调用方的设置（文件属性/管道调优、控制台+剪贴板编码、git 环境变量…），非 Windows 平台空操作。由 `early-init.el` 最早期绝对路径 `load`。新增纯 OS-only 代码都加进这一个文件；跨平台功能不放这里 |
 | `user-lisp/evil-plugins/ime.el` | 跨平台输入法切换（`iys/switch-to-english-input-method`，Windows 用 im-select.exe / Linux·macOS 用 fcitx5-remote）。由 `early-init.el` 绝对路径 `load` |
 | `user-lisp/init-mirrors.el` | **包源镜像的唯一定义处**（`init.el` require 它，换镜像只改这一个文件） |
+| `user-lisp/iys-notify/iys-notify.el` | **内置插件** `iys-notify`：posframe 弹出 echo 与交互式 eldoc。开 `iys-notify-mode`；命令 `iys-notify-doc-at-point`。TTY / 无 posframe 退回默认 |
+| `user-lisp/init-notify.el` | 接线：`require` `iys-notify`、别名 `iys/doc-at-point`、非 batch 时开 mode |
 | `user-lisp/init-bars.el` | **mode-line + tab-line** 的入口：两条 bar 共用的工具函数 + 字号/内边距统一设置（放一起改才不会顾此失彼）。本体 `require` 自 `user-lisp/mode-line`、`user-lisp/tab-line`。须在 `init-ui` 之后加载，复用其字体选择结果 |
-| `user-lisp/mode-line/init-mode-line.el` | mode-line 实现本体，`(provide 'init-mode-line)`，由 `init-bars.el` `require` |
+| `user-lisp/mode-line/init-mode-line.el` | mode-line 实现本体，`(provide 'init-mode-line)`，由 `init-bars.el` `require`。托盘开着时状态画在 minibuffer 行；echo 走 `iys-notify` |
 | `user-lisp/tab-line/init-tab-line.el` | tab-line 实现本体，`(provide 'init-tab-line)`。⚠ 特意不叫 `tab-line.el`：user-lisp 会把子目录**前置**到 load-path，叫 `tab-line.el` 会盖住内置库。整条 bar 用正文底色，选中标签底边一条 accent 线；不装 centaur-tabs 本身（启动约 2.2s） |
 | `user-lisp/eshell-prompt/init-eshell-prompt.el` | eshell 提示符实现本体，由 `init-term.el` `require` |
 | `user-lisp/eshell-syntax-highlighting/` | **vendored** 的 `eshell-syntax-highlighting`（GPLv3，上游 20241222.2030），本地补丁给 `executable-find` 加缓存；由 `init-term.el` 的 `eshell-mode-hook` 加载。见其 `README.md` |
@@ -61,7 +63,7 @@
 | `user-lisp/init-externals.el` | 本配置依赖的外部程序清单（`iys/external-programs`）+ 手动检测 `iys/check-external-programs`。**不在启动时自动检查** |
 | `vendor/lspmux` | **git submodule**（`iysun/lspmux`，跟 `main`）。eglot 强依赖这份源码钉的版本。不放 `user-lisp/`，避免 Rust 树被字节编译。新机器 `git clone --recurse-submodules`，再 `cargo install --path vendor/lspmux --bin lspmux`。日常开发仍在 `~/work/projects/lspmux`，推送后在本仓 `git submodule update --remote vendor/lspmux` 再装一遍 |
 
-当前启用的模块（见 `init.el` 末尾）：`init-base` `init-externals` `init-ui` `init-parens` `init-bars` `init-window`
+当前启用的模块（见 `init.el` 末尾）：`init-base` `init-externals` `init-ui` `init-notify` `init-parens` `init-bars` `init-window`
 `init-completion` `init-dired` `init-git` `init-term` `init-project` `init-keymaps`
 `init-lsp`（eglot 全部 mode 只连 PATH 上的 `lspmux`，源码钉在 `vendor/lspmux`） `init-format` `init-navigation`` `init-isearch-pinyin`（isearch 里拼音首字母搜中文，只走 `C-s`/`C-r`，用 `pinyinlib`），以及 `user-lisp/evil-plugins/` 下的
 `evil-config` `evil-keymaps` `evil-vc` `evil-dired` `evil-ibuffer` `evil-extra` `mc-evil`（`ime` 由 `early-init.el` 加载）。
@@ -86,7 +88,7 @@ Emacs 的 `M-f`/`M-b`/`M-d` 走 `global-subword-mode`；evil 用 `forward-word-s
 `init-format`（`SPC f` = `iys/format-buffer` → `eglot-format` → lspmux；shell 等无 LSP 的语言由 mux 跑 `format` argv，已卸 apheleia）。跳转走 eglot → lspmux
 （可同时用上游 LSP 和 mux 内存/缓存索引，已卸 citre）。跳转用 `gd` / `M-.`（xref）。
 Emacs 项目（`.project` / `.git` / `project-list-file`）打开时 mux 自动建 tags；否则 `SPC c` = `iys/lspmux-index`。
-看文档键：`gh` = `iys/doc-at-point`（`user-lisp/init-base.el`）。
+看文档键：`gh` = `iys/doc-at-point`（`iys-notify-doc-at-point` 的别名；posframe，再按一次落到普通窗口）。
 `lspmux` 源码以 submodule 钉在 `vendor/lspmux`；eglot 仍调 PATH 上的二进制（`cargo install --path vendor/lspmux --bin lspmux`）。
 
 ## 本机第三方程序

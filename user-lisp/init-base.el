@@ -23,24 +23,6 @@
 
 (setq eldoc-echo-area-prefer-doc-buffer t)
 
-(defun iys/doc-at-point ()
-  "看光标处符号的文档。第一次按弹出 eldoc 文档窗口，窗口已开时再按一次跳进去（便于翻页/复制）。
-
-弹窗直接调内置的 `eldoc'（= `eldoc-print-current-symbol-info'）：它交互调用时走
-`eldoc--invoke-strategy' 的 interactive 分支，**绕过 `eldoc-idle-delay' 立刻请求一次**，
-并把 interactive 标志一路透传给 `eldoc-display-in-buffer'，由后者在**异步结果回来之后**
-才弹窗——eglot 的 textDocument/hover 是异步的，这一点很关键。
-⚠ 别图省事直接绑 `eldoc-doc-buffer'：那个只读「上一次」算出来的结果，刚跳到新符号上按
-就会显示上一个符号的陈旧内容，而且从没算过时直接 `user-error'。
-另：`eldoc' 不要求 `eldoc-mode' 开着，只要 buffer 里 `eldoc-documentation-functions' 非空。"
-  (interactive)
-  ;; ⚠ 显示时被改名为 *eldoc for <sym>*，只能靠此内部变量定位
-  (let ((win (and (buffer-live-p eldoc--doc-buffer)
-                  (get-buffer-window eldoc--doc-buffer))))
-    (if (and win (not (eq win (selected-window))))
-        (select-window win)
-      (call-interactively #'eldoc))))
-
 (add-hook 'after-init-hook 'savehist-mode)
 (progn
   (setq enable-recursive-minibuffers t)

@@ -65,6 +65,7 @@
 ;; ⚠ evil 留到 after-init（不计入 emacs-init-time）；depth -99 保证早于字体/补全等其它 after-init 工作
 (add-hook 'after-init-hook (lambda () (require 'evil-config)) -99)
 (require 'init-ui)
+(require 'init-notify)
 (require 'init-parens)
 (require 'init-bars)
 (require 'init-window)

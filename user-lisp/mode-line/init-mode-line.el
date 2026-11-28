@@ -168,40 +168,6 @@ KEEP-CLICK 非 nil 时保留 local-map/help-echo/mouse-face —— 那是
                             'font-lock-string-face)
          (iys/ui--tray-flymake))))
 
-(defvar iys/ui--tray-message nil
-  "接管下来的 echo 消息（原样一段，可能多行），nil 表示没有。")
-(defvar iys/ui--tray-message-timer nil)
-(defvar iys/ui--tray-message-duration 1
-  "消息在托盘行里停留的秒数，到点自动让位给状态段。")
-(defvar iys/ui--tray-message-max-width 40
-  "消息最多占多少列，超过就截断加省略号。
-挡住 eldoc 签名、which-key 提示这类长串，别让它把整行吃掉。")
-
-(defun iys/ui--tray-message-line ()
-  "把接管的 echo 消息压成一行、去掉属性，按 `iys/ui--tray-message-max-width'
-截断后接在左段状态后面。"
-  (when (stringp iys/ui--tray-message)
-    (let ((s (string-trim
-              (replace-regexp-in-string
-               "[\n\r]+" " " (substring-no-properties iys/ui--tray-message)))))
-      (unless (string-empty-p s)
-        (truncate-string-to-width s iys/ui--tray-message-max-width
-                                  nil nil (iys/ui--tray-ellipsis))))))
-
-(defun iys/ui--tray-left-with-message (room)
-  "左段状态，有 echo 消息时接在后面——消息不顶掉状态。
-ROOM 是这一行「状态 + 消息」能用的列数（已扣掉右段），消息超了就截断加
-省略号，保证右段不会被顶出可视范围。"
-  (let* ((status (iys/ui--tray-left))
-         (msg (iys/ui--tray-message-line))
-         (budget (and msg room (- room (string-width (or status "")) 2)))
-         (msg (when (and msg budget (> budget 0))
-                (truncate-string-to-width msg budget nil nil (iys/ui--tray-ellipsis)))))
-    (cond ((and status msg) (concat status "  " msg))
-          (msg (concat "  " msg))
-          (status status)
-          (t ""))))
-
 (defun iys/ui--echo-width ()
   "这一行的可用列数。留 1 列，避免最后一个字换行。"
   (let ((win (minibuffer-window)))
@@ -224,21 +190,20 @@ ROOM 是这一行「状态 + 消息」能用的列数（已扣掉右段），消
       (concat left pad right))))
 
 (defun iys/ui--tray-render ()
-  "左段靠左、右段靠右的一整行。
-echo 消息接在左段状态后面（不顶掉状态），另外还受 `iys/ui--tray-message-max-width'
-和「先给右段留位」两条限制，所以再长的消息也不会把项目/分支顶出可视范围。"
+  "左段靠左、右段靠右。echo 走 `iys-notify'，不进这一行。"
   (let* ((width (max 1 (iys/ui--echo-width)))
          (right (or (iys/ui--tray-right) ""))
          (gap 2)
-         (left (iys/ui--tray-left-with-message
-                (- width (string-width right) gap))))
+         (left (or (iys/ui--tray-left) "")))
     (when (> (+ (string-width left) gap (string-width right)) width)
       (let ((room (max 0 (- width (string-width left) gap))))
         (setq right (if (zerop room)
                         ""
-                      (truncate-string-to-width right room nil nil (iys/ui--tray-ellipsis))))))
+                      (truncate-string-to-width
+                       right room nil nil (iys/ui--tray-ellipsis))))))
     (when (> (string-width left) (1- width))
-      (setq left (truncate-string-to-width left (1- width) nil nil (iys/ui--tray-ellipsis)))
+      (setq left (truncate-string-to-width
+                  left (1- width) nil nil (iys/ui--tray-ellipsis)))
       (setq right ""))
     (iys/ui--tray-line left right)))
 
@@ -291,48 +256,6 @@ echo 消息接在左段状态后面（不顶掉状态），另外还受 `iys/ui-
 (defun iys/ui--echo-tray-suppressed-p ()
   (or (active-minibuffer-window)
       (bound-and-true-p isearch-mode)))
-
-;; ---- echo 消息并入托盘行 -------------------------------------------------
-;; `set-message-functions' 里的函数返回 t = 别再单独显示这条消息（返回值不是
-;; 字符串时，C 那边就不再往 echo area 写）。默认那条 `set-minibuffer-message'
-;; 仍然排在后面，处理“正在输入 minibuffer”时的消息。
-(defun iys/ui--tray-message-clear ()
-  "忘掉接管的 echo 消息，并取消到期定时器。"
-  (when (timerp iys/ui--tray-message-timer)
-    (cancel-timer iys/ui--tray-message-timer))
-  (setq iys/ui--tray-message-timer nil
-        iys/ui--tray-message nil))
-
-(defun iys/ui--tray-message-expire ()
-  (setq iys/ui--tray-message-timer nil)
-  (when iys/ui--tray-message
-    (setq iys/ui--tray-message nil)
-    (iys/ui--echo-tray-update)))
-
-(defun iys/ui--tray-message-handler (msg)
-  "把 echo 消息并进托盘行；返回 t 表示不用 echo area 单独显示。
-正在用 minibuffer / isearch 时返回 nil，交回默认处理——那种时候消息得显示
-在输入行上，塞进托盘反而看不见。"
-  (cond
-   ((not (stringp msg)) nil)
-   ;; (message "") 是“清掉回显”，顺手把托盘里的旧消息一起清掉
-   ((string-empty-p msg)
-    (iys/ui--tray-message-clear)
-    nil)
-   ((or (not iys/ui-echo-tray-mode)
-        (iys/ui--echo-tray-suppressed-p))
-    nil)
-   (t
-    (setq iys/ui--tray-message msg)
-    (when (timerp iys/ui--tray-message-timer)
-      (cancel-timer iys/ui--tray-message-timer))
-    (setq iys/ui--tray-message-timer
-          (run-at-time iys/ui--tray-message-duration nil
-                       #'iys/ui--tray-message-expire))
-    ;; echo area 里可能还挂着上一条（isearch/输入中漏过去的），不清会盖住托盘
-    (when (current-message) (message nil))
-    (iys/ui--echo-tray-update)
-    t)))
 
 (defun iys/ui--tray-bar-bg ()
   "和 tab-line 那条 bar 同一个背景，上下 padding 才是同一块颜色。"
@@ -410,8 +333,6 @@ echo 消息接在左段状态后面（不顶掉状态），另外还受 `iys/ui-
   (add-hook 'echo-area-clear-hook #'iys/ui--echo-tray-update)
   (add-hook 'minibuffer-setup-hook #'iys/ui--tray-on-minibuffer-setup)
   (add-hook 'minibuffer-exit-hook #'iys/ui--tray-on-minibuffer-exit)
-  ;; 排在 `set-minibuffer-message' 前面：托盘优先接管，输入中让它接手
-  (add-to-list 'set-message-functions #'iys/ui--tray-message-handler)
   (unless iys/ui--tray-timer
     (setq iys/ui--tray-timer (run-with-timer 1 1 #'iys/ui--echo-tray-update)))
   (when (fboundp 'iys/ui-setup-bars)
@@ -424,9 +345,6 @@ echo 消息接在左段状态后面（不顶掉状态），另外还受 `iys/ui-
   (when iys/ui--tray-timer
     (cancel-timer iys/ui--tray-timer)
     (setq iys/ui--tray-timer nil))
-  (setq set-message-functions (delq #'iys/ui--tray-message-handler
-                                    set-message-functions))
-  (iys/ui--tray-message-clear)
   (remove-hook 'post-command-hook #'iys/ui--echo-tray-update)
   (remove-hook 'echo-area-clear-hook #'iys/ui--echo-tray-update)
   (remove-hook 'after-change-major-mode-hook #'iys/ui--sync-mode-line)
@@ -442,9 +360,7 @@ echo 消息接在左段状态后面（不顶掉状态），另外还受 `iys/ui-
 
 (define-minor-mode iys/ui-echo-tray-mode
   "把原 mode-line 显示在 minibuffer 这一行：左段靠左，右段靠右。
-echo 消息不单独占一行，而是接在左段状态后面显示
-`iys/ui--tray-message-duration' 秒；右段的项目/分支可以直接点。
-正在输入或 isearch 时先让出这一行。"
+echo 消息走 `iys-notify'。正在输入或 isearch 时先让出这一行。"
   :global t
   :group 'mode-line
   (if iys/ui-echo-tray-mode
