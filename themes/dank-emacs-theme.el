@@ -235,6 +235,10 @@
    `(corfu-default ((t (:background ,surface-container :foreground ,on-surface))))
    `(corfu-current ((t (:background ,primary-container :foreground ,dank-cyan-bright))))
 
+   ;; iys-notify（别 inherit tooltip：Emacs 默认 tooltip 是刺眼黄底）
+   `(iys-notify ((t (:background ,surface-container :foreground ,on-surface))))
+   `(iys-notify-border ((t (:foreground ,outline-variant))))
+
    ;; Which-key
    `(which-key-key-face ((t (:foreground ,dank-cyan :weight bold))))
    `(which-key-separator-face ((t (:foreground ,outline-variant))))

@@ -5,7 +5,8 @@
 ;; Keywords: frames, convenience
 
 ;; echo 消息和交互式 `eldoc' 走同一个 posframe。idle eldoc 默认吞掉。
-;; TTY / 无 posframe 时全部退回 Emacs 默认行为。不自动启用，开 `iys-notify-mode'。
+;; Emacs 31 的 TTY child frame 也能弹；posframe 不可用时退回默认。
+;; 不自动启用，开 `iys-notify-mode'。
 
 ;;; Code:
 
@@ -71,12 +72,12 @@
   :group 'iys-notify)
 
 (defface iys-notify
-  '((t :inherit tooltip))
-  "通知子 frame 的前景/背景。"
+  '((t :inherit default))
+  "通知子 frame 的前景/背景。主题可改成略浮起的面板色。"
   :group 'iys-notify)
 
 (defface iys-notify-border
-  '((t :inherit font-lock-function-name-face))
+  '((t :inherit vertical-border))
   "通知子 frame 的边框色。"
   :group 'iys-notify)
 
@@ -85,8 +86,7 @@
 (defconst iys-notify--echo-buffer " *iys-notify*")
 
 (defun iys-notify--workable-p ()
-  (and (display-graphic-p)
-       (require 'posframe nil t)
+  (and (require 'posframe nil t)
        (fboundp 'posframe-workable-p)
        (posframe-workable-p)))
 
@@ -147,7 +147,8 @@
            (border (iys-notify--face-attr 'iys-notify-border :foreground fg))
            (cap (if doc iys-notify-doc-max-width iys-notify-echo-max-width))
            (max-w (max 40 (min cap (/ (* (frame-width) 2) 5))))
-           (max-h (if doc iys-notify-doc-max-height iys-notify-echo-max-height)))
+           (max-h (if doc iys-notify-doc-max-height iys-notify-echo-max-height))
+           (fringe (if (display-graphic-p) 8 0)))
       (posframe-show
        buffer
        :string string
@@ -156,8 +157,8 @@
        :internal-border-color border
        :background-color bg
        :foreground-color fg
-       :left-fringe 8
-       :right-fringe 8
+       :left-fringe fringe
+       :right-fringe fringe
        :max-width max-w
        :max-height max-h
        :min-width (min iys-notify-min-width max-w)
@@ -181,7 +182,7 @@
     (iys-notify--show eldoc--doc-buffer 'doc)))
 
 (defun iys-notify--eldoc-in-buffer (orig docs interactive)
-  "GUI 下已经弹了通知，别再拆一个 *eldoc* 窗口。"
+  "已经弹了通知，别再拆一个 *eldoc* 窗口。"
   (if (and interactive (iys-notify--workable-p))
       (progn (eldoc--format-doc-buffer docs) nil)
     (funcall orig docs interactive)))

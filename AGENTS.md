@@ -38,7 +38,7 @@
 | `user-lisp/init-windows.el` | Windows 专项、无其它调用方的设置（文件属性/管道调优、控制台+剪贴板编码、git 环境变量…），非 Windows 平台空操作。由 `early-init.el` 最早期绝对路径 `load`。新增纯 OS-only 代码都加进这一个文件；跨平台功能不放这里 |
 | `user-lisp/evil-plugins/ime.el` | 跨平台输入法切换（`iys/switch-to-english-input-method`，Windows 用 im-select.exe / Linux·macOS 用 fcitx5-remote）。由 `early-init.el` 绝对路径 `load` |
 | `user-lisp/init-mirrors.el` | **包源镜像的唯一定义处**（`init.el` require 它，换镜像只改这一个文件） |
-| `user-lisp/iys-notify/iys-notify.el` | **内置插件** `iys-notify`：posframe 弹出 echo 与交互式 eldoc。开 `iys-notify-mode`；命令 `iys-notify-doc-at-point`。TTY / 无 posframe 退回默认 |
+| `user-lisp/iys-notify/iys-notify.el` | **内置插件** `iys-notify`：posframe 弹出 echo 与交互式 eldoc。开 `iys-notify-mode`；命令 `iys-notify-doc-at-point`。Emacs 31 TTY child frame 也能弹；posframe 不可用时退回默认 |
 | `user-lisp/init-notify.el` | 接线：`require` `iys-notify`、别名 `iys/doc-at-point`、非 batch 时开 mode |
 | `user-lisp/init-bars.el` | **mode-line + tab-line** 的入口：两条 bar 共用的工具函数 + 字号/内边距统一设置（放一起改才不会顾此失彼）。本体 `require` 自 `user-lisp/mode-line`、`user-lisp/tab-line`。须在 `init-ui` 之后加载，复用其字体选择结果 |
 | `user-lisp/mode-line/init-mode-line.el` | mode-line 实现本体，`(provide 'init-mode-line)`，由 `init-bars.el` `require`。托盘开着时状态画在 minibuffer 行；echo 走 `iys-notify` |
