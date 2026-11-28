@@ -45,7 +45,8 @@
     (go-work-ts-mode    go-dot-work-mode)
     (rust-ts-mode       rust-mode)     ; lspmux → rust-analyzer
     (mhtml-ts-mode      mhtml-mode)    ; lspmux 聚合 html+css+ts
-    (css-ts-mode        css-mode))     ; lspmux → vscode-css
+    (css-ts-mode        css-mode)      ; lspmux → vscode-css
+    (bash-ts-mode       sh-mode))      ; lspmux → shfmt
   "每个元素是 (TS-MODE 原生-MODE …)，nil 表示无对应 mode。")
 
 (defun iys/lspmux--auto-index-p (project)
@@ -128,8 +129,10 @@
                   (js-ts-mode :language-id "javascript")
                   (tsx-ts-mode :language-id "typescriptreact")
                   (typescript-ts-mode :language-id "typescript")
-                  (typescript-mode :language-id "typescript"))
-                #'iys/lspmux-contact)))
+                  (typescript-mode :language-id "typescript")
+                  (sh-mode :language-id "shellscript")
+                  (bash-ts-mode :language-id "shellscript"))
+                #'iys/lspmux-contact))
 
   (defun iys/lsp-complete ()
     "手动触发补全（C-M-i）。

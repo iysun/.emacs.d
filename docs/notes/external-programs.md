@@ -24,7 +24,7 @@ M-x iys/check-external-programs
 | `fd` | `consult-fd`（`M-s f`）、fd-dired | 不装 fd-dired；文件查找弱一档。Debian 二进制常叫 `fdfind`，PATH 上要有名为 `fd` 的入口 |
 | `locate` | `consult-locate`（`M-s c`） | 该命令不可用 |
 | `ctags` | Universal Ctags；lspmux 建/增量符号索引 | mux 的 tags 源没有索引（不写仓库 `tags` 文件） |
-| `shfmt` | apheleia 格式化 `sh-mode` | 不把 sh 交给 shfmt |
+| `shfmt` | lspmux 格式化 `sh-mode` | `SPC f` 报 formatter 错误 |
 | `node` | npm 语言服务器的运行时 | html/css/ts/pyright 起不来 |
 | `cc` | `treesit-install-language-grammar` | 装 grammar 失败 |
 | `fcitx5-remote` | Linux/macOS：退出插入态切英文；`C-SPC` 开输入法 | 不切输入法 |

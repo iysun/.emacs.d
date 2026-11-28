@@ -28,7 +28,6 @@
     corfu
     cape
     pinyinlib
-    apheleia
     ghostel
     no-littering)
   "本配置从 ELPA 声明的第三方包；vendored 包（如 eshell-syntax-highlighting）不在此列。

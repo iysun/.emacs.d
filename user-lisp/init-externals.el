@@ -13,7 +13,7 @@
     (:bin "fd" :class feature :why "consult-fd（M-s f）、fd-dired。Debian 二进制常叫 fdfind，PATH 上要有名为 fd 的入口")
     (:bin "locate" :class feature :why "consult-locate（M-s c）")
     (:bin "ctags" :class feature :why "Universal Ctags；lspmux 建/增量符号索引（不写仓库 tags 文件）")
-    (:bin "shfmt" :class feature :why "apheleia 格式化 sh-mode")
+    (:bin "shfmt" :class feature :why "lspmux 格式化 shellscript（sh-mode）")
     (:bin "node" :class feature :why "npm 语言服务器（html/css/ts/pyright）的运行时")
     (:bin "lspmux" :class lang :why "eglot 唯一入口；源在 vendor/lspmux submodule，cargo install 后进 PATH")
     (:bin "vscode-html-language-server" :class lang :why "HTML（lspmux 上游）")

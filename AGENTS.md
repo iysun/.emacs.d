@@ -83,8 +83,7 @@ Emacs 的 `M-f`/`M-b`/`M-d` 走 `global-subword-mode`；evil 用 `forward-word-s
 ⚠ 自定义 forward-op 必须返回
 「未移动数」（0=成功），否则 `evil-forward-nearest` 的 `(zerop ...)` 会报 wrong-type-argument。
 
-`init-format`（apheleia，非 LSP 场景的格式化；`SPC f` = `iys/format-buffer` 统一入口，按 buffer
-是否有 eglot 托管自动分流到 eglot-format 或 apheleia-format-buffer）。跳转走 eglot → lspmux
+`init-format`（`SPC f` = `iys/format-buffer` → `eglot-format` → lspmux；shell 等无 LSP 的语言由 mux 跑 `format` argv，已卸 apheleia）。跳转走 eglot → lspmux
 （可同时用上游 LSP 和 mux 内存/缓存索引，已卸 citre）。跳转用 `gd` / `M-.`（xref）。
 Emacs 项目（`.project` / `.git` / `project-list-file`）打开时 mux 自动建 tags；否则 `SPC c` = `iys/lspmux-index`。
 看文档键：`gh` = `iys/doc-at-point`（`user-lisp/init-base.el`）。
@@ -213,6 +212,7 @@ emacs                          # 真实 GUI，看 *Messages* / *Warnings*
 - **改了行为/加了模块** → 同步更新本文件相关小节（结构表、启用模块列表、命令）。纯重构 / 小修可不动文档。
 - **新增模块**：在 `user-lisp/` 下建 `init-xxx.el`，文件末 `(provide 'init-xxx)`，并在 `init.el` 末尾 `(require 'init-xxx)`。
 - **改完怎么验证**：批处理加载见 [.agent/run.md](.agent/run.md)；再启动真实 GUI 看 `*Messages*` / `*Warnings*`。
+- **本仓只有本人改**：`main` 可以 `--force-with-lease`（改正刚推上去的笔误、amend）。不要 force-push 别的仓库。
 - **别 eager `require` 会连带拉起重库的包**：例如 `fd-dired` 顶层 require `find-dired`/`ibuffer`/
   `ibuf-ext`，`find-dired` 又拉起 `dired`——启动时 eager `(require 'fd-dired)` 实测多花 ~0.4s。
   这类包用 `use-package … :defer t` 即可，命令靠 autoload，首次用时再加载。
