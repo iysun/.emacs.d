@@ -198,7 +198,7 @@
      `(whitespace-indentation      ((t :foreground ,tertiary)))
      `(whitespace-line             ((t :underline (:style wave :color ,gold))))
      `(whitespace-newline          ((t :foreground ,dim)))
-     `(whitespace-space            ((t :foreground ,dim :inherit italic)))
+     `(whitespace-space            ((t :foreground ,dim :slant italic)))
      `(whitespace-space-after-tab  ((t :inherit warning)))
      `(whitespace-space-before-tab ((t :inherit warning)))
      `(whitespace-tab              ((t :inherit whitespace-newline)))
@@ -212,8 +212,9 @@
      `(font-lock-constant-face             ((t :foreground ,yellow)))
      `(font-lock-delimiter-face            ((t :foreground ,bright)))
      `(font-lock-escape-face               ((t :foreground ,bright)))
-     `(font-lock-function-name-face        ((t :foreground ,purple :inherit italic)))
-     `(font-lock-keyword-face              ((t :foreground ,pink :inherit italic)))
+     ;; 用 :slant，不要 :inherit italic。字体没有斜体时，italic 这个 face 会退成下划线
+     `(font-lock-function-name-face        ((t :foreground ,purple :slant italic)))
+     `(font-lock-keyword-face              ((t :foreground ,pink :slant italic)))
      `(font-lock-negation-char-face        ((t :foreground ,red)))
      `(font-lock-number-face               ((t :foreground ,orange)))
      `(font-lock-operator-face             ((t :foreground ,blue)))
@@ -223,9 +224,11 @@
      `(font-lock-regexp-grouping-backslash ((t :foreground ,orange)))
      `(font-lock-regexp-grouping-construct ((t :foreground ,orange)))
      `(font-lock-string-face               ((t :foreground ,green)))
-     `(font-lock-type-face                 ((t :foreground ,purple-muted :inherit italic)))
+     `(font-lock-type-face                 ((t :foreground ,purple-muted :slant italic)))
      `(font-lock-variable-name-face        ((t :foreground ,fg)))
      `(font-lock-variable-use-face         ((t :foreground ,fg)))
+     ;; 内置定义额外继承 italic face，没有斜体的字体上会给 -webkit- 之类画下划线
+     `(css-proprietary-property            ((t :inherit font-lock-keyword-face :underline nil)))
   
      `(isearch      ((t :inherit match)))
      `(isearch-fail ((t :inherit error)))
