@@ -53,7 +53,8 @@
   :group 'iys-notify)
 
 (defcustom iys-notify-persist-commands
-  '(iys-notify-doc-at-point iys-notify-hide iys-notify-pop-out)
+  '(iys-notify-doc-at-point iys-notify-hide iys-notify-pop-out
+    iys/doc-at-point)
   "这些命令不关掉当前通知（`pre-command-hook' 里跳过）。"
   :type '(repeat function)
   :group 'iys-notify)
@@ -208,7 +209,7 @@
 
 走交互 `eldoc'，绕过 idle delay，eglot 的 hover 是异步的，等结果回来才画。"
   (interactive)
-  (if (iys-notify-visible-p)
+  (if (buffer-live-p iys-notify--buffer)
       (iys-notify-pop-out)
     (call-interactively #'eldoc)))
 
@@ -232,9 +233,15 @@
    (t (and (iys-notify-show msg) t))))
 
 (defun iys-notify--keep-p (cmd)
-  (or (memq cmd iys-notify-persist-commands)
-      (and (symbolp cmd)
-           (string-prefix-p "iys-notify-" (symbol-name cmd)))))
+  "CMD 及其 alias 目标都算。`gh' 绑的是 `iys/doc-at-point'，不能只认 `iys-notify-*'。"
+  (let* ((fn (and (symbolp cmd) (fboundp cmd) (indirect-function cmd)))
+         (name (and (symbolp cmd) (symbol-name cmd))))
+    (or (memq cmd iys-notify-persist-commands)
+        (and fn (memq fn iys-notify-persist-commands))
+        (and name (or (string-prefix-p "iys-notify-" name)
+                      (string= name "iys/doc-at-point")))
+        (eq fn (indirect-function 'iys-notify-doc-at-point))
+        (eq fn (indirect-function 'iys-notify-pop-out)))))
 
 (defun iys-notify--on-pre-command ()
   (unless (iys-notify--keep-p this-command)
